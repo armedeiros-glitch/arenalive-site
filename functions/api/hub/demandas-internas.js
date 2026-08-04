@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'planet-hub:demandas-internas:v1';
 const MAX_ITEMS = 500;
-const MAX_BODY_BYTES = 450_000;
+const MAX_BODY_BYTES = 550_000;
 
 const headers = {
   'Content-Type': 'application/json; charset=UTF-8',
@@ -14,6 +14,16 @@ const cleanDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) ? S
 const STATUS = new Set(['new', 'in_progress', 'waiting', 'completed', 'cancelled']);
 const PRIORITY = new Set(['urgent', 'high', 'normal', 'low']);
 const ORIGIN = new Set(['direction', 'meeting', 'whatsapp', 'internal', 'other']);
+const AI_MODE = new Set(['ai', 'rules', 'manual']);
+
+const normalizeSteps = (items) => (Array.isArray(items) ? items : [])
+  .slice(0, 12)
+  .map((item) => ({
+    id: cleanText(item?.id, 100) || `step-${crypto.randomUUID()}`,
+    text: cleanText(typeof item === 'string' ? item : item?.text, 260),
+    done: Boolean(item?.done),
+  }))
+  .filter((item) => item.text);
 
 const normalizeDemand = (item = {}) => {
   const status = STATUS.has(item.status) ? item.status : 'new';
@@ -33,6 +43,9 @@ const normalizeDemand = (item = {}) => {
     dueDate: cleanDate(item.dueDate),
     category: cleanText(item.category, 120),
     notes: cleanText(item.notes, 1800),
+    steps: normalizeSteps(item.steps),
+    originalText: cleanText(item.originalText, 4000),
+    aiMode: AI_MODE.has(item.aiMode) ? item.aiMode : 'manual',
     createdAt: cleanText(item.createdAt, 40) || new Date().toISOString(),
     updatedAt: cleanText(item.updatedAt, 40) || new Date().toISOString(),
     completedAt,
