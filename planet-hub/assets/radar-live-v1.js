@@ -12,7 +12,8 @@
   const radar = () => window.PMHRadarData;
   const isVisible = () => document.visibilityState === 'visible';
   const isOnline = () => navigator.onLine !== false;
-  const canRun = () => isVisible() && isOnline() && Boolean(radar()?.collect);
+  const serviceReady = () => Boolean(radar()?.collect);
+  const canRun = () => isVisible() && isOnline() && serviceReady();
 
   const clearTimer = () => {
     if (!timer) return;
@@ -67,8 +68,11 @@
   window.addEventListener('pagehide', clearTimer);
 
   const bootstrap = () => {
-    if (canRun()) return wake();
-    window.setTimeout(bootstrap, START_DELAY_MS);
+    if (!serviceReady()) {
+      window.setTimeout(bootstrap, START_DELAY_MS);
+      return;
+    }
+    if (canRun()) wake();
   };
 
   window.setTimeout(bootstrap, START_DELAY_MS);
