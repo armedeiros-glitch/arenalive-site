@@ -3,7 +3,31 @@
   grid-auto-flow: initial;
   grid-template-columns: repeat(var(--pmh-kanban-columns, 4), minmax(0, 1fr));
   gap: 13px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow: hidden;
+}
+
+.pmh-kanban.is-paginated .pmh-kanban-lane {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.pmh-kanban.is-paginated .pmh-kanban-cards {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.pmh-kanban.is-paginated .pmh-ticket-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .pmh-kanban.is-paginated .pmh-kanban-lane[hidden] {
