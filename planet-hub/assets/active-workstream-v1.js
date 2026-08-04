@@ -316,12 +316,19 @@
   const sync = () => {
     if (!isHome()) return;
     suppressOldBlocks();
-    render();
+    const root = demandsRoot();
+    if (!root) return;
+    if (!root.querySelector('[data-active-workstream]')) render();
     if (!state.loaded && !state.loading) load();
   };
 
-  const observer = new MutationObserver(sync);
+  let syncTimer = 0;
+  const observer = new MutationObserver(() => {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(sync, 30);
+  });
   observer.observe(document.documentElement, { childList: true, subtree: true });
+
   window.addEventListener('hashchange', () => {
     if (isHome()) refresh();
   });
