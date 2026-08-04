@@ -108,7 +108,7 @@ export async function onRequestGet({ env, request }) {
 
   const incomingUrl = new URL(request.url);
   const includeClosed = incomingUrl.searchParams.get('includeClosed') === '1';
-  const scope = incomingUrl.searchParams.get('scope') || 'marketing';
+  const scope = incomingUrl.searchParams.get('scope') || 'all';
   const personId = Number.parseInt(incomingUrl.searchParams.get('personId') || '', 10) || null;
   const departmentId = Number.parseInt(
     incomingUrl.searchParams.get('departmentId') || String(MARKETING_DEPARTMENT_ID),
