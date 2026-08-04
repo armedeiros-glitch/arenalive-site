@@ -81,6 +81,14 @@
     }).format(date);
   };
 
+  const daysUntil = (value) => {
+    const date = dateValue(value);
+    if (!date) return Number.POSITIVE_INFINITY;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.ceil((date.getTime() - today.getTime()) / 86400000);
+  };
+
   const fullMode = new URLSearchParams(window.location.search).get('full') === '1';
   if (fullMode) {
     document.body.classList.remove('pmh-command-mode');
@@ -99,7 +107,7 @@
     });
   };
 
-  const prepareNativeArea = (key) => {
+  const prepareArea = (key) => {
     document.body.classList.add('pmh-command-mode');
     shell.hidden = false;
     root?.setAttribute('aria-hidden', 'true');
@@ -142,24 +150,6 @@
     window.localStorage.setItem(TRACKED_KEY, JSON.stringify(items));
   };
 
-  const projectDate = (item) => item.endDate || item.openingDate || item.startDate;
-
-  const daysUntil = (value) => {
-    const date = dateValue(value);
-    if (!date) return Number.POSITIVE_INFINITY;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return Math.ceil((date.getTime() - today.getTime()) / 86400000);
-  };
-
-  const upcomingProjects = (items) => items
-    .filter((item) => !item.completed)
-    .filter((item) => {
-      const days = daysUntil(projectDate(item));
-      return days >= 0 && days <= 45;
-    })
-    .sort((a, b) => dateValue(projectDate(a)) - dateValue(projectDate(b)));
-
   let projectsCache = null;
   let projectsPromise = null;
 
@@ -178,6 +168,11 @@
 
     return projectsPromise;
   };
+
+  const trackedUpcoming = (items) => items.filter((item) => {
+    const days = daysUntil(item.openingDate);
+    return days >= 0 && days <= 45;
+  });
 
   const dueDateFor = (openingDate, daysBefore) => {
     const date = dateValue(openingDate);
@@ -209,23 +204,47 @@
     return { pending, late };
   };
 
-  const renderUpcoming = (projects, tracked) => {
-    const trackedProjects = new Set(tracked.map((item) => String(item.sourceProjectId || '')));
-    const upcoming = upcomingProjects(projects).slice(0, 3);
-    if (!upcoming.length) {
-      return '<div class="pmh-implant-command-empty">Nenhuma inauguração prevista para os próximos 45 dias.</div>';
+  const projectStatus = (item) => {
+    if (item.completed) return ['CONCLUÍDA', 'is-completed'];
+    if (item.paused) return ['PAUSADA', 'is-paused'];
+    if (item.active !== false) return ['ATIVA', ''];
+    return ['INATIVA', 'is-inactive'];
+  };
+
+  const renderProjects = (projects, tracked) => {
+    if (!projects.length) {
+      return '<div class="pmh-implant-command-empty">Nenhuma implantação encontrada no SULTS.</div>';
     }
 
-    return `<div class="pmh-upcoming-grid">${upcoming.map((item) => {
+    const trackedIds = new Set(tracked.map((item) => String(item.sourceProjectId || '')));
+    const sorted = [...projects].sort((a, b) => {
+      const statusWeight = (item) => item.completed ? 3 : item.paused ? 2 : item.active === false ? 1 : 0;
+      const weightDiff = statusWeight(a) - statusWeight(b);
+      if (weightDiff) return weightDiff;
+      return String(a.unit || a.projectName || '').localeCompare(String(b.unit || b.projectName || ''), 'pt-BR');
+    });
+
+    return `<div class="pmh-implant-command-list">${sorted.map((item) => {
+      const [status, statusClass] = projectStatus(item);
       const projectId = String(item.sultsProjectId || item.id || '');
-      const active = trackedProjects.has(projectId);
+      const isTracked = trackedIds.has(projectId);
+      const unit = item.unit || item.projectName || 'Unidade sem nome';
+      const context = [item.category, item.model].filter(Boolean).join(' · ') || 'Projeto de implantação';
       return `
-        <article class="pmh-upcoming-card">
-          <div class="pmh-upcoming-date"><strong>${esc(formatDate(projectDate(item)))}</strong><span>inauguração prevista</span></div>
-          <div><h3>${esc(item.unit || item.projectName || 'Unidade sem nome')}</h3><p>${esc(item.category || item.model || 'Projeto SULTS')} · ${esc(item.responsible || 'Responsável não informado')}</p></div>
-          ${active
-            ? '<span class="pmh-upcoming-active">Checklist ativo</span>'
-            : `<button type="button" data-pmh-start-inauguration="${esc(projectId)}">Iniciar checklist</button>`}
+        <article class="pmh-implant-command-card">
+          <div>
+            <header>
+              <span class="${statusClass}">${status}</span>
+              ${isTracked ? '<span class="is-tracked">CHECKLIST ATIVO</span>' : ''}
+            </header>
+            <h3>${esc(unit)}</h3>
+            <p>${esc(context)}<br>Responsável: ${esc(item.responsible || 'Não informado')}</p>
+          </div>
+          <aside>
+            <strong>${esc(formatDate(item.endDate || item.startDate))}</strong>
+            <span>Data do projeto no SULTS</span>
+          </aside>
+          ${item.attentionNote ? `<div class="pmh-implant-command-note">Atenção: ${esc(item.attentionNote)}</div>` : ''}
         </article>`;
     }).join('')}</div>`;
   };
@@ -274,20 +293,23 @@
     try {
       const projects = await ensureProjects();
       const tracked = readTracked();
-      const upcoming = upcomingProjects(projects).length;
+      const upcoming = trackedUpcoming(tracked).length;
+
       content.querySelectorAll('.pmh-cc-metric').forEach((card) => {
         const label = normalize(card.querySelector('small')?.textContent);
-        if (label === 'implantacoes ativas') {
+        if (label === 'implantacoes ativas' || label === 'implantacoes no sults') {
           const small = card.querySelector('small');
           const strong = card.querySelector('strong');
           const span = card.querySelector('span');
-          if (small && small.textContent !== 'Inaugurações ativas') small.textContent = 'Inaugurações ativas';
-          if (strong && strong.textContent !== String(tracked.length)) strong.textContent = String(tracked.length);
-          if (span && span.textContent !== 'Checklists em acompanhamento') span.textContent = 'Checklists em acompanhamento';
+          if (small && small.textContent !== 'Implantações no SULTS') small.textContent = 'Implantações no SULTS';
+          if (strong && strong.textContent !== String(projects.length)) strong.textContent = String(projects.length);
+          if (span && span.textContent !== 'Projetos cadastrados') span.textContent = 'Projetos cadastrados';
         }
         if (label === 'proximas inauguracoes') {
           const strong = card.querySelector('strong');
+          const span = card.querySelector('span');
           if (strong && strong.textContent !== String(upcoming)) strong.textContent = String(upcoming);
+          if (span && span.textContent !== 'Checklists nos próximos 45 dias') span.textContent = 'Checklists nos próximos 45 dias';
         }
       });
     } catch (_) {}
@@ -297,43 +319,42 @@
 
   const ensureModal = (projects) => {
     if (modal) return modal;
+
     modal = document.createElement('div');
     modal.className = 'pmh-inauguration-modal';
     modal.hidden = true;
     modal.innerHTML = `
       <section class="pmh-inauguration-dialog" role="dialog" aria-modal="true" aria-labelledby="pmh-new-inauguration-title">
         <header>
-          <div><small>NOVA INAUGURAÇÃO</small><h2 id="pmh-new-inauguration-title">Iniciar checklist inaugural</h2><p>Escolha um projeto do SULTS ou faça um cadastro manual.</p></div>
+          <div><small>NOVA INAUGURAÇÃO</small><h2 id="pmh-new-inauguration-title">Iniciar checklist inaugural</h2><p>Escolha uma implantação do SULTS ou faça um cadastro manual.</p></div>
           <button type="button" data-pmh-close-inauguration aria-label="Fechar">×</button>
         </header>
         <form>
-          <label class="pmh-field-wide">Projeto do SULTS<select name="projectId"><option value="">Cadastro manual</option></select></label>
+          <label class="pmh-field-wide">Implantação do SULTS<select name="projectId"><option value="">Cadastro manual</option></select></label>
           <label>Unidade<input name="unit" required></label>
-          <label>Data da inauguração<input name="openingDate" type="date" required></label>
+          <label>Data real da inauguração<input name="openingDate" type="date" required></label>
           <label>Responsável<input name="responsible"></label>
           <label>Shopping / local<input name="location"></label>
-          <p>Ao salvar, a unidade entra no acompanhamento com o checklist oficial de 15 etapas.</p>
+          <p>A data do projeto no SULTS não será tratada automaticamente como inauguração. Aqui você informa a data real e cria o checklist.</p>
           <footer><button type="button" data-pmh-close-inauguration>Cancelar</button><button type="submit">Criar inauguração</button></footer>
         </form>
       </section>`;
     document.body.appendChild(modal);
 
     const select = modal.querySelector('select[name="projectId"]');
-    const sortedProjects = [...projects].sort((a, b) => {
-      const aDays = daysUntil(projectDate(a));
-      const bDays = daysUntil(projectDate(b));
-      return aDays - bDays;
-    });
+    const sortedProjects = [...projects].sort((a, b) =>
+      String(a.unit || a.projectName || '').localeCompare(String(b.unit || b.projectName || ''), 'pt-BR'),
+    );
     select.insertAdjacentHTML('beforeend', sortedProjects.map((item) => {
       const id = String(item.sultsProjectId || item.id || '');
-      return `<option value="${esc(id)}">${esc(item.unit || item.projectName || 'Unidade sem nome')} · ${esc(formatDate(projectDate(item)))}</option>`;
+      return `<option value="${esc(id)}">${esc(item.unit || item.projectName || 'Unidade sem nome')}</option>`;
     }).join(''));
 
     const fillProject = (projectId) => {
       const item = projects.find((project) => String(project.sultsProjectId || project.id || '') === String(projectId));
       if (!item) return;
       modal.querySelector('input[name="unit"]').value = item.unit || item.projectName || '';
-      modal.querySelector('input[name="openingDate"]').value = dateInput(projectDate(item));
+      modal.querySelector('input[name="openingDate"]').value = '';
       modal.querySelector('input[name="responsible"]').value = item.responsible || '';
       modal.querySelector('input[name="location"]').value = item.category || item.model || '';
     };
@@ -382,20 +403,14 @@
       patchHomeMetrics();
     });
 
-    modal.fillProject = fillProject;
     return modal;
   };
 
-  const openNewInauguration = async (projectId = '') => {
+  const openNewInauguration = async () => {
     try {
       const projects = await ensureProjects();
       const dialog = ensureModal(projects);
-      const form = dialog.querySelector('form');
-      form.reset();
-      if (projectId) {
-        dialog.querySelector('select[name="projectId"]').value = String(projectId);
-        dialog.fillProject(String(projectId));
-      }
+      dialog.querySelector('form').reset();
       dialog.hidden = false;
       document.body.style.overflow = 'hidden';
       window.setTimeout(() => dialog.querySelector('select')?.focus(), 20);
@@ -405,15 +420,15 @@
   };
 
   const openImplantations = async (updateUrl = true) => {
-    prepareNativeArea('inauguracoes');
+    prepareArea('inauguracoes');
     content.classList.remove('pmh-cc-embedded');
     content.innerHTML = `
       <section class="pmh-implant-command">
         <header class="pmh-implant-command-head">
-          <div><small>INAUGURAÇÕES</small><h2>Unidades no radar do Marketing</h2><p>As próximas datas aparecem primeiro. Só vira acompanhamento quando o checklist é iniciado.</p></div>
+          <div><small>IMPLANTAÇÕES E INAUGURAÇÕES</small><h2>Unidades no radar do Marketing</h2><p>As implantações ficam como referência. Só vira inauguração acompanhada quando você adicionar pelo botão.</p></div>
           <a role="button" tabindex="0" data-pmh-new-inauguration>＋ Nova inauguração</a>
         </header>
-        <div class="pmh-implant-command-loading">Sincronizando projetos com o SULTS…</div>
+        <div class="pmh-implant-command-loading">Sincronizando implantações com o SULTS…</div>
       </section>`;
 
     if (updateUrl) history.replaceState(null, '', '#nucleo/inauguracoes');
@@ -421,20 +436,20 @@
     try {
       const projects = await ensureProjects();
       const tracked = readTracked();
-      const upcoming = upcomingProjects(projects);
+      const upcoming = trackedUpcoming(tracked);
       const summary = checklistSummary(tracked);
       const page = content.querySelector('.pmh-implant-command');
       if (!page) return;
       page.querySelector('.pmh-implant-command-loading')?.remove();
       page.insertAdjacentHTML('beforeend', `
         <section class="pmh-implant-command-summary">
+          <article><small>IMPLANTAÇÕES NO SULTS</small><strong>${projects.length}</strong><span>Todos os projetos cadastrados</span></article>
           <article><small>EM ACOMPANHAMENTO</small><strong>${tracked.length}</strong><span>Checklists ativos</span></article>
-          <article><small>PRÓXIMAS</small><strong>${upcoming.length}</strong><span>Nos próximos 45 dias</span></article>
-          <article><small>PENDÊNCIAS</small><strong>${summary.pending}</strong><span>Etapas ainda abertas</span></article>
-          <article><small>ATRASADAS</small><strong>${summary.late}</strong><span>Precisam de ação</span></article>
+          <article><small>PRÓXIMAS INAUGURAÇÕES</small><strong>${upcoming.length}</strong><span>Nos próximos 45 dias</span></article>
+          <article><small>ATRASADAS</small><strong>${summary.late}</strong><span>Etapas que precisam de ação</span></article>
         </section>
-        <section class="pmh-inauguration-section"><header><div><small>PRIORIDADE</small><h3>Próximas inaugurações</h3></div><span>Até 45 dias</span></header>${renderUpcoming(projects, tracked)}</section>
-        <section class="pmh-inauguration-section"><header><div><small>ACOMPANHAMENTO</small><h3>Checklists inaugurais</h3></div><span>${tracked.length} ativos</span></header>${renderTracked(tracked)}</section>`);
+        <section class="pmh-inauguration-section"><header><div><small>REFERÊNCIA SULTS</small><h3>Todas as implantações</h3></div><span>${projects.length} projetos</span></header>${renderProjects(projects, tracked)}</section>
+        <section class="pmh-inauguration-section"><header><div><small>ACOMPANHAMENTO REAL</small><h3>Checklists inaugurais</h3></div><span>${tracked.length} ativos</span></header>${renderTracked(tracked)}</section>`);
     } catch (error) {
       const loading = content.querySelector('.pmh-implant-command-loading');
       if (loading) {
@@ -486,7 +501,7 @@
       return;
     }
 
-    prepareNativeArea(normalizedKey);
+    prepareArea(normalizedKey);
     content.classList.add('pmh-cc-embedded');
     content.innerHTML = '<div class="pmh-cc-embed-loading">Abrindo área do Marketing Hub…</div>';
 
@@ -506,14 +521,8 @@
     const newInauguration = event.target.closest('[data-pmh-new-inauguration]');
     if (newInauguration) {
       event.preventDefault();
+      event.stopImmediatePropagation();
       openNewInauguration();
-      return;
-    }
-
-    const startInauguration = event.target.closest('[data-pmh-start-inauguration]');
-    if (startInauguration) {
-      event.preventDefault();
-      openNewInauguration(startInauguration.dataset.pmhStartInauguration);
       return;
     }
 
