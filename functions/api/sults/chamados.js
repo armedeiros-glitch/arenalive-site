@@ -3,6 +3,7 @@ const PAGE_LIMIT = 100;
 const ACTIVE_SITUATIONS = [1, 4, 5, 6];
 const MARKETING_DEPARTMENT_ID = 10;
 const DEFAULT_PERSON_NAME = 'André Roberto Medeiros';
+const DEFAULT_BRAND_TERM = 'Planet Chocolate';
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -121,6 +122,12 @@ const departmentIsIncluded = (ticket, departmentId) => {
   return ticket.support.some((item) => item?.departamento?.id === departmentId);
 };
 
+const brandIsIncluded = (ticket, brandTerm) => {
+  const normalizedBrand = normalizeText(brandTerm);
+  if (!normalizedBrand) return true;
+  return normalizeText(ticket.unit).includes(normalizedBrand);
+};
+
 export async function onRequestGet({ env, request }) {
   if (!env.SULTS_API_TOKEN) {
     return json({ error: 'SULTS_API_TOKEN não configurado.' }, 500);
@@ -128,9 +135,10 @@ export async function onRequestGet({ env, request }) {
 
   const incomingUrl = new URL(request.url);
   const includeClosed = incomingUrl.searchParams.get('includeClosed') === '1';
-  const scope = incomingUrl.searchParams.get('scope') || 'mine';
+  const scope = incomingUrl.searchParams.get('scope') || 'planet';
   const personId = Number.parseInt(incomingUrl.searchParams.get('personId') || '', 10) || null;
   const personName = incomingUrl.searchParams.get('personName') || DEFAULT_PERSON_NAME;
+  const brandTerm = incomingUrl.searchParams.get('brand') || DEFAULT_BRAND_TERM;
   const departmentId = Number.parseInt(
     incomingUrl.searchParams.get('departmentId') || String(MARKETING_DEPARTMENT_ID),
     10,
@@ -168,7 +176,8 @@ export async function onRequestGet({ env, request }) {
       .filter((ticket) => {
         if (scope === 'all') return true;
         if (scope === 'marketing') return departmentIsIncluded(ticket, departmentId);
-        return personIsIncluded(ticket, personId, personName);
+        if (scope === 'mine') return personIsIncluded(ticket, personId, personName);
+        return brandIsIncluded(ticket, brandTerm);
       })
       .sort((a, b) =>
         new Date(b.lastUpdatedAt || b.openedAt || 0).getTime() -
@@ -179,6 +188,7 @@ export async function onRequestGet({ env, request }) {
       data: chamados,
       filters: {
         scope,
+        brandTerm: scope === 'planet' ? brandTerm : null,
         departmentId: scope === 'marketing' ? departmentId : null,
         personId: scope === 'mine' ? personId : null,
         personName: scope === 'mine' ? personName : null,
