@@ -15,7 +15,6 @@
   let currentContext = null;
   let lastClickedItem = null;
   let updateTimer = 0;
-  let mounted = false;
 
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
@@ -38,6 +37,8 @@
   };
 
   const visible = (element) => Boolean(element && (element.offsetWidth || element.offsetHeight || element.getClientRects().length));
+  const appReady = () => Boolean(document.querySelector('#pmh-app, .pmh-sidebar, [data-andre-os-app]'))
+    && !document.querySelector('.pmh-access-screen');
   const titleText = () => document.querySelector('[data-title]')?.textContent?.trim() || document.title || 'André OS';
   const currentHash = () => String(location.hash || '#inicio').replace(/^#/, '').split('?')[0] || 'inicio';
 
@@ -118,11 +119,11 @@
   )) || null;
 
   const itemFromElement = (element) => {
-    if (!element) return null;
+    if (!element?.closest) return null;
     const directId = element.dataset?.attentionOpen
       || element.dataset?.radarContext
-      || element.closest?.('[data-attention-open]')?.dataset?.attentionOpen
-      || element.closest?.('[data-radar-context]')?.dataset?.radarContext;
+      || element.closest('[data-attention-open]')?.dataset?.attentionOpen
+      || element.closest('[data-radar-context]')?.dataset?.radarContext;
     if (directId) return radarItemById(directId);
 
     const sourceMappings = [
@@ -132,7 +133,8 @@
       ['ticketId', 'chamados'],
     ];
     for (const [key, action] of sourceMappings) {
-      const owner = element.closest?.(`[data-${key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`)}]`);
+      const attribute = key.replace(/[A-Z]/g, (character) => `-${character.toLowerCase()}`);
+      const owner = element.closest(`[data-${attribute}]`);
       const sourceId = owner?.dataset?.[key];
       if (sourceId) return radarItemBySource(action, sourceId);
     }
@@ -168,7 +170,10 @@
       '.pmh-modal',
       '[role="dialog"]',
     ];
-    const panel = candidates.map((selector) => [...document.querySelectorAll(selector)].find(visible)).find(Boolean);
+    const panel = candidates
+      .flatMap((selector) => [...document.querySelectorAll(selector)])
+      .filter((element) => !element.matches(ROOT_SELECTOR) && !element.closest(ROOT_SELECTOR))
+      .find(visible);
     if (!panel) return null;
 
     const formId = panel.querySelector('[data-radar-context-form]')?.dataset?.itemId;
@@ -257,6 +262,13 @@
     context.selected_item?.id || context.selected_item?.source_id || 'page',
   ].join(':');
 
+  const contextSignature = (context) => JSON.stringify({
+    page_id: context.page_id,
+    context_path: context.context_path,
+    selected_item: context.selected_item,
+    radar_loaded_at: context.radar?.loaded_at || '',
+  });
+
   const readDraft = (context) => {
     try { return sessionStorage.getItem(`${DRAFT_PREFIX}${contextKey(context)}`) || ''; } catch { return ''; }
   };
@@ -278,11 +290,15 @@
     ].filter(Boolean).map(([label, value]) => `<div><small>${esc(label)}</small><strong>${esc(value)}</strong></div>`).join('');
   };
 
-  const renderContext = () => {
-    currentContext = buildContext();
+  const renderContext = (context = buildContext()) => {
+    currentContext = context;
     const root = document.querySelector(ROOT_SELECTOR);
     const trigger = document.querySelector(TRIGGER_SELECTOR);
     if (!root || !trigger) return;
+
+    const signature = contextSignature(currentContext);
+    if (root.dataset.contextSignature === signature) return;
+    root.dataset.contextSignature = signature;
 
     trigger.title = `Pensar no contexto: ${(currentContext.context_path || []).join(' › ')}`;
     trigger.querySelector('[data-thinking-trigger-context]').textContent = currentContext.selected_item?.title || currentContext.page_label;
@@ -302,18 +318,21 @@
   };
 
   const open = (overrides = {}) => {
-    ensureMounted();
-    currentContext = { ...buildContext(), ...clone(overrides) };
-    renderContext();
+    if (!ensureMounted()) return;
+    const context = { ...buildContext(), ...clone(overrides) };
+    renderContext(context);
     const root = document.querySelector(ROOT_SELECTOR);
     root?.classList.add('open');
+    root?.setAttribute('aria-hidden', 'false');
     document.body.classList.add('aos-thinking-open');
     root?.querySelector('[data-thinking-input]')?.focus();
     window.dispatchEvent(new CustomEvent('andre-os:thinking-open', { detail: { context: clone(currentContext) } }));
   };
 
   const close = () => {
-    document.querySelector(ROOT_SELECTOR)?.classList.remove('open');
+    const root = document.querySelector(ROOT_SELECTOR);
+    root?.classList.remove('open');
+    root?.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('aos-thinking-open');
     window.dispatchEvent(new CustomEvent('andre-os:thinking-close'));
   };
@@ -415,29 +434,30 @@
   };
 
   const ensureMounted = () => {
-    if (!document.body) return false;
+    if (!document.body || !appReady()) {
+      document.querySelector(ROOT_SELECTOR)?.remove();
+      document.querySelector(TRIGGER_SELECTOR)?.remove();
+      return false;
+    }
     if (!document.querySelector(ROOT_SELECTOR)) document.body.insertAdjacentHTML('beforeend', drawerMarkup());
     placeTrigger();
-    mounted = true;
-    renderContext();
     return true;
   };
 
   const scheduleUpdate = () => {
     clearTimeout(updateTimer);
     updateTimer = setTimeout(() => {
-      ensureMounted();
-      renderContext();
+      if (ensureMounted()) renderContext();
     }, UPDATE_DELAY_MS);
   };
 
   document.addEventListener('click', (event) => {
-    if (event.target.closest(TRIGGER_SELECTOR)) {
+    if (event.target.closest?.(TRIGGER_SELECTOR)) {
       event.preventDefault();
       open();
       return;
     }
-    if (event.target.closest('[data-thinking-close]')) {
+    if (event.target.closest?.('[data-thinking-close]')) {
       close();
       return;
     }
@@ -450,13 +470,13 @@
   }, true);
 
   document.addEventListener('input', (event) => {
-    if (!event.target.matches('[data-thinking-input]')) return;
+    if (!event.target.matches?.('[data-thinking-input]')) return;
     writeDraft(event.target.value, currentContext || buildContext());
     setStatus('', '');
   });
 
   document.addEventListener('submit', (event) => {
-    const form = event.target.closest('[data-thinking-form]');
+    const form = event.target.closest?.('[data-thinking-form]');
     if (!form) return;
     event.preventDefault();
     submit(form.querySelector('[data-thinking-input]')?.value || '');
@@ -466,7 +486,10 @@
     if (event.key === 'Escape' && document.querySelector(ROOT_SELECTOR)?.classList.contains('open')) close();
   });
 
-  window.addEventListener('hashchange', scheduleUpdate);
+  window.addEventListener('hashchange', () => {
+    lastClickedItem = null;
+    scheduleUpdate();
+  });
   window.addEventListener('pmh:access-ready', scheduleUpdate);
   window.addEventListener('pmh:radar-data', scheduleUpdate);
   window.addEventListener('andre-os:context-changed', scheduleUpdate);
