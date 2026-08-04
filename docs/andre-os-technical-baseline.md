@@ -28,6 +28,14 @@ Regras:
 6. Limitar payload, frequência e tamanho das respostas.
 7. Nunca chamar IA para tarefas determinísticas que o código pode resolver.
 
+## Atualização do Radar
+
+- Não usar cron para vigiar o Marketing Hub nesta fase.
+- Atualizar imediatamente quando o usuário abre ou retorna para a aba.
+- Enquanto a aba estiver visível e online, atualizar no máximo uma vez por minuto.
+- Pausar completamente quando a aba estiver oculta, o aparelho estiver bloqueado ou não houver conexão.
+- A atualização automática usa somente regras e leitura das fontes; ela nunca chama IA.
+
 ## Segurança mínima
 
 - Todas as rotas `/api/hub/*`, exceto a própria sessão, exigem sessão autenticada.
@@ -63,4 +71,4 @@ Ela não exibe valores de secrets ou tokens.
 
 ## Próxima consolidação técnica
 
-A fila ativa e a análise do Radar repetem parte da coleta e normalização das mesmas fontes. A próxima refatoração deve criar um único serviço de dados do Radar e fazer os dois módulos consumirem o mesmo resultado, sem alterar a interface ou as regras atuais.
+A fila ativa e a análise do Radar usam uma única coleta e normalização das fontes. O próximo passo é evoluir o contexto operacional e o cockpit de decisão sem voltar a duplicar regras entre módulos.

@@ -3,10 +3,20 @@
 
   const FILTERS = {
     all: 'Tudo ativo',
+    actionable: 'Posso agir',
+    blocked: 'Com dependência',
     late: 'Atrasadas',
     today: 'Hoje',
     week: 'Esta semana',
     noDate: 'Sem prazo',
+  };
+
+  const OPERATIONAL = {
+    actionable: { label: 'Posso agir', tone: 'actionable' },
+    blocked: { label: 'Bloqueado', tone: 'blocked' },
+    waiting_info: { label: 'Aguardando informação', tone: 'waiting' },
+    waiting_approval: { label: 'Aguardando aprovação', tone: 'waiting' },
+    scheduled: { label: 'Retomar depois', tone: 'scheduled' },
   };
 
   const state = {
@@ -40,9 +50,13 @@
     root.querySelector('.pmh-demand-completed')?.setAttribute('hidden', '');
   };
 
+  const hasDependency = (item) => (item.operationalState || 'actionable') !== 'actionable';
+
   const matchesFilter = (item, filter) => {
     const bucket = radar()?.dueMeta(item.dueDate).bucket;
     if (filter === 'all') return true;
+    if (filter === 'actionable') return !hasDependency(item);
+    if (filter === 'blocked') return hasDependency(item);
     if (filter === 'week') return ['today', 'week'].includes(bucket);
     return bucket === filter;
   };
@@ -52,18 +66,31 @@
     return result;
   }, {});
 
+  const operationalMeta = (item) => OPERATIONAL[item.operationalState] || OPERATIONAL.actionable;
+
+  const contextSummary = (item) => {
+    if (!hasDependency(item)) return '';
+    return [item.dependsOn, item.blockerReason].filter(Boolean).join(' · ');
+  };
+
   const card = (item) => {
     const due = radar().dueMeta(item.dueDate);
+    const operational = operationalMeta(item);
     const attrs = item.action === 'demand'
       ? `data-demand-edit="${esc(item.sourceId)}"`
       : `data-view="${esc(item.action)}"`;
-    return `<button type="button" class="pmh-active-row" ${attrs}>
-      <span class="pmh-active-origin tone-${esc(item.originTone)}">${esc(item.origin)}</span>
-      <span class="pmh-active-main"><strong>${esc(item.title)}</strong><small>${esc(item.context)}</small></span>
-      <span class="pmh-active-person"><small>RESPONSÁVEL</small><strong>${esc(item.responsible)}</strong></span>
-      <span class="pmh-active-status">${esc(item.status)}</span>
-      <time class="${esc(due.tone)}">${esc(due.label)}</time>
-    </button>`;
+    const detail = contextSummary(item);
+
+    return `<article class="pmh-active-entry ${hasDependency(item) ? 'has-dependency' : ''}">
+      <button type="button" class="pmh-active-row" ${attrs}>
+        <span class="pmh-active-origin tone-${esc(item.originTone)}">${esc(item.origin)}</span>
+        <span class="pmh-active-main"><strong>${esc(item.title)}</strong><small>${esc(detail || item.context)}</small></span>
+        <span class="pmh-active-person"><small>RESPONSÁVEL</small><strong>${esc(item.responsible)}</strong></span>
+        <span class="pmh-active-status operational-${esc(operational.tone)}">${esc(hasDependency(item) ? operational.label : item.status)}</span>
+        <time class="${esc(due.tone)}">${esc(due.label)}</time>
+      </button>
+      <button type="button" class="pmh-active-context" data-radar-context="${esc(item.id)}" aria-label="Definir contexto de ${esc(item.title)}">${hasDependency(item) ? 'Editar contexto' : '+ Contexto'}</button>
+    </article>`;
   };
 
   const render = () => {
@@ -86,7 +113,7 @@
     const totals = filterCounts();
 
     target.innerHTML = `<header class="pmh-active-head">
-      <div><small>RADAR OPERACIONAL</small><h2>Tudo que está ativo</h2><p>Uma fila única. A origem aparece só para dar contexto.</p></div>
+      <div><small>RADAR OPERACIONAL</small><h2>Tudo que está ativo</h2><p>A fila mostra o prazo. O contexto explica se o item realmente pode andar.</p></div>
       <b>${visible.length} ${visible.length === 1 ? 'demanda' : 'demandas'}</b>
     </header>
     <nav class="pmh-active-filters" aria-label="Filtrar demandas ativas">
