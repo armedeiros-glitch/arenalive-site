@@ -1,0 +1,235 @@
+.pmh-implant-command {
+  max-width: 1420px;
+  margin: 0 auto;
+  padding: 28px 34px 60px;
+}
+
+.pmh-implant-command-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 24px 26px;
+  border: 1px solid #e8ddd7;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 34px rgba(61, 35, 25, .05);
+}
+
+.pmh-implant-command-head small {
+  display: block;
+  margin-bottom: 7px;
+  color: #ef651d;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .16em;
+}
+
+.pmh-implant-command-head h2 {
+  margin: 0;
+  color: #2c211d;
+  font-size: 29px;
+  letter-spacing: -.04em;
+}
+
+.pmh-implant-command-head p {
+  margin: 7px 0 0;
+  color: #827874;
+  font-size: 12px;
+}
+
+.pmh-implant-command-head button {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 11px;
+  color: #fff;
+  background: #ef651d;
+  font: 800 11px Inter, Arial, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 9px 22px rgba(239, 101, 29, .22);
+}
+
+.pmh-implant-command-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.pmh-implant-command-summary article {
+  padding: 16px;
+  border: 1px solid #e8e0dc;
+  border-radius: 15px;
+  background: #fff;
+}
+
+.pmh-implant-command-summary small,
+.pmh-implant-command-summary strong,
+.pmh-implant-command-summary span {
+  display: block;
+}
+
+.pmh-implant-command-summary small {
+  color: #887f7b;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.pmh-implant-command-summary strong {
+  margin-top: 7px;
+  color: #3a2720;
+  font-size: 25px;
+  letter-spacing: -.05em;
+}
+
+.pmh-implant-command-summary span {
+  margin-top: 3px;
+  color: #9a918c;
+  font-size: 9px;
+}
+
+.pmh-implant-command-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pmh-implant-command-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #e8e0dc;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.pmh-implant-command-card header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pmh-implant-command-card header span {
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: #168a60;
+  background: #e5f5ee;
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.pmh-implant-command-card header span.is-paused {
+  color: #9a6a00;
+  background: #fff2c9;
+}
+
+.pmh-implant-command-card header span.is-completed {
+  color: #6b43c4;
+  background: #eee8ff;
+}
+
+.pmh-implant-command-card header span.is-inactive {
+  color: #7d7470;
+  background: #eeeae8;
+}
+
+.pmh-implant-command-card h3 {
+  margin: 0;
+  color: #30231e;
+  font-size: 16px;
+  letter-spacing: -.02em;
+}
+
+.pmh-implant-command-card p {
+  margin: 6px 0 0;
+  color: #817873;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.pmh-implant-command-card aside {
+  min-width: 150px;
+  text-align: right;
+}
+
+.pmh-implant-command-card aside strong,
+.pmh-implant-command-card aside span {
+  display: block;
+}
+
+.pmh-implant-command-card aside strong {
+  color: #44312a;
+  font-size: 11px;
+}
+
+.pmh-implant-command-card aside span {
+  margin-top: 5px;
+  color: #958b86;
+  font-size: 8px;
+}
+
+.pmh-implant-command-note {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+  padding-top: 11px;
+  border-top: 1px solid #eee7e3;
+  color: #a1542c;
+  font-size: 9px;
+}
+
+.pmh-implant-command-empty,
+.pmh-implant-command-error,
+.pmh-implant-command-loading {
+  padding: 38px 20px;
+  border: 1px dashed #ddcec6;
+  border-radius: 16px;
+  color: #817671;
+  background: #fff;
+  text-align: center;
+  font-size: 12px;
+}
+
+.pmh-implant-command-error {
+  color: #9b3f2c;
+  border-color: #efb6a9;
+  background: #fff4f1;
+}
+
+@media (max-width: 980px) {
+  .pmh-implant-command-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pmh-implant-command-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .pmh-implant-command {
+    padding: 20px 16px 40px;
+  }
+
+  .pmh-implant-command-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pmh-implant-command-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pmh-implant-command-card {
+    grid-template-columns: 1fr;
+  }
+
+  .pmh-implant-command-card aside {
+    text-align: left;
+  }
+}
