@@ -4,6 +4,7 @@ const ACTIVE_SITUATIONS = [1, 4, 5, 6];
 const MARKETING_DEPARTMENT_ID = 10;
 const DEFAULT_PERSON_NAME = 'André Roberto Medeiros';
 const DEFAULT_BRAND_TERM = 'Planet Chocolate';
+const IGNORED_STORAGE_KEY = 'planet-hub:chamados-ignorados:v1';
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -28,15 +29,9 @@ const fetchTickets = async (token, params = {}) => {
   url.searchParams.set('start', String(params.start ?? 0));
   url.searchParams.set('limit', String(params.limit ?? PAGE_LIMIT));
 
-  if (params.situation != null) {
-    url.searchParams.set('situacao', String(params.situation));
-  }
-  if (params.responsible != null) {
-    url.searchParams.set('responsavel', String(params.responsible));
-  }
-  if (params.requester != null) {
-    url.searchParams.set('solicitante', String(params.requester));
-  }
+  if (params.situation != null) url.searchParams.set('situacao', String(params.situation));
+  if (params.responsible != null) url.searchParams.set('responsavel', String(params.responsible));
+  if (params.requester != null) url.searchParams.set('solicitante', String(params.requester));
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -48,6 +43,17 @@ const fetchTickets = async (token, params = {}) => {
 
   const payload = await parsePayload(response);
   return { response, payload, situation: params.situation ?? null };
+};
+
+const readIgnoredIds = async (env) => {
+  if (!env.PLANET_HUB_DATA) return new Set();
+  try {
+    const stored = await env.PLANET_HUB_DATA.get(IGNORED_STORAGE_KEY, { type: 'json' });
+    const data = Array.isArray(stored?.data) ? stored.data : [];
+    return new Set(data.map((item) => String(item?.id || '')).filter(Boolean));
+  } catch {
+    return new Set();
+  }
 };
 
 const mapTicket = (ticket) => ({
@@ -135,6 +141,7 @@ export async function onRequestGet({ env, request }) {
 
   const incomingUrl = new URL(request.url);
   const includeClosed = incomingUrl.searchParams.get('includeClosed') === '1';
+  const includeIgnored = incomingUrl.searchParams.get('includeIgnored') === '1';
   const scope = incomingUrl.searchParams.get('scope') || 'planet';
   const personId = Number.parseInt(incomingUrl.searchParams.get('personId') || '', 10) || null;
   const personName = incomingUrl.searchParams.get('personName') || DEFAULT_PERSON_NAME;
@@ -147,11 +154,13 @@ export async function onRequestGet({ env, request }) {
   try {
     const requests = includeClosed
       ? [fetchTickets(env.SULTS_API_TOKEN)]
-      : ACTIVE_SITUATIONS.map((situation) =>
-          fetchTickets(env.SULTS_API_TOKEN, { situation }),
-        );
+      : ACTIVE_SITUATIONS.map((situation) => fetchTickets(env.SULTS_API_TOKEN, { situation }));
 
-    const results = await Promise.all(requests);
+    const [results, ignoredIds] = await Promise.all([
+      Promise.all(requests),
+      includeIgnored ? Promise.resolve(new Set()) : readIgnoredIds(env),
+    ]);
+
     const successful = results.filter(({ response }) => response.ok);
     const failed = results.filter(({ response }) => !response.ok);
 
@@ -174,6 +183,7 @@ export async function onRequestGet({ env, request }) {
     const chamados = uniqueById(rawTickets)
       .map(mapTicket)
       .filter((ticket) => {
+        if (ignoredIds.has(String(ticket.id))) return false;
         if (scope === 'all') return true;
         if (scope === 'marketing') return departmentIsIncluded(ticket, departmentId);
         if (scope === 'mine') return personIsIncluded(ticket, personId, personName);
@@ -188,6 +198,7 @@ export async function onRequestGet({ env, request }) {
       data: chamados,
       filters: {
         scope,
+        includeIgnored,
         brandTerm: scope === 'planet' ? brandTerm : null,
         departmentId: scope === 'marketing' ? departmentId : null,
         personId: scope === 'mine' ? personId : null,
@@ -199,6 +210,7 @@ export async function onRequestGet({ env, request }) {
         situations: includeClosed ? [] : ACTIVE_SITUATIONS,
         successfulQueries: successful.length,
         failedQueries: failed.length,
+        ignored: ignoredIds.size,
         size: chamados.length,
       },
       warning: failed.length
