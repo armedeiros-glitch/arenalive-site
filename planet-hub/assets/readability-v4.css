@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+/* Brand typography: Bebas Neue for navigation and emphasis; clean sans for reading. */
+body, input, select, textarea {
+  font-family: Arial, Helvetica, sans-serif !important;
+  text-rendering: auto !important;
+}
+h1, h2, h3, button, [class*="_sidebar_"] nav button b,
+[class*="_deliveryDashboard_"] article strong,
+[class*="_directiveQueue_"] strong,
+[class*="_demandTable_"] article strong {
+  font-family: "Bebas Neue", Impact, sans-serif !important;
+  letter-spacing: .025em !important;
+}
+[class*="_sidebar_"] nav button b { font-size: 13px !important; line-height: 1.25 !important; font-weight: 700 !important; text-shadow: none !important; }
+[class*="_sidebar_"] nav button em { font-size: 10px !important; }
+[class*="_sidebar_"] nav button[class*="_active_"] b,
+[class*="_sidebar_"] nav button[aria-current="page"] b {
+  color: #fff !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em !important;
+  text-shadow: none !important;
+}
+[class*="_logo_"] small, [class*="_profile_"] small { font-size: 10px !important; }
+[class*="_profile_"] strong { font-size: 12px !important; }
+[class*="_topbar_"] small { font-size: 10px !important; }
+[class*="_topActions_"] a, [class*="_topActions_"] button, [class*="_pageAction_"] { font-size: 10px !important; }
+
+[class*="_heroCopy_"] > p { font-size: 15px !important; }
+[class*="_heroChips_"] span { font-size: 9px !important; }
+[class*="_heroAction_"] > span, [class*="_moduleHeader_"] span { font-size: 10px !important; }
+[class*="_heroAction_"] > p { font-size: 11px !important; }
+[class*="_heroAction_"] button small { font-size: 9px !important; }
+[class*="_heroAction_"] button strong { font-size: 11px !important; }
+[class*="_statusLegend_"] span { font-size: 9px !important; }
+
+[class*="_moduleCard_"] small { font-size: 11px !important; line-height: 1.3 !important; font-weight: 800 !important; text-shadow: none !important; }
+[class*="_moduleCard_"] h3 { font-size: 20px !important; line-height: 1.2 !important; font-weight: 800 !important; letter-spacing: -0.02em !important; text-shadow: none !important; }
+[class*="_moduleCard_"] p { font-size: 13px !important; line-height: 1.5 !important; font-weight: 500 !important; text-shadow: none !important; }
+[class*="_moduleCard_"] > b { font-size: 12px !important; font-weight: 800 !important; text-shadow: none !important; }
+[class*="_portalArea_"] header span, [class*="_portalArea_"] a small { font-size: 9px !important; }
+[class*="_portalArea_"] a strong { font-size: 14px !important; }
+[class*="_portalArea_"] a p, [class*="_portalArea_"] a > b { font-size: 10px !important; }
+
+[class*="_pageHead_"] small { font-size: 10px !important; }
+[class*="_pageHead_"] p { font-size: 13px !important; }
+[class*="_capture_"] footer span, [class*="_capture_"] footer button { font-size: 10px !important; }
+[class*="_inboxGrid_"] small { font-size: 9px !important; }
+[class*="_inboxGrid_"] h3 { font-size: 13px !important; }
+[class*="_inboxGrid_"] p, [class*="_inboxGrid_"] button { font-size: 10px !important; }
+
+[class*="_deliveryDashboard_"] header small { font-size: 9px !important; }
+[class*="_deliveryDashboard_"] header p, [class*="_deliveryDashboard_"] article p { font-size: 10px !important; line-height: 1.4 !important; }
+[class*="_deliveryDashboard_"] header button { font-size: 10px !important; }
+[class*="_deliveryDashboard_"] article small { font-size: 9px !important; }
+[class*="_deliveryDashboard_"] article strong { font-size: 27px !important; }
+[class*="_goalCard_"] label { font-size: 9px !important; }
+[class*="_goalCard_"] input { font-size: 11px !important; }
+[class*="_directiveQueue_"] small { font-size: 10px !important; line-height: 1.3 !important; font-weight: 800 !important; letter-spacing: .04em !important; text-shadow: none !important; }
+[class*="_directiveQueue_"] strong { font-size: 16px !important; line-height: 1.25 !important; font-weight: 800 !important; letter-spacing: -0.01em !important; text-shadow: none !important; }
+[class*="_directiveQueue_"] p, [class*="_directiveQueue_"] > b { font-size: 11px !important; line-height: 1.45 !important; font-weight: 600 !important; text-shadow: none !important; }
+[class*="_directiveQueue_"] * { opacity: 1 !important; }
+[class*="_filters_"] button { font-size: 11px !important; }
+
+[class*="_demandTable_"] > header { font-size: 9px !important; }
+[class*="_demandTable_"] article em { font-size: 9px !important; }
+[class*="_demandTable_"] article strong { font-size: 12px !important; line-height: 1.35 !important; }
+[class*="_demandTable_"] article small { font-size: 9px !important; }
+[class*="_demandTable_"] article time { font-size: 10px !important; }
+[class*="_demandTable_"] input, [class*="_demandTable_"] select { font-size: 11px !important; }
+[class*="_demandForm_"] label > span { font-size: 9px !important; }
+[class*="_demandForm_"] input, [class*="_demandForm_"] select, [class*="_demandForm_"] button { font-size: 11px !important; }
+
+[class*="_timeline_"] [class*="_campaignMain_"] > span, [class*="_timeline_"] aside small { font-size: 9px !important; }
+[class*="_timeline_"] [class*="_campaignMain_"] p, [class*="_timeline_"] aside button { font-size: 10px !important; }
+[class*="_timeline_"] aside strong { font-size: 12px !important; }
+[class*="_weekBoard_"] header span, [class*="_weekBoard_"] header small, [class*="_weekBoard_"] article em { font-size: 9px !important; }
+[class*="_weekBoard_"] article p, [class*="_weekBoard_"] footer button { font-size: 10px !important; }
+[class*="_weekBoard_"] article h3 { font-size: 14px !important; }
+
+[class*="_unitGrid_"] small, [class*="_starGrid_"] small, [class*="_projectGrid_"] small { font-size: 9px !important; }
+[class*="_unitGrid_"] strong, [class*="_unitGrid_"] button, [class*="_starGrid_"] button { font-size: 10px !important; }
+[class*="_ticketList_"] small, [class*="_ticketList_"] em { font-size: 9px !important; }
+[class*="_ticketList_"] strong { font-size: 11px !important; }
+[class*="_ticketDetail_"] small { font-size: 9px !important; }
+[class*="_ticketDetail_"] p, [class*="_ticketDetail_"] strong, [class*="_ticketDetail_"] button { font-size: 11px !important; }
+
+[class*="_quickAccess_"] small, [class*="_overview_"] small, [class*="_panel_"] header span, [class*="_template_"] header span { font-size: 9px !important; }
+[class*="_quickAccess_"] strong { font-size: 14px !important; }
+[class*="_quickAccess_"] p, [class*="_overview_"] p, [class*="_panel_"] header p, [class*="_template_"] header p { font-size: 10px !important; }
+[class*="_overview_"] h3 { font-size: 13px !important; }
+[class*="_filterBar_"] button { font-size: 10px !important; }
+[class*="_stepContent_"] header em, [class*="_stepContent_"] header span { font-size: 9px !important; }
+[class*="_stepContent_"] h4 { font-size: 12px !important; }
+[class*="_stepContent_"] p, [class*="_owner_"] small, [class*="_owner_"] strong, [class*="_checklist_"] time small, [class*="_checklist_"] time strong, [class*="_openStep_"] { font-size: 10px !important; }
+
+[class*="_financeHero_"] span, [class*="_expensePanel_"] header span, [class*="_financeSide_"] header span { font-size: 9px !important; }
+[class*="_financeHero_"] p, [class*="_financeHero_"] button { font-size: 10px !important; }
+[class*="_financeKpis_"] small, [class*="_financeKpis_"] span { font-size: 9px !important; }
+[class*="_tableHead_"] { font-size: 9px !important; }
+[class*="_expenseTable_"] article em, [class*="_expenseTable_"] article small, [class*="_expenseTable_"] article time, [class*="_expenseTable_"] article > span, [class*="_expenseTable_"] article > b, [class*="_expenseTable_"] article > button { font-size: 10px !important; }
+[class*="_expenseTable_"] article strong { font-size: 12px !important; }
+[class*="_financeSide_"] label, [class*="_financeNote_"] p, [class*="_financeNote_"] button, [class*="_budgetBar_"] p { font-size: 10px !important; }
+
+@media (max-width: 760px) {
+  [class*="_sidebar_"] nav button b { font-size: 11px !important; }
+  [class*="_moduleCard_"] p { font-size: 10px !important; }
+  [class*="_deliveryDashboard_"] > div { grid-template-columns: 1fr !important; }
+}
