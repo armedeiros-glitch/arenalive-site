@@ -1,7 +1,6 @@
 (() => {
   'use strict';
 
-  const SULTS_LIST_URL = 'https://planetchocolate.sults.com.br/chamados';
   const DIRECT_PREFIX = 'https://planetchocolate.sults.com.br/chamados/interacoes/';
 
   const copyText = async (value) => {
@@ -32,39 +31,41 @@
     window.setTimeout(() => {
       element.classList.remove('visible');
       window.setTimeout(() => element.remove(), 220);
-    }, 3200);
+    }, 2600);
   };
 
   const decorate = () => {
     document.querySelectorAll(`a[href^="${DIRECT_PREFIX}"]`).forEach((link) => {
-      if (link.dataset.sultsFallbackReady === '1') return;
-      const id = link.href.slice(DIRECT_PREFIX.length).split(/[?#/]/)[0].replace(/\D/g, '');
+      if (link.dataset.sultsCopyLinkReady === '1') return;
+
+      const url = link.href;
+      const id = url.slice(DIRECT_PREFIX.length).split(/[?#/]/)[0].replace(/\D/g, '');
       if (!id) return;
-      link.dataset.sultsFallbackReady = '1';
+
+      link.dataset.sultsCopyLinkReady = '1';
       link.dataset.sultsTicketId = id;
-      link.href = SULTS_LIST_URL;
-      link.textContent = `Copiar #${id} e abrir SULTS ↗`;
-      link.title = 'O SULTS retorna links externos para a lista. O número será copiado para você colar na busca.';
+      link.dataset.sultsTicketUrl = url;
+      link.textContent = 'Copiar link';
+      link.title = `Copiar o link do chamado #${id}`;
+      link.removeAttribute('target');
+      link.removeAttribute('rel');
     });
   };
 
   document.addEventListener('click', async (event) => {
-    const link = event.target.closest('[data-sults-fallback-ready]');
+    const link = event.target.closest('[data-sults-copy-link-ready]');
     if (!link) return;
+
     event.preventDefault();
+    event.stopPropagation();
 
     const ticketId = link.dataset.sultsTicketId;
-    const popup = window.open(SULTS_LIST_URL, '_blank', 'noopener,noreferrer');
-    const copied = await copyText(ticketId);
-
-    if (!popup) {
-      window.location.href = SULTS_LIST_URL;
-      return;
-    }
+    const ticketUrl = link.dataset.sultsTicketUrl;
+    const copied = await copyText(ticketUrl);
 
     toast(copied
-      ? `Chamado #${ticketId} copiado. Cole na busca do SULTS.`
-      : `Abra a busca do SULTS e procure pelo chamado #${ticketId}.`);
+      ? `Link do chamado #${ticketId} copiado.`
+      : `Não foi possível copiar o link do chamado #${ticketId}.`);
   }, true);
 
   const style = document.createElement('style');
