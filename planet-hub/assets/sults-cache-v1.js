@@ -1,5 +1,5 @@
 (() => {
-  const CACHE_PREFIX = 'planet-hub-sults-cache-v1:';
+  const CACHE_PREFIX = 'planet-hub-sults-cache-v2:';
   const nativeFetch = window.fetch.bind(window);
   const state = new Map();
   const RETRY_DELAYS = [0, 450, 1200];
@@ -15,7 +15,8 @@
       const scope = parsed.searchParams.get('scope') || '';
       const personId = parsed.searchParams.get('personId') || '';
       const personName = parsed.searchParams.get('personName') || '';
-      return `${CACHE_PREFIX}${parsed.pathname}?scope=${scope}&personId=${personId}&personName=${personName}`;
+      const brand = parsed.searchParams.get('brand') || '';
+      return `${CACHE_PREFIX}${parsed.pathname}?scope=${scope}&personId=${personId}&personName=${personName}&brand=${brand}`;
     } catch (_) {
       return `${CACHE_PREFIX}${url}`;
     }
