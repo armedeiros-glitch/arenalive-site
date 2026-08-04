@@ -84,7 +84,8 @@
     modal.querySelector('form')?.addEventListener('submit', (event) => {
       event.preventDefault();
       const form = event.currentTarget;
-      const formData = new FormData(form);
+      const view = doc.defaultView || window;
+      const formData = new view.FormData(form);
       const draft = {
         name: String(formData.get('campaignName') || '').trim(),
         date: String(formData.get('campaignDate') || ''),
@@ -93,13 +94,13 @@
       };
       if (!draft.name) return;
       try {
-        window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+        view.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
       } catch (_) {}
       close();
       try {
-        window.top.location.href = '/publicar?source=calendar';
+        view.top.location.href = '/publicar?source=calendar';
       } catch (_) {
-        window.location.href = '/publicar?source=calendar';
+        view.location.href = '/publicar?source=calendar';
       }
     });
 
@@ -110,7 +111,10 @@
     const modal = ensureModal(doc);
     modal.hidden = false;
     doc.body.style.overflow = 'hidden';
-    window.setTimeout(() => modal.querySelector('input[name="campaignName"]')?.focus(), 20);
+    (doc.defaultView || window).setTimeout(
+      () => modal.querySelector('input[name="campaignName"]')?.focus(),
+      20,
+    );
   };
 
   const stylePrincipalCampaigns = (doc) => {
@@ -147,9 +151,10 @@
       [...doc.querySelectorAll('#root a, #root button')].forEach((element) => {
         const text = normalize(element.textContent);
         if (!text.includes('publicar campanha') && !text.includes('criar campanha')) return;
-        element.textContent = '＋ Criar campanha';
         if (element.dataset.pmhCampaignHooked === '1') return;
+
         element.dataset.pmhCampaignHooked = '1';
+        element.textContent = '＋ Criar campanha';
         element.addEventListener('click', (event) => {
           event.preventDefault();
           event.stopImmediatePropagation();
@@ -190,6 +195,8 @@
     shell.querySelectorAll('[data-pmh-open="campanhas"]').forEach((element) => element.remove());
 
     shell.querySelectorAll('[data-pmh-open="calendario"]').forEach((element) => {
+      if (element.dataset.pmhCalendarUnified === '1') return;
+      element.dataset.pmhCalendarUnified = '1';
       const strong = element.querySelector('strong');
       const small = element.querySelector('small');
       if (strong) strong.textContent = 'Calendário';
