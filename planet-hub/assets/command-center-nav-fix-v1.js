@@ -9,15 +9,13 @@
 
   const labels = {
     inauguracoes: 'Inaugurações',
-    campanhas: 'Campanhas',
-    calendario: 'Calendário',
+    calendario: 'Calendário de campanhas',
     conteudos: 'Conteúdos',
   };
 
   const patterns = {
     inauguracoes: [/inaugura/, /implanta/],
-    campanhas: [/campanha/],
-    calendario: [/calend/],
+    calendario: [/campanha/, /calend/],
     conteudos: [/conte[uú]do/, /biblioteca/, /materiais/],
   };
 
@@ -36,27 +34,32 @@
     return;
   }
 
+  const normalizeKey = (key) => key === 'campanhas' ? 'calendario' : key;
+
   const setActive = (key) => {
+    const normalizedKey = normalizeKey(key);
     shell.querySelectorAll('.pmh-cc-sidebar nav button').forEach((button) => {
-      button.classList.toggle('is-active', button.dataset.pmhOpen === key);
+      button.classList.toggle('is-active', normalizeKey(button.dataset.pmhOpen) === normalizedKey);
     });
   };
 
   const findTarget = (doc, key) => {
+    const normalizedKey = normalizeKey(key);
     const candidates = [...doc.querySelectorAll('#root button, #root a')];
     return candidates.find((node) => {
       const text = normalize(node.textContent);
-      return (patterns[key] || []).some((pattern) => pattern.test(text));
+      return (patterns[normalizedKey] || []).some((pattern) => pattern.test(text));
     });
   };
 
   const navigateFrame = (frame, key) => {
     let attempts = 0;
+    const normalizedKey = normalizeKey(key);
     const tryNavigate = () => {
       attempts += 1;
       try {
         const doc = frame.contentDocument;
-        const target = doc && findTarget(doc, key);
+        const target = doc && findTarget(doc, normalizedKey);
         if (target) {
           target.click();
           return;
@@ -66,32 +69,37 @@
       }
       if (attempts < 30) window.setTimeout(tryNavigate, 120);
       else {
-        try { frame.contentWindow.location.hash = `#${key}`; } catch (_) {}
+        try {
+          frame.contentWindow.location.hash = normalizedKey === 'calendario' ? '#campanhas' : `#${normalizedKey}`;
+        } catch (_) {}
       }
     };
     tryNavigate();
   };
 
   const openEmbedded = (key, updateUrl = true) => {
-    if (!labels[key]) return;
+    const normalizedKey = normalizeKey(key);
+    if (!labels[normalizedKey]) return;
 
     document.body.classList.add('pmh-command-mode');
     shell.hidden = false;
     root?.setAttribute('aria-hidden', 'true');
-    setActive(key);
+    setActive(normalizedKey);
     if (search) search.hidden = true;
-    if (title) title.textContent = labels[key];
+    if (title) title.textContent = labels[normalizedKey];
     content.classList.add('pmh-cc-embedded');
     content.innerHTML = '<div class="pmh-cc-embed-loading">Abrindo área do Marketing Hub…</div>';
 
     const frame = document.createElement('iframe');
     frame.className = 'pmh-cc-embedded-frame';
-    frame.title = labels[key];
-    frame.src = '/planet-hub/embed.html';
-    frame.addEventListener('load', () => navigateFrame(frame, key));
+    frame.title = labels[normalizedKey];
+    frame.src = normalizedKey === 'calendario'
+      ? '/planet-hub/embed.html#campanhas'
+      : `/planet-hub/embed.html#${normalizedKey}`;
+    frame.addEventListener('load', () => navigateFrame(frame, normalizedKey));
     content.replaceChildren(frame);
 
-    if (updateUrl) history.replaceState(null, '', `#nucleo/${key}`);
+    if (updateUrl) history.replaceState(null, '', `#nucleo/${normalizedKey}`);
   };
 
   shell.addEventListener('click', (event) => {
@@ -101,7 +109,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
 
-    const key = openButton.dataset.pmhOpen;
+    const key = normalizeKey(openButton.dataset.pmhOpen);
     if (key === 'hub') {
       window.location.href = '/planet-hub/?full=1';
       return;
@@ -121,10 +129,11 @@
   window.addEventListener('message', (event) => {
     if (event.origin !== window.location.origin || event.data?.type !== 'pmh-native-ready') return;
     const frame = content.querySelector('.pmh-cc-embedded-frame');
-    const route = window.location.hash.match(/^#nucleo\/(.+)$/)?.[1];
+    const route = normalizeKey(window.location.hash.match(/^#nucleo\/(.+)$/)?.[1]);
     if (frame && labels[route]) navigateFrame(frame, route);
   });
 
-  const initialRoute = window.location.hash.match(/^#nucleo\/(.+)$/)?.[1];
+  let initialRoute = normalizeKey(window.location.hash.match(/^#nucleo\/(.+)$/)?.[1]);
+  if (initialRoute === 'campanhas') initialRoute = 'calendario';
   if (labels[initialRoute]) window.setTimeout(() => openEmbedded(initialRoute, false), 0);
 })();
