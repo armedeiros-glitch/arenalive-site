@@ -29,9 +29,6 @@ const fetchTickets = async (token, params = {}) => {
   if (params.situation != null) {
     url.searchParams.set('situacao', String(params.situation));
   }
-  if (params.department != null) {
-    url.searchParams.set('departamento', String(params.department));
-  }
   if (params.responsible != null) {
     url.searchParams.set('responsavel', String(params.responsible));
   }
@@ -65,6 +62,7 @@ const mapTicket = (ticket) => ({
   department: ticket.departamento?.nome ?? null,
   departmentId: ticket.departamento?.id ?? null,
   sendingDepartment: ticket.departamentoEnvio?.nome ?? null,
+  sendingDepartmentId: ticket.departamentoEnvio?.id ?? null,
   subject: ticket.assunto?.nome ?? null,
   subjectId: ticket.assunto?.id ?? null,
   labels: Array.isArray(ticket.etiqueta) ? ticket.etiqueta : [],
@@ -97,6 +95,12 @@ const personIsIncluded = (ticket, personId) => {
   return ticket.support.some((item) => item?.pessoa?.id === personId);
 };
 
+const departmentIsIncluded = (ticket, departmentId) => {
+  if (!departmentId) return true;
+  if (ticket.departmentId === departmentId) return true;
+  return ticket.support.some((item) => item?.departamento?.id === departmentId);
+};
+
 export async function onRequestGet({ env, request }) {
   if (!env.SULTS_API_TOKEN) {
     return json({ error: 'SULTS_API_TOKEN não configurado.' }, 500);
@@ -106,20 +110,20 @@ export async function onRequestGet({ env, request }) {
   const includeClosed = incomingUrl.searchParams.get('includeClosed') === '1';
   const scope = incomingUrl.searchParams.get('scope') || 'marketing';
   const personId = Number.parseInt(incomingUrl.searchParams.get('personId') || '', 10) || null;
-  const departmentId = scope === 'all'
-    ? null
-    : Number.parseInt(incomingUrl.searchParams.get('departmentId') || String(MARKETING_DEPARTMENT_ID), 10);
+  const departmentId = Number.parseInt(
+    incomingUrl.searchParams.get('departmentId') || String(MARKETING_DEPARTMENT_ID),
+    10,
+  );
 
   if (scope === 'mine' && !personId) {
     return json({ error: 'Para usar scope=mine, informe personId.' }, 400);
   }
 
   try {
-    const baseFilters = { department: departmentId };
     const requests = includeClosed
-      ? [fetchTickets(env.SULTS_API_TOKEN, baseFilters)]
+      ? [fetchTickets(env.SULTS_API_TOKEN)]
       : ACTIVE_SITUATIONS.map((situation) =>
-          fetchTickets(env.SULTS_API_TOKEN, { ...baseFilters, situation }),
+          fetchTickets(env.SULTS_API_TOKEN, { situation }),
         );
 
     const results = await Promise.all(requests);
@@ -144,7 +148,11 @@ export async function onRequestGet({ env, request }) {
 
     const chamados = uniqueById(rawTickets)
       .map(mapTicket)
-      .filter((ticket) => scope !== 'mine' || personIsIncluded(ticket, personId))
+      .filter((ticket) => {
+        if (scope === 'all') return true;
+        if (scope === 'mine') return personIsIncluded(ticket, personId);
+        return departmentIsIncluded(ticket, departmentId);
+      })
       .sort((a, b) =>
         new Date(b.lastUpdatedAt || b.openedAt || 0).getTime() -
         new Date(a.lastUpdatedAt || a.openedAt || 0).getTime(),
@@ -154,7 +162,7 @@ export async function onRequestGet({ env, request }) {
       data: chamados,
       filters: {
         scope,
-        departmentId,
+        departmentId: scope === 'marketing' ? departmentId : null,
         personId,
       },
       pagination: {
