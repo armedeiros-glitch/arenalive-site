@@ -4,6 +4,7 @@
   const LEGACY_KEY = 'planet-hub-implantations-v1';
   const SCRIPT_SEQUENCE = [
     '/planet-hub/assets/command-center-nav-fix-v1.js?v=20260804-shared2',
+    '/planet-hub/assets/inauguration-actions-v1.js?v=20260804-1',
     '/planet-hub/assets/kanban-pagination-v1.js?v=20260804-2',
     '/planet-hub/assets/calendar-consolidation-v1.js?v=20260804-2',
   ];
