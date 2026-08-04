@@ -67,7 +67,7 @@ const normalizeInauguration = (item = {}) => {
     location: cleanText(item.location, 180),
     createdAt: cleanText(item.createdAt, 40) || new Date().toISOString(),
     updatedAt: cleanText(item.updatedAt, 40) || new Date().toISOString(),
-    packageBudget: cleanMoney(item.packageBudget),
+    packageBudget: item.packageBudget == null ? 4100 : cleanMoney(item.packageBudget),
     actionsVersion: Math.max(0, Math.min(100, Number.parseInt(item.actionsVersion, 10) || 0)),
     checklist,
     inauguralActions,
