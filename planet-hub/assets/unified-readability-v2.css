@@ -1,0 +1,208 @@
+/* Planet Marketing Hub: desktop readability floor and crisp text rendering. */
+:root {
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-synthesis: none;
+  text-rendering: auto;
+  -webkit-text-size-adjust: 100%;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: Inter, Arial, Helvetica, sans-serif !important;
+  text-rendering: auto !important;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  letter-spacing: normal;
+}
+
+/* Navigation and fixed interface text */
+.pmh-brand strong { font-size: 18px !important; line-height: 1.2 !important; }
+.pmh-brand small,
+.pmh-sidebar nav button,
+.pmh-sidebar nav button b,
+.pmh-sidebar footer small,
+.pmh-sidebar footer span {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+.pmh-sidebar nav button { min-height: 48px !important; font-weight: 700 !important; }
+.pmh-sidebar nav button b { min-width: 28px !important; padding: 4px 7px !important; }
+
+/* Page header */
+.pmh-topbar small,
+.pmh-top-actions input,
+.pmh-alert,
+.pmh-loading,
+.pmh-empty {
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+.pmh-topbar h1 { font-size: 32px !important; line-height: 1.15 !important; }
+.pmh-top-actions label { min-height: 44px !important; }
+
+/* Main section headings and actions */
+.pmh-hero small,
+.pmh-section-head small,
+.pmh-panel header small,
+.pmh-projects header small,
+.pmh-inauguration-card header small,
+.pmh-calendar-legend span,
+.pmh-calendar article > span {
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+  letter-spacing: .04em !important;
+}
+.pmh-hero h2,
+.pmh-section-head h2 { font-size: 32px !important; line-height: 1.18 !important; }
+.pmh-hero p,
+.pmh-section-head p,
+.primary,
+.pmh-hero > button,
+.danger {
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+.primary,
+.pmh-hero > button { min-height: 46px !important; padding-inline: 18px !important; }
+.danger { min-height: 40px !important; }
+
+/* Dashboard metrics and shortcuts */
+.pmh-metric small,
+.pmh-metric span,
+.pmh-shortcuts strong,
+.pmh-shortcuts span {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+.pmh-metric { min-height: 126px !important; }
+.pmh-metric strong { font-size: 31px !important; line-height: 1.05 !important; }
+.pmh-shortcuts button { min-height: 86px !important; }
+.pmh-panel h3,
+.pmh-projects h3 { font-size: 20px !important; line-height: 1.25 !important; }
+
+/* Lists and recent items */
+.pmh-list strong,
+.pmh-list small,
+.pmh-list time {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+.pmh-list button { min-height: 62px !important; }
+
+/* Kanban */
+.pmh-lane { flex-basis: 340px !important; }
+.pmh-lane h3,
+.pmh-lane header b,
+.pmh-ticket > small,
+.pmh-ticket h4,
+.pmh-ticket p,
+.pmh-ticket dt,
+.pmh-ticket dd {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+.pmh-ticket h4 { font-size: 16px !important; line-height: 1.35 !important; }
+.pmh-ticket { padding: 16px !important; }
+
+/* Inaugurations */
+.pmh-inauguration-card h3 { font-size: 21px !important; line-height: 1.25 !important; }
+.pmh-inauguration-card header p,
+.pmh-date strong,
+.pmh-date span,
+.pmh-progress-label,
+.pmh-inauguration-card summary,
+.pmh-checklist strong,
+.pmh-checklist small,
+.pmh-checklist em,
+.pmh-actions summary span small,
+.pmh-finance small,
+.pmh-finance strong,
+.pmh-finance input,
+.pmh-action h5,
+.pmh-action p,
+.pmh-action .use,
+.pmh-action-grid small,
+.pmh-action-grid strong,
+.pmh-action-grid input,
+.pmh-action-note small,
+.pmh-action-note input {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+.pmh-action h5 { font-size: 16px !important; }
+.pmh-checklist label { min-height: 58px !important; padding: 12px 14px !important; }
+.pmh-action { padding: 15px !important; }
+.pmh-finance > label,
+.pmh-finance > article,
+.pmh-action-grid > div,
+.pmh-action-grid > label,
+.pmh-action-note { padding: 12px !important; }
+
+/* Implantation reference list */
+.pmh-projects > header > span,
+.pmh-projects strong,
+.pmh-projects small,
+.pmh-projects button {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+.pmh-projects article { min-height: 72px !important; padding: 14px !important; }
+.pmh-projects button { min-height: 40px !important; padding-inline: 13px !important; }
+
+/* Calendar and content library */
+.pmh-calendar h3,
+.pmh-content-grid h3 { font-size: 19px !important; line-height: 1.3 !important; }
+.pmh-calendar p,
+.pmh-calendar small,
+.pmh-calendar strong,
+.pmh-content-grid p,
+.pmh-content-grid small,
+.pmh-content-grid strong,
+.pmh-content-grid button {
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+
+/* Dialogs and forms */
+.pmh-modal small,
+.pmh-modal p,
+.pmh-modal label,
+.pmh-modal input,
+.pmh-modal select,
+.pmh-modal button,
+.pmh-dialog small,
+.pmh-dialog p,
+.pmh-dialog label,
+.pmh-dialog input,
+.pmh-dialog select,
+.pmh-dialog button {
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+.pmh-modal h2,
+.pmh-dialog h2 { font-size: 27px !important; line-height: 1.2 !important; }
+
+@media (max-width: 980px) {
+  .pmh-topbar h1 { font-size: 28px !important; }
+  .pmh-hero h2,
+  .pmh-section-head h2 { font-size: 27px !important; }
+  .pmh-finance { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .pmh-action-grid { grid-template-columns: 1fr 1fr !important; }
+}
+
+@media (max-width: 720px) {
+  .pmh-sidebar nav button,
+  .pmh-sidebar footer small,
+  .pmh-sidebar footer span { font-size: 14px !important; }
+  .pmh-content { padding-inline: 16px !important; }
+  .pmh-metrics,
+  .pmh-shortcuts,
+  .pmh-home-grid,
+  .pmh-calendar,
+  .pmh-projects > div { grid-template-columns: 1fr !important; }
+}
