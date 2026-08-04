@@ -2,36 +2,12 @@
   'use strict';
 
   const ANALYZE_API = '/api/hub/analisar-radar';
-  const SOURCES = [
-    ['SULTS', '/api/sults/chamados?start=0&limit=100'],
-    ['Inaugurações', '/api/hub/inauguracoes'],
-    ['Demandas internas', '/api/hub/demandas-internas'],
-    ['Conteúdos', '/api/hub/conteudos'],
-    ['Campanhas', '/api/hub/campanhas'],
-  ];
-
   let analyzing = false;
 
+  const radar = () => window.PMHRadarData;
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
   }[char]));
-
-  const todayIso = () => new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(new Date());
-
-  const cleanDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '').slice(0, 10))
-    ? String(value).slice(0, 10)
-    : '';
-
-  const dayDiff = (value) => {
-    const date = cleanDate(value);
-    if (!date) return null;
-    const due = new Date(`${date}T12:00:00`);
-    const today = new Date(`${todayIso()}T12:00:00`);
-    return Math.round((due - today) / 86400000);
-  };
 
   const fetchJson = async (url, options = {}) => {
     const response = await fetch(url, {
@@ -42,126 +18,6 @@
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
     return payload;
-  };
-
-  const ticketDue = (item) => item.stipulatedResolutionAt || item.plannedResolutionAt || '';
-  const ticketFinished = (item) => Boolean(
-    item.concludedAt || item.resolvedAt || [2, 3].includes(Number(item.situation?.id || item.situationId)),
-  );
-
-  const fromTickets = (items) => items
-    .filter((item) => !ticketFinished(item))
-    .map((item) => ({
-      id: `ticket-${item.sultsTicketId || item.id}`,
-      origin: 'SULTS',
-      title: item.title || 'Demanda sem título',
-      context: item.unit || item.department || 'Chamado do Marketing',
-      responsible: item.responsible || 'Não definido',
-      status: item.situation?.name || 'Aberta',
-      dueDate: cleanDate(ticketDue(item)),
-      priority: ticketDue(item) && (dayDiff(ticketDue(item)) ?? 1) < 0 ? 0 : 2,
-      updatedAt: item.lastChangeAt || item.openedAt || '',
-    }));
-
-  const fromInaugurations = (items) => items
-    .filter((item) => {
-      const checklist = Array.isArray(item.checklist) ? item.checklist : [];
-      return !checklist.length || checklist.some((step) => !step.done);
-    })
-    .map((item) => {
-      const checklist = Array.isArray(item.checklist) ? item.checklist : [];
-      const done = checklist.filter((step) => step.done).length;
-      return {
-        id: `inauguration-${item.id}`,
-        origin: 'Inauguração',
-        title: item.unit || 'Inauguração sem unidade',
-        context: item.location || 'Implantação acompanhada',
-        responsible: item.responsible || 'Não definido',
-        status: checklist.length ? `${done}/${checklist.length} etapas` : 'Em acompanhamento',
-        dueDate: cleanDate(item.openingDate),
-        priority: item.openingDate && (dayDiff(item.openingDate) ?? 99) <= 7 ? 1 : 3,
-        updatedAt: item.updatedAt || '',
-      };
-    });
-
-  const demandOrigin = (origin) => ({
-    direction: 'Direção',
-    meeting: 'Reunião',
-    whatsapp: 'WhatsApp',
-    internal: 'Operação interna',
-    other: 'Outra origem',
-  }[origin] || 'Demanda interna');
-
-  const fromDemands = (items) => items
-    .filter((item) => !['completed', 'cancelled'].includes(item.status))
-    .map((item) => ({
-      id: `demand-${item.id}`,
-      origin: demandOrigin(item.origin),
-      title: item.title || 'Demanda sem título',
-      context: item.category || 'Demanda interna',
-      responsible: item.responsible || 'Não definido',
-      status: ({ new: 'Nova', in_progress: 'Em andamento', waiting: 'Aguardando' }[item.status] || 'Ativa'),
-      dueDate: cleanDate(item.dueDate),
-      priority: ({ urgent: 0, high: 1, normal: 2, low: 3 }[item.priority] ?? 2),
-      updatedAt: item.updatedAt || '',
-    }));
-
-  const fromContents = (items) => items
-    .filter((item) => ['planejamento', 'producao', 'aprovacao'].includes(item.status))
-    .map((item) => ({
-      id: `content-${item.id}`,
-      origin: /social|reels|instagram|facebook/i.test([item.category, item.format, ...(item.tags || [])].join(' '))
-        ? 'Social media'
-        : 'Conteúdo',
-      title: item.title || 'Conteúdo sem título',
-      context: [item.category, item.campaign, item.unit].filter(Boolean).join(' · ') || 'Biblioteca de conteúdos',
-      responsible: item.responsible || 'Não definido',
-      status: ({ planejamento: 'Planejamento', producao: 'Em produção', aprovacao: 'Em aprovação' }[item.status] || 'Ativo'),
-      dueDate: cleanDate(item.dueDate),
-      priority: item.status === 'aprovacao' ? 1 : item.status === 'producao' ? 2 : 3,
-      updatedAt: item.updatedAt || '',
-    }));
-
-  const campaignName = (id) => {
-    const slug = String(id || '').split('__')[1] || 'campanha';
-    return slug.split('-').filter(Boolean).map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-  };
-
-  const campaignStart = (id) => String(id || '').split('__')[0] || '';
-
-  const fromCampaigns = (items) => items
-    .filter((item) => ['planejamento', 'producao', 'aprovacao', 'ativa'].includes(item.status))
-    .map((item) => ({
-      id: `campaign-${item.id}`,
-      origin: 'Campanha',
-      title: campaignName(item.id),
-      context: item.nextMilestone || 'Campanha do calendário',
-      responsible: item.responsible || 'Não definido',
-      status: ({ planejamento: 'Planejamento', producao: 'Em produção', aprovacao: 'Em aprovação', ativa: 'Ativa' }[item.status] || 'Ativa'),
-      dueDate: cleanDate(item.milestoneDate || campaignStart(item.id)),
-      priority: item.status === 'ativa' ? 0 : item.status === 'aprovacao' ? 1 : 2,
-      updatedAt: item.updatedAt || '',
-    }));
-
-  const collectRadar = async () => {
-    const results = await Promise.allSettled(SOURCES.map(([, url]) => fetchJson(url)));
-    const values = results.map((result) => result.status === 'fulfilled' && Array.isArray(result.value.data)
-      ? result.value.data
-      : []);
-    const errors = results
-      .map((result, index) => result.status === 'rejected' ? SOURCES[index][0] : '')
-      .filter(Boolean);
-
-    return {
-      errors,
-      items: [
-        ...fromTickets(values[0]),
-        ...fromInaugurations(values[1]),
-        ...fromDemands(values[2]),
-        ...fromContents(values[3]),
-        ...fromCampaigns(values[4]),
-      ],
-    };
   };
 
   const list = (title, items, renderer) => {
@@ -217,9 +73,12 @@
     setTimeout(() => modal.remove(), 180);
   };
 
-  const analyze = async () => {
+  const analyze = async ({ forceData = false } = {}) => {
     if (analyzing) return;
     const button = document.querySelector('[data-analyze-radar]');
+    const service = radar();
+    if (!service) return alert('O serviço de dados do Radar não foi carregado.');
+
     analyzing = true;
     if (button) {
       button.disabled = true;
@@ -228,14 +87,15 @@
     }
 
     try {
-      const radar = await collectRadar();
-      if (!radar.items.length) throw new Error('Nenhuma demanda ativa foi encontrada para analisar.');
+      const snapshot = await service.collect({ force: forceData });
+      const items = service.toAnalysisItems(snapshot.items);
+      if (!items.length) throw new Error('Nenhuma demanda ativa foi encontrada para analisar.');
       const analysis = await fetchJson(ANALYZE_API, {
         method: 'POST',
         body: JSON.stringify({
-          today: todayIso(),
-          items: radar.items,
-          sourceErrors: radar.errors,
+          today: service.todayIso(),
+          items,
+          sourceErrors: snapshot.errors,
         }),
       });
       renderModal(analysis);
@@ -269,7 +129,7 @@
     if (event.target.matches('[data-radar-analysis-modal]')) return closeModal();
     if (event.target.closest('[data-radar-analysis-again]')) {
       closeModal();
-      setTimeout(analyze, 220);
+      setTimeout(() => analyze({ forceData: true }), 220);
       return;
     }
     const copy = event.target.closest('[data-radar-analysis-copy]');
