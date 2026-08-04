@@ -36,31 +36,34 @@
 
   const decorate = () => {
     document.querySelectorAll(`a[href^="${DIRECT_PREFIX}"]`).forEach((link) => {
-      if (link.dataset.sultsCopyLinkReady === '1') return;
-
       const url = link.href;
       const id = url.slice(DIRECT_PREFIX.length).split(/[?#/]/)[0].replace(/\D/g, '');
       if (!id) return;
 
-      link.dataset.sultsCopyLinkReady = '1';
-      link.dataset.sultsTicketId = id;
-      link.dataset.sultsTicketUrl = url;
-      link.textContent = 'Copiar link';
-      link.title = `Copiar o link do chamado #${id}`;
-      link.removeAttribute('target');
-      link.removeAttribute('rel');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = link.className;
+      button.dataset.sultsCopyLinkReady = '1';
+      button.dataset.sultsTicketId = id;
+      button.dataset.sultsTicketUrl = url;
+      button.textContent = 'Copiar link';
+      button.title = `Copiar o link do chamado #${id}`;
+      button.setAttribute('aria-label', `Copiar link do chamado ${id}`);
+
+      link.replaceWith(button);
     });
   };
 
   document.addEventListener('click', async (event) => {
-    const link = event.target.closest('[data-sults-copy-link-ready]');
-    if (!link) return;
+    const button = event.target.closest('[data-sults-copy-link-ready]');
+    if (!button) return;
 
     event.preventDefault();
     event.stopPropagation();
+    event.stopImmediatePropagation();
 
-    const ticketId = link.dataset.sultsTicketId;
-    const ticketUrl = link.dataset.sultsTicketUrl;
+    const ticketId = button.dataset.sultsTicketId;
+    const ticketUrl = button.dataset.sultsTicketUrl;
     const copied = await copyText(ticketUrl);
 
     toast(copied
@@ -70,6 +73,7 @@
 
   const style = document.createElement('style');
   style.textContent = `
+    [data-sults-copy-link-ready]{cursor:pointer}
     .pmh-sults-toast{position:fixed;right:24px;bottom:24px;z-index:1000001;max-width:min(420px,calc(100vw - 32px));padding:14px 17px;border-radius:12px;color:#fff;background:#2f211c;box-shadow:0 18px 48px rgba(35,20,14,.28);font-size:14px;font-weight:800;opacity:0;transform:translateY(12px);transition:opacity .2s ease,transform .2s ease}
     .pmh-sults-toast.visible{opacity:1;transform:translateY(0)}
   `;
