@@ -2,6 +2,7 @@ const SULTS_ENDPOINT = 'https://api.sults.com.br/api/v1/chamado/ticket';
 const PAGE_LIMIT = 100;
 const ACTIVE_SITUATIONS = [1, 4, 5, 6];
 const MARKETING_DEPARTMENT_ID = 10;
+const DEFAULT_PERSON_NAME = 'André Roberto Medeiros';
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -89,10 +90,29 @@ const uniqueById = (tickets) =>
     array.findIndex((candidate) => candidate.id === ticket.id) === index,
   );
 
-const personIsIncluded = (ticket, personId) => {
-  if (!personId) return true;
-  if (ticket.responsibleId === personId || ticket.requesterId === personId) return true;
-  return ticket.support.some((item) => item?.pessoa?.id === personId);
+const normalizeText = (value) => String(value || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const personIsIncluded = (ticket, personId, personName) => {
+  const normalizedName = normalizeText(personName);
+  const responsibleMatches =
+    (personId && ticket.responsibleId === personId) ||
+    (normalizedName && normalizeText(ticket.responsible) === normalizedName);
+
+  if (responsibleMatches) return true;
+
+  return ticket.support.some((item) => {
+    const supportPerson = item?.pessoa;
+    if (!supportPerson) return false;
+    return (
+      (personId && supportPerson.id === personId) ||
+      (normalizedName && normalizeText(supportPerson.nome) === normalizedName)
+    );
+  });
 };
 
 const departmentIsIncluded = (ticket, departmentId) => {
@@ -108,16 +128,13 @@ export async function onRequestGet({ env, request }) {
 
   const incomingUrl = new URL(request.url);
   const includeClosed = incomingUrl.searchParams.get('includeClosed') === '1';
-  const scope = incomingUrl.searchParams.get('scope') || 'all';
+  const scope = incomingUrl.searchParams.get('scope') || 'mine';
   const personId = Number.parseInt(incomingUrl.searchParams.get('personId') || '', 10) || null;
+  const personName = incomingUrl.searchParams.get('personName') || DEFAULT_PERSON_NAME;
   const departmentId = Number.parseInt(
     incomingUrl.searchParams.get('departmentId') || String(MARKETING_DEPARTMENT_ID),
     10,
   );
-
-  if (scope === 'mine' && !personId) {
-    return json({ error: 'Para usar scope=mine, informe personId.' }, 400);
-  }
 
   try {
     const requests = includeClosed
@@ -150,8 +167,8 @@ export async function onRequestGet({ env, request }) {
       .map(mapTicket)
       .filter((ticket) => {
         if (scope === 'all') return true;
-        if (scope === 'mine') return personIsIncluded(ticket, personId);
-        return departmentIsIncluded(ticket, departmentId);
+        if (scope === 'marketing') return departmentIsIncluded(ticket, departmentId);
+        return personIsIncluded(ticket, personId, personName);
       })
       .sort((a, b) =>
         new Date(b.lastUpdatedAt || b.openedAt || 0).getTime() -
@@ -163,7 +180,9 @@ export async function onRequestGet({ env, request }) {
       filters: {
         scope,
         departmentId: scope === 'marketing' ? departmentId : null,
-        personId,
+        personId: scope === 'mine' ? personId : null,
+        personName: scope === 'mine' ? personName : null,
+        membership: scope === 'mine' ? ['responsible', 'support'] : null,
       },
       pagination: {
         mode: includeClosed ? 'all-first-page' : 'active-situations',
