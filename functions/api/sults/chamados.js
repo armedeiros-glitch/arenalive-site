@@ -1,6 +1,6 @@
 const SULTS_ENDPOINT = 'https://api.sults.com.br/api/v1/chamado/ticket';
 const PAGE_LIMIT = 100;
-const MAX_PAGES = 10;
+const ACTIVE_SITUATIONS = [1, 4, 5, 6];
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -20,10 +20,14 @@ const parsePayload = async (response) => {
   }
 };
 
-const fetchPage = async (token, start, limit = PAGE_LIMIT) => {
+const fetchTickets = async (token, params = {}) => {
   const url = new URL(SULTS_ENDPOINT);
-  url.searchParams.set('start', String(start));
-  url.searchParams.set('limit', String(limit));
+  url.searchParams.set('start', String(params.start ?? 0));
+  url.searchParams.set('limit', String(params.limit ?? PAGE_LIMIT));
+
+  if (params.situation != null) {
+    url.searchParams.set('situacao', String(params.situation));
+  }
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -34,7 +38,7 @@ const fetchPage = async (token, start, limit = PAGE_LIMIT) => {
   });
 
   const payload = await parsePayload(response);
-  return { response, payload };
+  return { response, payload, situation: params.situation ?? null };
 };
 
 const mapTicket = (ticket) => ({
@@ -72,72 +76,65 @@ const mapTicket = (ticket) => ({
   ratingNote: ticket.avaliacaoObservacao ?? null,
 });
 
+const uniqueById = (tickets) =>
+  tickets.filter((ticket, index, array) =>
+    array.findIndex((candidate) => candidate.id === ticket.id) === index,
+  );
+
 export async function onRequestGet({ env, request }) {
   if (!env.SULTS_API_TOKEN) {
     return json({ error: 'SULTS_API_TOKEN não configurado.' }, 500);
   }
 
   const incomingUrl = new URL(request.url);
-  const requestedStart = Math.max(0, Number.parseInt(incomingUrl.searchParams.get('start') || '0', 10) || 0);
-  const requestedLimit = Math.min(PAGE_LIMIT, Math.max(1, Number.parseInt(incomingUrl.searchParams.get('limit') || String(PAGE_LIMIT), 10) || PAGE_LIMIT));
-  const fetchAll = incomingUrl.searchParams.get('all') !== '0';
+  const includeClosed = incomingUrl.searchParams.get('includeClosed') === '1';
 
   try {
-    const first = await fetchPage(env.SULTS_API_TOKEN, requestedStart, requestedLimit);
+    const requests = includeClosed
+      ? [fetchTickets(env.SULTS_API_TOKEN)]
+      : ACTIVE_SITUATIONS.map((situation) =>
+          fetchTickets(env.SULTS_API_TOKEN, { situation }),
+        );
 
-    if (!first.response.ok) {
+    const results = await Promise.all(requests);
+    const successful = results.filter(({ response }) => response.ok);
+    const failed = results.filter(({ response }) => !response.ok);
+
+    if (!successful.length) {
+      const firstFailure = failed[0];
       return json(
         {
           error: 'O SULTS recusou a consulta de chamados.',
-          status: first.response.status,
-          details: first.payload,
+          status: firstFailure?.response.status ?? 502,
+          details: firstFailure?.payload ?? {},
         },
-        first.response.status,
+        firstFailure?.response.status ?? 502,
       );
     }
 
-    const pages = [first.payload];
-    const reportedPages = Math.max(1, Number(first.payload.totalPage) || 1);
-    const remainingPages = fetchAll
-      ? Math.min(MAX_PAGES, reportedPages) - 1
-      : 0;
-
-    if (remainingPages > 0) {
-      const requests = Array.from({ length: remainingPages }, (_, index) =>
-        fetchPage(env.SULTS_API_TOKEN, requestedStart + index + 1, PAGE_LIMIT),
-      );
-      const results = await Promise.all(requests);
-
-      for (const result of results) {
-        if (!result.response.ok) {
-          return json(
-            {
-              error: 'O SULTS recusou uma página da consulta de chamados.',
-              status: result.response.status,
-              details: result.payload,
-            },
-            result.response.status,
-          );
-        }
-        pages.push(result.payload);
-      }
-    }
-
-    const rawTickets = pages.flatMap((page) => Array.isArray(page.data) ? page.data : []);
-    const uniqueTickets = rawTickets.filter((ticket, index, array) =>
-      array.findIndex((candidate) => candidate.id === ticket.id) === index,
+    const rawTickets = successful.flatMap(({ payload }) =>
+      Array.isArray(payload.data) ? payload.data : [],
     );
-    const chamados = uniqueTickets.map(mapTicket);
+
+    const chamados = uniqueById(rawTickets)
+      .map(mapTicket)
+      .sort((a, b) =>
+        new Date(b.lastUpdatedAt || b.openedAt || 0).getTime() -
+        new Date(a.lastUpdatedAt || a.openedAt || 0).getTime(),
+      );
 
     return json({
       data: chamados,
       pagination: {
-        start: requestedStart,
-        limit: requestedLimit,
-        totalPage: reportedPages,
-        fetchedPages: pages.length,
+        mode: includeClosed ? 'all-first-page' : 'active-situations',
+        situations: includeClosed ? [] : ACTIVE_SITUATIONS,
+        successfulQueries: successful.length,
+        failedQueries: failed.length,
         size: chamados.length,
       },
+      warning: failed.length
+        ? 'Algumas situações não puderam ser consultadas, mas os dados disponíveis foram mantidos.'
+        : null,
     });
   } catch (error) {
     return json(
