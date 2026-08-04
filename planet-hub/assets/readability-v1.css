@@ -27,10 +27,10 @@ html, body, button, input, select, textarea {
 [class*="_heroAction_"] button strong { font-size: 11px !important; }
 [class*="_statusLegend_"] span { font-size: 9px !important; }
 
-[class*="_moduleCard_"] small { font-size: 9px !important; line-height: 1.25 !important; }
-[class*="_moduleCard_"] h3 { font-size: 17px !important; }
-[class*="_moduleCard_"] p { font-size: 11px !important; line-height: 1.5 !important; }
-[class*="_moduleCard_"] > b { font-size: 10px !important; }
+[class*="_moduleCard_"] small { font-size: 11px !important; line-height: 1.3 !important; font-weight: 800 !important; text-shadow: none !important; }
+[class*="_moduleCard_"] h3 { font-size: 20px !important; line-height: 1.2 !important; font-weight: 800 !important; letter-spacing: -0.02em !important; text-shadow: none !important; }
+[class*="_moduleCard_"] p { font-size: 13px !important; line-height: 1.5 !important; font-weight: 500 !important; text-shadow: none !important; }
+[class*="_moduleCard_"] > b { font-size: 12px !important; font-weight: 800 !important; text-shadow: none !important; }
 [class*="_portalArea_"] header span, [class*="_portalArea_"] a small { font-size: 9px !important; }
 [class*="_portalArea_"] a strong { font-size: 14px !important; }
 [class*="_portalArea_"] a p, [class*="_portalArea_"] a > b { font-size: 10px !important; }
