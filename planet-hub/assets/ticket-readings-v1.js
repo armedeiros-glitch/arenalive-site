@@ -12,6 +12,7 @@
   let queuedSnapshot = null;
   let lastSignature = '';
   let decorateTimer = 0;
+  const memoryReadings = new Map();
 
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
@@ -157,9 +158,24 @@
     }
   };
 
+  const rememberReading = (item, reading) => {
+    if (!item?.id || !reading) return;
+    memoryReadings.set(item.id, { version: item.updatedAt || '', reading });
+  };
+
+  const recalledReading = (item) => {
+    const remembered = memoryReadings.get(item?.id);
+    return remembered && remembered.version === (item.updatedAt || '') ? remembered.reading : null;
+  };
+
   const fetchReading = async (item) => {
+    const remembered = recalledReading(item);
+    if (remembered) return remembered;
     const cached = readCache(item);
-    if (cached) return cached;
+    if (cached) {
+      rememberReading(item, cached);
+      return cached;
+    }
 
     const response = await fetch(`/api/sults/chamados/${encodeURIComponent(item.sourceId)}`, {
       headers: { Accept: 'application/json' },
@@ -168,11 +184,15 @@
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
     const reading = inferReading(payload, item);
-    if (reading) writeCache(item, reading);
+    if (reading) {
+      writeCache(item, reading);
+      rememberReading(item, reading);
+    }
     return reading;
   };
 
   const candidateScore = (item) => {
+    if (!baseRadar) return 0;
     const due = baseRadar.dueMeta(item.dueDate);
     let score = Number(item.priority || 2) * 30;
     if (due.bucket === 'late') score -= 10000;
@@ -192,10 +212,11 @@
 
   const signatureFor = (items) => items.map((item) => `${item.id}:${item.updatedAt || ''}`).join('|');
 
-  const mergeReadings = (snapshot, readings) => {
-    const byId = new Map(readings.filter((entry) => entry.reading).map((entry) => [entry.item.id, entry.reading]));
+  const mergeReadings = (snapshot, readings = []) => {
+    readings.forEach((entry) => rememberReading(entry.item, entry.reading));
+    const incoming = new Map(readings.filter((entry) => entry.reading).map((entry) => [entry.item.id, entry.reading]));
     const items = (snapshot.items || []).map((item) => {
-      const ticketReading = byId.get(item.id) || item.ticketReading || null;
+      const ticketReading = incoming.get(item.id) || recalledReading(item) || item.ticketReading || null;
       if (!ticketReading) return item;
       const hasSavedContext = (item.operationalState || 'actionable') !== 'actionable'
         || item.blockerReason || item.dependsOn || item.nextAction || item.followUpDate;
@@ -223,7 +244,7 @@
   };
 
   const enhance = async (snapshot) => {
-    if (!snapshot || snapshot.ticketReadings || !isVisible()) return;
+    if (!baseRadar || !snapshot || snapshot.ticketReadings || !isVisible()) return;
     if (processing) {
       queuedSnapshot = snapshot;
       return;
@@ -233,7 +254,7 @@
     if (!candidates.length) return;
     const signature = signatureFor(candidates);
     if (signature === lastSignature && enrichedSnapshot) {
-      dispatchEnriched({ ...snapshot, items: enrichedSnapshot.items, ticketReadings: true });
+      dispatchEnriched(mergeReadings(snapshot));
       return;
     }
 
@@ -291,12 +312,28 @@
     });
   };
 
+  const requestDrawerReading = (panel, snapshot, item) => {
+    if (!item || panel.dataset.readingRequested === '1') return;
+    panel.dataset.readingRequested = '1';
+    fetchReading(item).then((reading) => {
+      if (!reading) return;
+      const current = enrichedSnapshot || snapshot;
+      dispatchEnriched(mergeReadings(current, [{ item, reading }]));
+    }).catch(() => {
+      panel.dataset.readingRequested = '0';
+    });
+  };
+
   const decorateDrawer = (snapshot) => {
     const panel = document.querySelector('.pmh-ticket-drawer-panel:not(.loading)');
     if (!panel || panel.querySelector('[data-drawer-ticket-reading]')) return;
     const id = panel.querySelector('.pmh-ticket-drawer-header small')?.textContent?.replace(/\D/g, '');
     const item = snapshot?.items?.find((candidate) => candidate.id === `ticket-${id}`);
-    if (!item?.ticketReading) return;
+    if (!item) return;
+    if (!item.ticketReading) {
+      requestDrawerReading(panel, snapshot, item);
+      return;
+    }
     const actions = panel.querySelector('.pmh-ticket-drawer-actions');
     const wrapper = document.createElement('div');
     wrapper.dataset.drawerTicketReading = '1';
@@ -344,6 +381,7 @@
       scheduleDecorate();
       return;
     }
+    if (!baseRadar) wrapRadar();
     enhance(event.detail);
   });
 
