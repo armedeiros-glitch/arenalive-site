@@ -1,0 +1,246 @@
+.pmh-decision-kind {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin-top: 12px;
+  padding: 0 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(255,255,255,.08);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.pmh-decision-kind.tone-follow-up,
+.pmh-attention-kind.tone-follow-up { color: #ffe2b8; }
+.pmh-decision-kind.tone-approval { color: #dff7e9; }
+.pmh-decision-kind.tone-decision { color: #d6e7ff; }
+.pmh-decision-kind.tone-risk { color: #ffd3ce; }
+.pmh-decision-kind.tone-campaign { color: #ffd8ec; }
+.pmh-decision-kind.tone-inauguration { color: #ffe2b8; }
+
+.pmh-attention-queue {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.pmh-attention-queue > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.pmh-attention-queue > header small {
+  color: #bfb2ff;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+.pmh-attention-queue > header span {
+  color: rgba(255,255,255,.52);
+  font-size: 10px;
+}
+.pmh-attention-queue > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.pmh-attention-card {
+  display: grid;
+  align-content: start;
+  min-width: 0;
+  min-height: 152px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 13px;
+  color: #fff;
+  background: rgba(255,255,255,.055);
+  text-align: left;
+  cursor: pointer;
+  transition: transform .16s ease, background .16s ease, border-color .16s ease;
+}
+.pmh-attention-card:hover,
+.pmh-attention-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(191,178,255,.55);
+  background: rgba(255,255,255,.1);
+  outline: 0;
+}
+.pmh-attention-card.tone-follow-up { box-shadow: inset 3px 0 0 #e7a84d; }
+.pmh-attention-card.tone-approval { box-shadow: inset 3px 0 0 #55b981; }
+.pmh-attention-card.tone-decision { box-shadow: inset 3px 0 0 #6092d5; }
+.pmh-attention-card.tone-risk { box-shadow: inset 3px 0 0 #d9655d; }
+.pmh-attention-card.tone-campaign { box-shadow: inset 3px 0 0 #cf6aa0; }
+.pmh-attention-card.tone-inauguration { box-shadow: inset 3px 0 0 #dc8843; }
+.pmh-attention-kind {
+  color: #c8bcff;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.pmh-attention-card > strong {
+  display: -webkit-box;
+  margin-top: 8px;
+  overflow: hidden;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.pmh-attention-card > small {
+  display: -webkit-box;
+  margin-top: 7px;
+  overflow: hidden;
+  color: rgba(255,255,255,.62);
+  font-size: 10px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.pmh-attention-card footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+}
+.pmh-attention-card footer span,
+.pmh-attention-card footer time {
+  overflow: hidden;
+  color: rgba(255,255,255,.54);
+  font-size: 9px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pmh-attention-card footer time.late { color: #ffd3ce; }
+.pmh-attention-card footer time.today { color: #ffe2b8; }
+.pmh-attention-card footer time.soon { color: #d6e7ff; }
+
+.pmh-attention-handoff {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 1000001;
+  width: min(380px, calc(100vw - 40px));
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(145deg, #17141f, #29243a);
+  box-shadow: 0 24px 70px rgba(18,15,29,.34);
+  animation: pmhAttentionIn .18s ease both;
+}
+.pmh-attention-handoff.tone-follow-up { box-shadow: inset 4px 0 0 #e7a84d, 0 24px 70px rgba(18,15,29,.34); }
+.pmh-attention-handoff.tone-approval { box-shadow: inset 4px 0 0 #55b981, 0 24px 70px rgba(18,15,29,.34); }
+.pmh-attention-handoff.tone-decision { box-shadow: inset 4px 0 0 #6092d5, 0 24px 70px rgba(18,15,29,.34); }
+.pmh-attention-handoff.tone-risk { box-shadow: inset 4px 0 0 #d9655d, 0 24px 70px rgba(18,15,29,.34); }
+.pmh-attention-handoff.tone-campaign { box-shadow: inset 4px 0 0 #cf6aa0, 0 24px 70px rgba(18,15,29,.34); }
+.pmh-attention-handoff.tone-inauguration { box-shadow: inset 4px 0 0 #dc8843, 0 24px 70px rgba(18,15,29,.34); }
+.pmh-attention-handoff > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pmh-attention-handoff > header span {
+  color: #c8bcff;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.pmh-attention-handoff > header button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  color: rgba(255,255,255,.65);
+  background: rgba(255,255,255,.08);
+  font-size: 18px;
+  cursor: pointer;
+}
+.pmh-attention-handoff > strong {
+  display: block;
+  margin-top: 9px;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.25;
+}
+.pmh-attention-handoff > p {
+  margin: 8px 0 0;
+  color: rgba(255,255,255,.66);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.pmh-attention-handoff > div {
+  margin-top: 12px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.065);
+}
+.pmh-attention-handoff > div small,
+.pmh-attention-handoff > div b { display: block; }
+.pmh-attention-handoff > div small {
+  color: #bfb2ff;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .07em;
+}
+.pmh-attention-handoff > div b {
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.pmh-attention-handoff > footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.pmh-attention-handoff > footer button {
+  min-height: 36px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 9px;
+  color: #fff;
+  background: rgba(255,255,255,.07);
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.pmh-attention-handoff > footer button.primary {
+  border-color: var(--aos-accent);
+  background: var(--aos-accent);
+}
+.pmh-attention-target {
+  animation: pmhAttentionPulse 1s ease 2;
+  outline: 3px solid rgba(104,75,255,.42) !important;
+  outline-offset: 4px;
+}
+@keyframes pmhAttentionIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pmhAttentionPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(104,75,255,0); }
+  50% { box-shadow: 0 0 0 9px rgba(104,75,255,.15); }
+}
+@media (max-width: 900px) {
+  .pmh-attention-queue > div { grid-template-columns: 1fr; }
+  .pmh-attention-card { min-height: 0; }
+}
+@media (max-width: 620px) {
+  .pmh-attention-queue > header { align-items: flex-start; flex-direction: column; }
+  .pmh-attention-handoff {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    width: auto;
+  }
+}
