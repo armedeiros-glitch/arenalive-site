@@ -1,0 +1,21 @@
+.campaign-is-past {
+  opacity: 0.42;
+  filter: grayscale(0.68) saturate(0.45);
+  transition: opacity 160ms ease, filter 160ms ease;
+}
+
+.campaign-is-past:hover,
+.campaign-is-past:focus-within {
+  opacity: 0.7;
+  filter: grayscale(0.35) saturate(0.72);
+}
+
+.campaign-is-past button {
+  opacity: 0.72;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campaign-is-past {
+    transition: none;
+  }
+}
