@@ -20,8 +20,13 @@
     if (legacyHero) legacyHero.remove();
 
     const cockpit = document.querySelector('[data-decision-cockpit]');
-    if (cockpit && cockpit.parentElement === content && content.firstElementChild !== cockpit) {
-      content.insertBefore(cockpit, content.firstElementChild);
+    if (!cockpit) return;
+
+    const alert = content.querySelector(':scope > .pmh-alert');
+    const desiredAnchor = alert ? alert.nextElementSibling : content.firstElementChild;
+
+    if (cockpit.parentElement !== content || cockpit !== desiredAnchor) {
+      content.insertBefore(cockpit, desiredAnchor || null);
     }
   };
 
