@@ -1,14 +1,6 @@
 (() => {
   'use strict';
 
-  const API = {
-    tickets: '/api/sults/chamados?start=0&limit=100',
-    inaugurations: '/api/hub/inauguracoes',
-    demands: '/api/hub/demandas-internas',
-    contents: '/api/hub/conteudos',
-    campaigns: '/api/hub/campanhas',
-  };
-
   const FILTERS = {
     all: 'Tudo ativo',
     late: 'Atrasadas',
@@ -25,6 +17,7 @@
     errors: [],
   };
 
+  const radar = () => window.PMHRadarData;
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
   }[char]));
@@ -34,167 +27,6 @@
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
-
-  const todayIso = () => new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(new Date());
-
-  const asDate = (value) => {
-    const raw = String(value || '').slice(0, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
-    const date = new Date(`${raw}T12:00:00`);
-    return Number.isNaN(date.getTime()) ? null : date;
-  };
-
-  const dayDiff = (value) => {
-    const due = asDate(value);
-    const today = asDate(todayIso());
-    return due && today ? Math.round((due - today) / 86400000) : null;
-  };
-
-  const fmtDate = (value) => {
-    const date = asDate(value);
-    return date ? new Intl.DateTimeFormat('pt-BR').format(date) : 'Sem prazo';
-  };
-
-  const dueMeta = (value) => {
-    const diff = dayDiff(value);
-    if (diff == null) return { label: 'Sem prazo', tone: 'none', weight: 90000, bucket: 'noDate' };
-    if (diff < 0) return { label: `Atrasada há ${Math.abs(diff)}d`, tone: 'late', weight: diff, bucket: 'late' };
-    if (diff === 0) return { label: 'Hoje', tone: 'today', weight: 0, bucket: 'today' };
-    if (diff <= 7) return { label: diff === 1 ? 'Amanhã' : `Em ${diff} dias`, tone: 'soon', weight: diff, bucket: 'week' };
-    return { label: fmtDate(value), tone: 'later', weight: diff, bucket: 'later' };
-  };
-
-  const json = async (url) => {
-    const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
-    return Array.isArray(payload.data) ? payload.data : [];
-  };
-
-  const ticketDue = (item) => item.stipulatedResolutionAt || item.plannedResolutionAt || '';
-  const ticketFinished = (item) => Boolean(
-    item.concludedAt || item.resolvedAt || [2, 3].includes(Number(item.situation?.id || item.situationId)),
-  );
-
-  const fromTickets = (items) => items
-    .filter((item) => !ticketFinished(item))
-    .map((item) => ({
-      id: `ticket-${item.sultsTicketId || item.id}`,
-      sourceId: String(item.sultsTicketId || item.id || ''),
-      origin: 'SULTS',
-      originTone: 'sults',
-      title: item.title || 'Demanda sem título',
-      context: item.unit || item.department || 'Chamado do Marketing',
-      responsible: item.responsible || 'Não definido',
-      status: item.situation?.name || 'Aberta',
-      dueDate: ticketDue(item),
-      priority: ticketDue(item) && (dayDiff(ticketDue(item)) ?? 1) < 0 ? 0 : 2,
-      updatedAt: item.lastChangeAt || item.openedAt || '',
-      action: 'chamados',
-    }));
-
-  const fromInaugurations = (items) => items
-    .filter((item) => {
-      const checklist = Array.isArray(item.checklist) ? item.checklist : [];
-      return !checklist.length || checklist.some((step) => !step.done);
-    })
-    .map((item) => {
-      const checklist = Array.isArray(item.checklist) ? item.checklist : [];
-      const done = checklist.filter((step) => step.done).length;
-      return {
-        id: `inauguration-${item.id}`,
-        sourceId: String(item.id || ''),
-        origin: 'Inauguração',
-        originTone: 'inauguration',
-        title: item.unit || 'Inauguração sem unidade',
-        context: item.location || 'Implantação acompanhada',
-        responsible: item.responsible || 'Não definido',
-        status: checklist.length ? `${done}/${checklist.length} etapas` : 'Em acompanhamento',
-        dueDate: item.openingDate || '',
-        priority: item.openingDate && (dayDiff(item.openingDate) ?? 99) <= 7 ? 1 : 3,
-        updatedAt: item.updatedAt || '',
-        action: 'inauguracoes',
-      };
-    });
-
-  const demandOrigin = (origin) => ({
-    direction: 'Direção',
-    meeting: 'Reunião',
-    whatsapp: 'WhatsApp',
-    internal: 'Operação interna',
-    other: 'Outra origem',
-  }[origin] || 'Demanda interna');
-
-  const fromInternalDemands = (items) => items
-    .filter((item) => !['completed', 'cancelled'].includes(item.status))
-    .map((item) => ({
-      id: `demand-${item.id}`,
-      sourceId: String(item.id || ''),
-      origin: demandOrigin(item.origin),
-      originTone: item.origin || 'internal',
-      title: item.title || 'Demanda sem título',
-      context: item.category || 'Demanda interna',
-      responsible: item.responsible || 'Não definido',
-      status: ({ new: 'Nova', in_progress: 'Em andamento', waiting: 'Aguardando' }[item.status] || 'Ativa'),
-      dueDate: item.dueDate || '',
-      priority: ({ urgent: 0, high: 1, normal: 2, low: 3 }[item.priority] ?? 2),
-      updatedAt: item.updatedAt || '',
-      action: 'demand',
-    }));
-
-  const fromContents = (items) => items
-    .filter((item) => ['planejamento', 'producao', 'aprovacao'].includes(item.status))
-    .map((item) => ({
-      id: `content-${item.id}`,
-      sourceId: String(item.id || ''),
-      origin: /social|reels|instagram|facebook/i.test([item.category, item.format, ...(item.tags || [])].join(' '))
-        ? 'Social media'
-        : 'Conteúdo',
-      originTone: 'content',
-      title: item.title || 'Conteúdo sem título',
-      context: [item.category, item.campaign, item.unit].filter(Boolean).join(' · ') || 'Biblioteca de conteúdos',
-      responsible: item.responsible || 'Não definido',
-      status: ({ planejamento: 'Planejamento', producao: 'Em produção', aprovacao: 'Em aprovação' }[item.status] || 'Ativo'),
-      dueDate: item.dueDate || '',
-      priority: item.status === 'aprovacao' ? 1 : item.status === 'producao' ? 2 : 3,
-      updatedAt: item.updatedAt || '',
-      action: 'conteudos',
-    }));
-
-  const campaignName = (id) => {
-    const slug = String(id || '').split('__')[1] || 'campanha';
-    return slug.split('-').filter(Boolean).map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-  };
-
-  const campaignStart = (id) => String(id || '').split('__')[0] || '';
-
-  const fromCampaigns = (items) => items
-    .filter((item) => ['planejamento', 'producao', 'aprovacao', 'ativa'].includes(item.status))
-    .map((item) => ({
-      id: `campaign-${item.id}`,
-      sourceId: String(item.id || ''),
-      origin: 'Campanha',
-      originTone: 'campaign',
-      title: campaignName(item.id),
-      context: item.nextMilestone || 'Campanha do calendário',
-      responsible: item.responsible || 'Não definido',
-      status: ({ planejamento: 'Planejamento', producao: 'Em produção', aprovacao: 'Em aprovação', ativa: 'Ativa' }[item.status] || 'Ativa'),
-      dueDate: item.milestoneDate || campaignStart(item.id),
-      priority: item.status === 'ativa' ? 0 : item.status === 'aprovacao' ? 1 : 2,
-      updatedAt: item.updatedAt || '',
-      action: 'calendario',
-    }));
-
-  const sortItems = (items) => [...items].sort((a, b) => {
-    const dueA = dueMeta(a.dueDate).weight;
-    const dueB = dueMeta(b.dueDate).weight;
-    if (dueA !== dueB) return dueA - dueB;
-    if (a.priority !== b.priority) return a.priority - b.priority;
-    return Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0);
-  });
 
   const isHome = () => normalize(document.querySelector('[data-title]')?.textContent).includes('painel de marketing');
   const demandsRoot = () => document.querySelector('[data-internal-demands]');
@@ -209,7 +41,7 @@
   };
 
   const matchesFilter = (item, filter) => {
-    const bucket = dueMeta(item.dueDate).bucket;
+    const bucket = radar()?.dueMeta(item.dueDate).bucket;
     if (filter === 'all') return true;
     if (filter === 'week') return ['today', 'week'].includes(bucket);
     return bucket === filter;
@@ -221,7 +53,7 @@
   }, {});
 
   const card = (item) => {
-    const due = dueMeta(item.dueDate);
+    const due = radar().dueMeta(item.dueDate);
     const attrs = item.action === 'demand'
       ? `data-demand-edit="${esc(item.sourceId)}"`
       : `data-view="${esc(item.action)}"`;
@@ -250,7 +82,7 @@
       if (!target.isConnected) root.appendChild(target);
     }
 
-    const visible = sortItems(state.items.filter((item) => matchesFilter(item, state.filter)));
+    const visible = radar()?.sortItems(state.items.filter((item) => matchesFilter(item, state.filter))) || [];
     const totals = filterCounts();
 
     target.innerHTML = `<header class="pmh-active-head">
@@ -266,35 +98,41 @@
     ${state.errors.length ? `<footer class="pmh-active-warning">Algumas fontes não carregaram: ${esc(state.errors.join(', '))}.</footer>` : ''}`;
   };
 
-  const load = async () => {
-    if (state.loading || !isHome()) return;
-    state.loading = true;
-    render();
-    const results = await Promise.allSettled([
-      json(API.tickets),
-      json(API.inaugurations),
-      json(API.demands),
-      json(API.contents),
-      json(API.campaigns),
-    ]);
-    const labels = ['SULTS', 'Inaugurações', 'Demandas internas', 'Conteúdos', 'Campanhas'];
-    state.errors = results.map((result, index) => result.status === 'rejected' ? labels[index] : '').filter(Boolean);
-    state.items = sortItems([
-      ...fromTickets(results[0].status === 'fulfilled' ? results[0].value : []),
-      ...fromInaugurations(results[1].status === 'fulfilled' ? results[1].value : []),
-      ...fromInternalDemands(results[2].status === 'fulfilled' ? results[2].value : []),
-      ...fromContents(results[3].status === 'fulfilled' ? results[3].value : []),
-      ...fromCampaigns(results[4].status === 'fulfilled' ? results[4].value : []),
-    ]);
+  const applySnapshot = (snapshot) => {
+    if (!snapshot) return;
+    state.items = Array.isArray(snapshot.items) ? snapshot.items : [];
+    state.errors = Array.isArray(snapshot.errors) ? snapshot.errors : [];
     state.loaded = true;
     state.loading = false;
     render();
   };
 
+  const load = async ({ force = false } = {}) => {
+    if (state.loading || !isHome()) return;
+    const service = radar();
+    if (!service) {
+      state.errors = ['Serviço de dados do Radar'];
+      state.loaded = true;
+      return render();
+    }
+
+    state.loading = true;
+    render();
+    try {
+      applySnapshot(await service.collect({ force }));
+    } catch {
+      state.errors = ['Não foi possível carregar o Radar'];
+      state.loaded = true;
+      state.loading = false;
+      render();
+    }
+  };
+
   const refresh = () => {
     if (!isHome()) return;
+    radar()?.invalidate();
     state.loaded = false;
-    load();
+    load({ force: true });
   };
 
   document.addEventListener('click', (event) => {
@@ -311,6 +149,10 @@
 
   document.addEventListener('submit', (event) => {
     if (event.target.matches('[data-demand-preview]')) setTimeout(refresh, 650);
+  });
+
+  window.addEventListener('pmh:radar-data', (event) => {
+    if (isHome()) applySnapshot(event.detail);
   });
 
   const sync = () => {
