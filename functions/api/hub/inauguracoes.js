@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'planet-hub:inauguracoes:v1';
 const MAX_ITEMS = 150;
-const MAX_BODY_BYTES = 300_000;
+const MAX_BODY_BYTES = 700_000;
 
 const headers = {
   'Content-Type': 'application/json; charset=UTF-8',
@@ -14,6 +14,12 @@ const getStore = (env) => env.PLANET_HUB_DATA;
 
 const cleanText = (value, max = 240) => String(value ?? '').trim().slice(0, max);
 
+const cleanMoney = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0) return 0;
+  return Math.min(10_000_000, Math.round(number * 100) / 100);
+};
+
 const normalizeChecklistItem = (item = {}) => ({
   action: cleanText(item.action, 180),
   owner: cleanText(item.owner, 80),
@@ -21,9 +27,33 @@ const normalizeChecklistItem = (item = {}) => ({
   done: Boolean(item.done),
 });
 
+const normalizeInauguralAction = (item = {}) => {
+  const costType = ['package', 'unit', 'included'].includes(item.costType)
+    ? item.costType
+    : 'package';
+
+  return {
+    id: cleanText(item.id, 80) || `action-${crypto.randomUUID()}`,
+    name: cleanText(item.name, 140) || 'Ação inaugural',
+    description: cleanText(item.description, 320),
+    owner: cleanText(item.owner, 100),
+    timing: cleanText(item.timing, 80),
+    plannedAmount: cleanMoney(item.plannedAmount),
+    actualAmount: cleanMoney(item.actualAmount),
+    costType,
+    included: item.included !== false,
+    done: Boolean(item.done),
+    quantity: Math.max(0, Math.min(50, Number.parseInt(item.quantity, 10) || 0)),
+    notes: cleanText(item.notes, 300),
+  };
+};
+
 const normalizeInauguration = (item = {}) => {
   const checklist = Array.isArray(item.checklist)
     ? item.checklist.slice(0, 50).map(normalizeChecklistItem)
+    : [];
+  const inauguralActions = Array.isArray(item.inauguralActions)
+    ? item.inauguralActions.slice(0, 20).map(normalizeInauguralAction)
     : [];
 
   return {
@@ -37,7 +67,10 @@ const normalizeInauguration = (item = {}) => {
     location: cleanText(item.location, 180),
     createdAt: cleanText(item.createdAt, 40) || new Date().toISOString(),
     updatedAt: cleanText(item.updatedAt, 40) || new Date().toISOString(),
+    packageBudget: cleanMoney(item.packageBudget),
+    actionsVersion: Math.max(0, Math.min(100, Number.parseInt(item.actionsVersion, 10) || 0)),
     checklist,
+    inauguralActions,
   };
 };
 
