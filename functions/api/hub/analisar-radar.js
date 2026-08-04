@@ -8,6 +8,13 @@ const clean = (value, max = 300) => String(value ?? '').trim().slice(0, max);
 const cleanDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '').slice(0, 10))
   ? String(value).slice(0, 10)
   : '';
+const OPERATIONAL_STATES = new Set([
+  'actionable',
+  'blocked',
+  'waiting_info',
+  'waiting_approval',
+  'scheduled',
+]);
 
 const normalizeItem = (item = {}) => ({
   id: clean(item.id, 140),
@@ -19,6 +26,11 @@ const normalizeItem = (item = {}) => ({
   dueDate: cleanDate(item.dueDate),
   priority: Number.isFinite(Number(item.priority)) ? Math.max(0, Math.min(5, Number(item.priority))) : 2,
   updatedAt: clean(item.updatedAt, 40),
+  operationalState: OPERATIONAL_STATES.has(item.operationalState) ? item.operationalState : 'actionable',
+  blockerReason: clean(item.blockerReason, 900),
+  dependsOn: clean(item.dependsOn, 240),
+  nextAction: clean(item.nextAction, 600),
+  followUpDate: cleanDate(item.followUpDate),
 });
 
 const dateDiff = (dateValue, todayValue) => {
@@ -29,68 +41,110 @@ const dateDiff = (dateValue, todayValue) => {
   return Math.round((due - today) / 86400000);
 };
 
-const localAnalysis = (items, today) => {
-  const scored = items.map((item) => {
-    const days = dateDiff(item.dueDate, today);
-    const score = days == null
-      ? 100 + item.priority
-      : days < 0
-        ? -1000 + days
-        : days * 10 + item.priority;
-    return { ...item, days, score };
-  }).sort((a, b) => a.score - b.score);
+const isDeferred = (item) => item.operationalState !== 'actionable';
+const followUpDiff = (item, today) => dateDiff(item.followUpDate, today);
+const followUpDue = (item, today) => isDeferred(item)
+  && followUpDiff(item, today) != null
+  && followUpDiff(item, today) <= 0;
 
-  const focus = scored[0] || null;
-  const urgent = scored.filter((item) => item.days != null && item.days <= 0).slice(0, 5);
-  const noResponsible = scored.filter((item) => /não definido/i.test(item.responsible)).slice(0, 5);
-  const noDate = scored.filter((item) => item.days == null).slice(0, 5);
+const executionScore = (item, today) => {
+  const days = dateDiff(item.dueDate, today);
+  const score = days == null
+    ? 100 + item.priority
+    : days < 0
+      ? -1000 + days
+      : days * 10 + item.priority;
+  return { ...item, days, score };
+};
+
+const blockerDescription = (item) => [
+  item.dependsOn ? `Depende de ${item.dependsOn}.` : '',
+  item.blockerReason,
+  item.followUpDate ? `Revisar em ${item.followUpDate.split('-').reverse().join('/')}.` : '',
+].filter(Boolean).join(' ');
+
+const localAnalysis = (items, today) => {
+  const executable = items
+    .filter((item) => !isDeferred(item))
+    .map((item) => executionScore(item, today))
+    .sort((a, b) => a.score - b.score);
+
+  const followUps = items
+    .filter((item) => followUpDue(item, today))
+    .map((item) => ({ ...item, followUpDays: followUpDiff(item, today) }))
+    .sort((a, b) => a.followUpDays - b.followUpDays);
+
+  const blocked = items.filter(isDeferred);
+  const focus = executable[0] || followUps[0] || null;
+  const focusIsFollowUp = Boolean(focus && isDeferred(focus));
+  const urgent = executable.filter((item) => item.days != null && item.days <= 0).slice(0, 5);
+  const noResponsible = executable.filter((item) => /não definido/i.test(item.responsible)).slice(0, 5);
+  const noDate = executable.filter((item) => item.days == null).slice(0, 5);
 
   return {
     mode: 'rules',
     summary: items.length
-      ? `${items.length} demandas ativas analisadas. A prioridade foi definida por prazo e urgência.`
+      ? `${items.length} demandas ativas analisadas: ${executable.length} executáveis e ${blocked.length} com dependência registrada.`
       : 'Nenhuma demanda ativa foi enviada para análise.',
     focus: focus ? {
       title: focus.title,
-      reason: focus.days == null
-        ? 'É a demanda de maior prioridade entre as que não possuem prazo definido.'
-        : focus.days < 0
-          ? `Está atrasada há ${Math.abs(focus.days)} dia(s).`
-          : focus.days === 0
-            ? 'Vence hoje.'
-            : `É a próxima demanda com prazo, em ${focus.days} dia(s).`,
+      reason: focusIsFollowUp
+        ? `${blockerDescription(focus)} A data de cobrança ou revisão chegou.`
+        : focus.days == null
+          ? 'É a demanda executável de maior prioridade entre as que não possuem prazo definido.'
+          : focus.days < 0
+            ? `Está atrasada há ${Math.abs(focus.days)} dia(s) e não possui bloqueio registrado.`
+            : focus.days === 0
+              ? 'Vence hoje e está disponível para execução.'
+              : `É a próxima demanda executável com prazo, em ${focus.days} dia(s).`,
       origin: focus.origin,
-      dueDate: focus.dueDate,
+      dueDate: focusIsFollowUp ? focus.followUpDate : focus.dueDate,
     } : null,
     urgent: urgent.map((item) => ({
       title: item.title,
-      reason: item.days < 0 ? `Atrasada há ${Math.abs(item.days)} dia(s).` : 'Vence hoje.',
+      reason: item.days < 0 ? `Atrasada há ${Math.abs(item.days)} dia(s) e executável.` : 'Vence hoje e está executável.',
       origin: item.origin,
     })),
-    delegation: scored
-      .filter((item) => !/não definido/i.test(item.responsible))
-      .slice(0, 4)
-      .map((item) => ({
+    delegation: [
+      ...followUps.map((item) => ({
         title: item.title,
-        responsible: item.responsible,
-        suggestion: `Confirmar execução e próximo passo com ${item.responsible}.`,
+        responsible: item.dependsOn || item.responsible || 'Responsável externo',
+        suggestion: `Cobrar retorno e registrar uma nova previsão. ${item.blockerReason}`.trim(),
       })),
-    blocked: noResponsible.map((item) => ({
-      title: item.title,
-      reason: 'Responsável não definido.',
-    })),
-    nextActions: scored.slice(0, 3).map((item) => ({
-      action: item.responsible && !/não definido/i.test(item.responsible)
-        ? `Validar o próximo passo de “${item.title}” com ${item.responsible}.`
-        : `Definir responsável e próximo passo para “${item.title}”.`,
-      relatedTitle: item.title,
-    })),
-    risks: [
-      ...(urgent.length ? [`Existem ${urgent.length} demanda(s) vencida(s) ou com vencimento hoje.`] : []),
-      ...(noResponsible.length ? [`Existem ${noResponsible.length} demanda(s) sem responsável definido.`] : []),
-      ...(noDate.length ? [`Existem ${noDate.length} demanda(s) sem prazo entre as primeiras prioridades.`] : []),
+      ...executable
+        .filter((item) => !/não definido/i.test(item.responsible))
+        .map((item) => ({
+          title: item.title,
+          responsible: item.responsible,
+          suggestion: `Confirmar execução e próximo passo com ${item.responsible}.`,
+        })),
     ].slice(0, 5),
-    caveats: ['Análise automática baseada apenas nos dados cadastrados no Radar.'],
+    blocked: blocked.slice(0, 6).map((item) => ({
+      title: item.title,
+      reason: blockerDescription(item) || 'Item marcado com dependência, mas sem descrição suficiente.',
+    })),
+    nextActions: [
+      ...executable.slice(0, 3).map((item) => ({
+        action: item.nextAction || (/não definido/i.test(item.responsible)
+          ? `Definir responsável e próximo passo para “${item.title}”.`
+          : `Executar o próximo passo de “${item.title}”.`),
+        relatedTitle: item.title,
+      })),
+      ...followUps.slice(0, 3).map((item) => ({
+        action: `Cobrar ${item.dependsOn || item.responsible || 'a dependência'} sobre “${item.title}” e atualizar a previsão.`,
+        relatedTitle: item.title,
+      })),
+    ].slice(0, 3),
+    risks: [
+      ...(urgent.length ? [`Existem ${urgent.length} demanda(s) executáveis vencidas ou com vencimento hoje.`] : []),
+      ...(followUps.length ? [`Existem ${followUps.length} dependência(s) cuja data de cobrança já chegou.`] : []),
+      ...(blocked.filter((item) => !item.followUpDate).length
+        ? [`Existem ${blocked.filter((item) => !item.followUpDate).length} dependência(s) sem data de acompanhamento.`]
+        : []),
+      ...(noResponsible.length ? [`Existem ${noResponsible.length} demanda(s) executáveis sem responsável definido.`] : []),
+      ...(noDate.length ? [`Existem ${noDate.length} demanda(s) executáveis sem prazo entre as primeiras prioridades.`] : []),
+    ].slice(0, 5),
+    caveats: ['Análise baseada nos dados e contextos operacionais registrados no Radar.'],
   };
 };
 
@@ -210,7 +264,7 @@ const sanitizeAnalysis = (raw, fallback) => {
 };
 
 const runAi = async (env, items, today, sourceErrors) => {
-  const system = `Você é o analista operacional do Marketing da Planet Chocolate. Hoje é ${today}, fuso America/Sao_Paulo. Analise somente as demandas fornecidas. Não invente prazo, responsável, status, origem, dependência ou contexto. Escolha exatamente um foco principal, priorizando: atrasos, vencimento hoje, inaugurações próximas, campanhas ativas, aprovações e itens sem responsável que bloqueiem execução. Seja direto, prático e escreva em português brasileiro. Recomende no máximo 3 próximas ações e até 5 itens por bloco. Delegação significa cobrar ou confirmar execução com o responsável já cadastrado; não invente novos responsáveis. Se faltarem dados, registre em caveats. Fontes que falharam: ${sourceErrors.length ? sourceErrors.join(', ') : 'nenhuma'}.`;
+  const system = `Você é o analista operacional do Marketing da Planet Chocolate. Hoje é ${today}, fuso America/Sao_Paulo. Analise somente as demandas fornecidas. Não invente prazo, responsável, status, origem, dependência ou contexto. O campo operationalState define a situação real: actionable significa que pode ser executada agora; blocked, waiting_info, waiting_approval e scheduled significam que existe uma dependência. Nunca escolha um item com dependência como foco de execução apenas porque está atrasado. Um item com dependência só pode virar foco quando followUpDate chegou ou venceu, e nesse caso o foco é cobrar, revisar ou atualizar a dependência, não executar a entrega. Entre os itens actionable, priorize atrasos, vencimento hoje, inaugurações próximas, campanhas ativas, aprovações e itens sem responsável. Use blockerReason, dependsOn, nextAction e followUpDate literalmente, sem completar informações ausentes. Seja direto, prático e escreva em português brasileiro. Recomende no máximo 3 próximas ações e até 5 itens por bloco. Fontes que falharam: ${sourceErrors.length ? sourceErrors.join(', ') : 'nenhuma'}.`;
   const user = JSON.stringify({ today, items }, null, 2);
   const request = {
     messages: [
@@ -269,7 +323,7 @@ export async function onRequestPost({ env, request }) {
       ...fallback,
       aiConfigured: true,
       aiFailed: true,
-      warning: 'A IA não respondeu corretamente; usamos a análise local por prazo e prioridade.',
+      warning: 'A IA não respondeu corretamente; usamos a análise local com prazo, prioridade e dependências.',
       details: error instanceof Error ? error.message : String(error),
       analyzedAt: new Date().toISOString(),
       itemCount: items.length,
