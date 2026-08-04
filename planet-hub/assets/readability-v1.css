@@ -1,6 +1,19 @@
 /* Readability pass: preserve display titles, enlarge supporting text. */
-[class*="_sidebar_"] nav button b { font-size: 13px !important; line-height: 1.25 !important; }
+html, body, button, input, select, textarea {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: geometricPrecision !important;
+}
+[class*="_sidebar_"] nav button b { font-size: 13px !important; line-height: 1.25 !important; font-weight: 700 !important; text-shadow: none !important; }
 [class*="_sidebar_"] nav button em { font-size: 10px !important; }
+[class*="_sidebar_"] nav button[class*="_active_"] b,
+[class*="_sidebar_"] nav button[aria-current="page"] b {
+  color: #fff !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em !important;
+  text-shadow: none !important;
+}
 [class*="_logo_"] small, [class*="_profile_"] small { font-size: 10px !important; }
 [class*="_profile_"] strong { font-size: 12px !important; }
 [class*="_topbar_"] small { font-size: 10px !important; }
@@ -36,9 +49,10 @@
 [class*="_deliveryDashboard_"] article strong { font-size: 27px !important; }
 [class*="_goalCard_"] label { font-size: 9px !important; }
 [class*="_goalCard_"] input { font-size: 11px !important; }
-[class*="_directiveQueue_"] small { font-size: 9px !important; }
-[class*="_directiveQueue_"] strong { font-size: 15px !important; }
-[class*="_directiveQueue_"] p, [class*="_directiveQueue_"] > b { font-size: 10px !important; }
+[class*="_directiveQueue_"] small { font-size: 10px !important; line-height: 1.3 !important; font-weight: 800 !important; letter-spacing: .04em !important; text-shadow: none !important; }
+[class*="_directiveQueue_"] strong { font-size: 16px !important; line-height: 1.25 !important; font-weight: 800 !important; letter-spacing: -0.01em !important; text-shadow: none !important; }
+[class*="_directiveQueue_"] p, [class*="_directiveQueue_"] > b { font-size: 11px !important; line-height: 1.45 !important; font-weight: 600 !important; text-shadow: none !important; }
+[class*="_directiveQueue_"] * { opacity: 1 !important; }
 [class*="_filters_"] button { font-size: 11px !important; }
 
 [class*="_demandTable_"] > header { font-size: 9px !important; }
