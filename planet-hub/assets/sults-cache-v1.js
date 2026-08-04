@@ -2,6 +2,9 @@
   const CACHE_PREFIX = 'planet-hub-sults-cache-v1:';
   const nativeFetch = window.fetch.bind(window);
   const state = new Map();
+  const RETRY_DELAYS = [0, 450, 1200];
+
+  const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
   const isSultsRoute = (url) =>
     url.includes('/api/sults/chamados') || url.includes('/api/sults/implantacoes');
@@ -72,6 +75,26 @@
     }));
   };
 
+  const fetchWithRetry = async (args) => {
+    let lastResponse = null;
+    let lastError = null;
+
+    for (const delay of RETRY_DELAYS) {
+      if (delay) await wait(delay);
+      try {
+        const response = await nativeFetch(...args);
+        lastResponse = response;
+        if (response.ok) return response;
+        if (![408, 429, 500, 502, 503, 504].includes(response.status)) return response;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    if (lastResponse) return lastResponse;
+    throw lastError || new Error('Falha ao consultar o SULTS.');
+  };
+
   window.fetch = async (...args) => {
     const input = args[0];
     const url = typeof input === 'string' ? input : input?.url || '';
@@ -80,7 +103,7 @@
     const key = cacheKey(url);
 
     try {
-      const response = await nativeFetch(...args);
+      const response = await fetchWithRetry(args);
       if (response.ok) {
         try {
           const payload = await response.clone().json();
