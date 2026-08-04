@@ -22,6 +22,9 @@
     || /não definido|sem responsável/i.test(item.responsible);
 
   const statusMatches = (item, pattern) => pattern.test(String(item?.status || ''));
+  const isDeferred = (item) => (item.operationalState || 'actionable') !== 'actionable';
+  const followUpDiff = (item) => item.followUpDate ? radar().dayDiff(item.followUpDate) : null;
+  const followUpDue = (item) => isDeferred(item) && followUpDiff(item) != null && followUpDiff(item) <= 0;
 
   const focusScore = (item) => {
     const due = radar().dueMeta(item.dueDate);
@@ -35,13 +38,11 @@
 
     if (statusMatches(item, /aprova/i)) score -= 650;
     if (item.action === 'inauguracoes' && ['late', 'today', 'week'].includes(due.bucket)) score -= 450;
-    if (statusMatches(item, /aguard/i)) score += 350;
     if (responsibleMissing(item)) score -= 120;
-
     return score;
   };
 
-  const focusReason = (item) => {
+  const executionReason = (item) => {
     const due = radar().dueMeta(item.dueDate);
     const reasons = [];
 
@@ -49,19 +50,24 @@
     else if (due.bucket === 'today') reasons.push('Vence hoje.');
     else if (due.bucket === 'week') reasons.push(`${due.label}.`);
 
-    if (statusMatches(item, /aprova/i)) reasons.push('Está parada em aprovação.');
+    if (statusMatches(item, /aprova/i)) reasons.push('Está parada em aprovação e pode avançar com uma decisão sua.');
     if (item.action === 'inauguracoes' && ['late', 'today', 'week'].includes(due.bucket)) {
       reasons.push('A data da inauguração está próxima.');
     }
     if (responsibleMissing(item)) reasons.push('Ainda não há responsável definido.');
-    if (statusMatches(item, /aguard/i)) reasons.push('Existe uma dependência aguardando retorno.');
 
-    return reasons.join(' ') || 'É o item mais importante pela combinação de prioridade, prazo e atualização.';
+    return reasons.join(' ') || 'É o item executável mais importante pela combinação de prioridade, prazo e atualização.';
   };
 
-  const nextAction = (item) => {
+  const followUpReason = (item) => {
+    const dependency = item.dependsOn ? `Depende de ${item.dependsOn}.` : 'Existe uma dependência externa.';
+    const reason = item.blockerReason ? ` ${item.blockerReason}` : '';
+    return `${dependency}${reason} A data definida para cobrar ou revisar chegou.`;
+  };
+
+  const executionNextAction = (item) => {
+    if (item.nextAction) return item.nextAction;
     if (responsibleMissing(item)) return 'Definir quem assume e registrar o próximo passo.';
-    if (statusMatches(item, /aguard/i)) return 'Identificar a dependência e cobrar uma previsão objetiva.';
     if (statusMatches(item, /aprova/i)) return 'Abrir, revisar e aprovar ou devolver com um ajuste objetivo.';
 
     return ({
@@ -73,22 +79,48 @@
     }[item.action] || 'Abrir o item e definir o próximo movimento concreto.');
   };
 
+  const followUpNextAction = (item) => {
+    const target = item.dependsOn || item.responsible || 'a pessoa responsável';
+    return `Cobrar ${target} e registrar a nova previsão.`;
+
+  };
+
   const recommendFocus = (items) => {
-    const ranked = [...items].sort((a, b) => {
-      const difference = focusScore(a) - focusScore(b);
-      if (difference !== 0) return difference;
-      return radar().sortItems([a, b])[0] === a ? -1 : 1;
-    });
-    const item = ranked[0] || null;
-    return item ? { item, reason: focusReason(item), nextAction: nextAction(item) } : null;
+    const actionable = items
+      .filter((item) => !isDeferred(item))
+      .sort((a, b) => focusScore(a) - focusScore(b));
+
+    if (actionable[0]) {
+      return {
+        type: 'execution',
+        item: actionable[0],
+        reason: executionReason(actionable[0]),
+        nextAction: executionNextAction(actionable[0]),
+      };
+    }
+
+    const followUps = items
+      .filter(followUpDue)
+      .sort((a, b) => (followUpDiff(a) ?? 0) - (followUpDiff(b) ?? 0));
+
+    if (followUps[0]) {
+      return {
+        type: 'follow_up',
+        item: followUps[0],
+        reason: followUpReason(followUps[0]),
+        nextAction: followUpNextAction(followUps[0]),
+      };
+    }
+
+    return null;
   };
 
   const signals = (items) => ({
     late: items.filter((item) => radar().dueMeta(item.dueDate).bucket === 'late').length,
-    today: items.filter((item) => radar().dueMeta(item.dueDate).bucket === 'today').length,
-    approvals: items.filter((item) => statusMatches(item, /aprova/i)).length,
-    waiting: items.filter((item) => statusMatches(item, /aguard/i)).length,
-    noResponsible: items.filter(responsibleMissing).length,
+    executable: items.filter((item) => !isDeferred(item)).length,
+    dependencies: items.filter(isDeferred).length,
+    followUps: items.filter(followUpDue).length,
+    approvals: items.filter((item) => statusMatches(item, /aprova/i) && !isDeferred(item)).length,
   });
 
   const actionAttrs = (item) => item.action === 'demand'
@@ -97,42 +129,68 @@
 
   const signal = (value, label, tone = '') => `<span class="${esc(tone)}"><b>${esc(value)}</b>${esc(label)}</span>`;
 
-  const markup = (items) => {
-    const decision = recommendFocus(items);
-    if (!decision) {
-      return `<div class="pmh-decision-main"><small>AGORA</small><h2>Nenhuma pendência ativa</h2><p>O Radar não encontrou nada que precise de ação neste momento.</p></div>`;
-    }
+  const nearestFollowUp = (items) => items
+    .filter((item) => isDeferred(item) && item.followUpDate)
+    .sort((a, b) => String(a.followUpDate).localeCompare(String(b.followUpDate)))[0] || null;
 
-    const { item, reason, nextAction: movement } = decision;
-    const due = radar().dueMeta(item.dueDate);
+  const emptyMarkup = (items) => {
     const summary = signals(items);
-    const canPrepareMessage = item.responsible
-      && !/não definido|sem responsável|andré|andre/i.test(item.responsible);
+    const next = nearestFollowUp(items);
+    const nextLabel = next?.followUpDate
+      ? new Intl.DateTimeFormat('pt-BR').format(new Date(`${next.followUpDate}T12:00:00`))
+      : '';
 
     return `<div class="pmh-decision-top">
       <div class="pmh-decision-main">
-        <small>🎯 FOCO PRINCIPAL AGORA</small>
+        <small>🟢 SEM EXECUÇÃO DISPONÍVEL</small>
+        <h2>Nenhum item pode avançar agora</h2>
+        <p>${summary.dependencies ? `${summary.dependencies} item(ns) dependem de informação, aprovação ou retorno externo.` : 'O Radar não encontrou nenhuma pendência ativa.'}</p>
+        ${next ? `<div class="pmh-decision-next"><small>PRÓXIMO ACOMPANHAMENTO</small><strong>${esc(next.title)} · ${esc(nextLabel)}</strong></div>` : ''}
+      </div>
+      ${next ? `<div class="pmh-decision-actions"><button type="button" data-radar-context="${esc(next.id)}">Revisar dependência</button></div>` : ''}
+    </div>
+    <div class="pmh-decision-signals">
+      ${signal(summary.executable, ' executáveis')}
+      ${signal(summary.dependencies, ' com dependência', summary.dependencies ? 'warning' : '')}
+      ${signal(summary.followUps, ' cobranças vencidas', summary.followUps ? 'danger' : '')}
+    </div>`;
+  };
+
+  const markup = (items) => {
+    const decision = recommendFocus(items);
+    if (!decision) return emptyMarkup(items);
+
+    const { item, reason, nextAction: movement, type } = decision;
+    const due = radar().dueMeta(item.dueDate);
+    const summary = signals(items);
+    const canPrepareMessage = type === 'follow_up' || (item.responsible
+      && !/não definido|sem responsável|andré|andre/i.test(item.responsible));
+
+    return `<div class="pmh-decision-top">
+      <div class="pmh-decision-main">
+        <small>${type === 'follow_up' ? '📣 COBRANÇA NECESSÁRIA AGORA' : '🎯 FOCO PRINCIPAL AGORA'}</small>
         <h2>${esc(item.title)}</h2>
         <p>${esc(reason)}</p>
         <div class="pmh-decision-next"><small>PRÓXIMO MOVIMENTO</small><strong>${esc(movement)}</strong></div>
         <div class="pmh-decision-meta">
           <span class="pmh-active-origin tone-${esc(item.originTone)}">${esc(item.origin)}</span>
-          <span>${esc(item.responsible || 'Sem responsável')}</span>
+          <span>${esc(item.dependsOn || item.responsible || 'Sem responsável')}</span>
           <time class="${esc(due.tone)}">${esc(due.label)}</time>
         </div>
       </div>
       <div class="pmh-decision-actions">
-        <button type="button" class="primary" ${actionAttrs(item)}>Abrir foco</button>
+        <button type="button" class="primary" ${actionAttrs(item)}>${type === 'follow_up' ? 'Abrir item' : 'Abrir foco'}</button>
+        <button type="button" data-radar-context="${esc(item.id)}">${isDeferred(item) ? 'Editar dependência' : 'Adicionar contexto'}</button>
         <button type="button" data-analyze-radar>Analisar contexto</button>
-        ${canPrepareMessage ? `<button type="button" data-copy-follow-up data-title="${esc(item.title)}" data-responsible="${esc(item.responsible)}" data-reason="${esc(reason)}">Preparar cobrança</button>` : ''}
+        ${canPrepareMessage ? `<button type="button" data-copy-follow-up data-title="${esc(item.title)}" data-responsible="${esc(item.dependsOn || item.responsible)}" data-reason="${esc(item.blockerReason || reason)}">Preparar cobrança</button>` : ''}
       </div>
     </div>
     <div class="pmh-decision-signals" aria-label="Leitura rápida do Radar">
-      ${signal(summary.late, ' atrasadas', summary.late ? 'danger' : '')}
-      ${signal(summary.today, ' vencem hoje', summary.today ? 'warning' : '')}
-      ${signal(summary.approvals, ' em aprovação')}
-      ${signal(summary.waiting, ' aguardando')}
-      ${signal(summary.noResponsible, ' sem responsável', summary.noResponsible ? 'warning' : '')}
+      ${signal(summary.executable, ' executáveis')}
+      ${signal(summary.dependencies, ' com dependência', summary.dependencies ? 'warning' : '')}
+      ${signal(summary.followUps, ' cobranças vencidas', summary.followUps ? 'danger' : '')}
+      ${signal(summary.late, ' atrasadas')}
+      ${signal(summary.approvals, ' aprovações executáveis')}
     </div>`;
   };
 
@@ -169,7 +227,7 @@
     const responsible = button.dataset.responsible || '';
     const title = button.dataset.title || '';
     const reason = button.dataset.reason || '';
-    const text = `Oi, ${responsible}. Sobre “${title}”: ${reason} Consegue me confirmar o próximo passo e a previsão de conclusão?`;
+    const text = `Oi, ${responsible}. Sobre “${title}”: ${reason} Consegue me confirmar o que falta e uma previsão para liberarmos essa demanda?`;
 
     try {
       await navigator.clipboard.writeText(text);
