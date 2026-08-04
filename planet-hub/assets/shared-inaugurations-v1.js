@@ -2,7 +2,11 @@
   const API_URL = '/api/hub/inauguracoes';
   const TRACKED_KEY = 'planet-hub-inaugurations-v2';
   const LEGACY_KEY = 'planet-hub-implantations-v1';
-  const NAV_SCRIPT = '/planet-hub/assets/command-center-nav-fix-v1.js?v=20260804-shared1';
+  const SCRIPT_SEQUENCE = [
+    '/planet-hub/assets/command-center-nav-fix-v1.js?v=20260804-shared2',
+    '/planet-hub/assets/kanban-pagination-v1.js?v=20260804-2',
+    '/planet-hub/assets/calendar-consolidation-v1.js?v=20260804-2',
+  ];
   const storagePrototype = Storage.prototype;
   const originalGetItem = storagePrototype.getItem;
   const originalSetItem = storagePrototype.setItem;
@@ -35,6 +39,25 @@
   };
 
   const signature = (items) => JSON.stringify(items || []);
+
+  const comparable = (item) => {
+    if (!item || typeof item !== 'object') return String(item);
+    const copy = { ...item };
+    delete copy.updatedAt;
+    return JSON.stringify(copy);
+  };
+
+  const stampChangedItems = (previousItems, nextItems) => {
+    const previous = new Map(previousItems.map((item) => [String(item?.id || ''), item]));
+    const updatedAt = new Date().toISOString();
+    return nextItems.map((item) => {
+      const oldItem = previous.get(String(item?.id || ''));
+      if (!oldItem || comparable(oldItem) !== comparable(item)) {
+        return { ...item, updatedAt };
+      }
+      return item;
+    });
+  };
 
   const mergeItems = (remoteItems, localItems, preferLocal = false) => {
     const merged = new Map();
@@ -127,6 +150,7 @@
     if (!ready || suppressSync) return;
     window.clearTimeout(pendingSync);
     pendingSync = window.setTimeout(() => {
+      pendingSync = null;
       saveRemote(items).catch((error) => {
         console.warn('Planet Hub: sincronização compartilhada indisponível', error);
         setStatus('local', 'sincronização pendente');
@@ -135,9 +159,15 @@
   };
 
   storagePrototype.setItem = function patchedSetItem(key, value) {
-    originalSetItem.call(this, key, value);
-    if (this !== window.localStorage || key !== TRACKED_KEY || suppressSync) return;
-    scheduleSync(parseArray(value));
+    if (this !== window.localStorage || key !== TRACKED_KEY || suppressSync) {
+      originalSetItem.call(this, key, value);
+      return;
+    }
+
+    const previous = parseArray(originalGetItem.call(this, key));
+    const stamped = stampChangedItems(previous, parseArray(value));
+    originalSetItem.call(this, key, JSON.stringify(stamped));
+    scheduleSync(stamped);
   };
 
   const refreshFromRemote = async () => {
@@ -159,17 +189,23 @@
     } catch (_) {}
   };
 
-  const loadNavigation = () => new Promise((resolve) => {
+  const loadScript = (src) => new Promise((resolve) => {
     const script = document.createElement('script');
-    script.src = NAV_SCRIPT;
+    script.src = src;
     script.async = false;
     script.onload = resolve;
     script.onerror = () => {
-      console.error('Planet Hub: não foi possível carregar o módulo de navegação.');
+      console.error(`Planet Hub: não foi possível carregar ${src}.`);
       resolve();
     };
     document.head.appendChild(script);
   });
+
+  const loadHubScripts = async () => {
+    for (const src of SCRIPT_SEQUENCE) {
+      await loadScript(src);
+    }
+  };
 
   const boot = async () => {
     const localItems = readLocal();
@@ -199,7 +235,7 @@
       setStatus('local');
     }
 
-    await loadNavigation();
+    await loadHubScripts();
     window.setTimeout(() => setStatus(ready ? 'shared' : 'local'), 0);
 
     if (ready) {
