@@ -10,6 +10,21 @@
   const isHome = () => normalize(document.querySelector('[data-title]')?.textContent)
     .includes('painel de marketing');
 
+  const promoteDecisionCockpit = () => {
+    if (!isHome()) return;
+
+    const content = document.querySelector('[data-content]');
+    if (!content) return;
+
+    const legacyHero = content.querySelector(':scope > .pmh-hero');
+    if (legacyHero) legacyHero.remove();
+
+    const cockpit = document.querySelector('[data-decision-cockpit]');
+    if (cockpit && cockpit.parentElement === content && content.firstElementChild !== cockpit) {
+      content.insertBefore(cockpit, content.firstElementChild);
+    }
+  };
+
   const syncTopSearch = () => {
     const search = document.querySelector('[data-search-wrap]');
     if (!search) return;
@@ -64,6 +79,7 @@
     scheduled = true;
     requestAnimationFrame(() => {
       scheduled = false;
+      promoteDecisionCockpit();
       syncTopSearch();
       compactDemandComposer();
     });
