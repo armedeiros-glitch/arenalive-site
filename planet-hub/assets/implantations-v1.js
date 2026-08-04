@@ -1,6 +1,9 @@
 (() => {
   const STORAGE_KEY = 'planet-hub-implantations-v1';
+  const SULTS_API_URL = '/api/sults/implantacoes?start=0&limit=100';
   let lastFocus = null;
+  let sultsItems = [];
+  let sultsState = 'loading';
 
   const read = () => {
     try {
@@ -73,10 +76,35 @@
     open(button);
   }, true);
 
+  const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[character]));
+
   const formatDate = (value) => {
-    const [year, month, day] = value.split('-');
-    return `${day}/${month}/${year}`;
+    if (!value) return 'Data não informada';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Data não informada';
+    return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(date);
   };
+
+  const statusLabel = (item) => {
+    if (item.completed) return 'CONCLUÍDO';
+    if (item.paused) return 'PAUSADO';
+    if (item.active) return 'EM IMPLANTAÇÃO';
+    return 'INATIVO';
+  };
+
+  const normalizeSultsItem = (item) => ({
+    id: `sults-${item.sultsProjectId}`,
+    source: 'sults',
+    unit: item.unit,
+    franchisee: item.responsible || 'Responsável não informado',
+    location: item.category || item.model || 'Localização não informada',
+    openingDate: item.endDate || item.startDate,
+    completed: item.completed,
+    paused: item.paused,
+    active: item.active,
+    cnpj: item.cnpj,
+    projectName: item.projectName,
+  });
 
   const render = () => {
     const title = [...document.querySelectorAll('h2')].find((node) => node.textContent.trim() === 'Inaugurações');
@@ -84,26 +112,58 @@
     const page = title.closest('div[class]');
     const overview = page && [...page.children].find((node) => node.tagName === 'SECTION' && !node.querySelector('h2'));
     if (!overview) return;
+
     let list = page.querySelector('.pmh-implant-list');
-    const items = read();
-    if (!items.length) {
+    const localItems = read();
+    const items = [...sultsItems.map(normalizeSultsItem), ...localItems];
+
+    if (!items.length && sultsState !== 'loading' && sultsState !== 'error') {
       if (list) list.remove();
       return;
     }
+
     if (!list) {
       list = document.createElement('section');
       list.className = 'pmh-implant-list';
       overview.parentNode.insertBefore(list, overview);
     }
-    const markup = `<header><h3>Implantações cadastradas</h3><span>${items.length} ${items.length === 1 ? 'unidade' : 'unidades'}</span></header>` +
+
+    if (sultsState === 'loading' && !items.length) {
+      list.innerHTML = '<header><h3>Implantações cadastradas</h3><span>Sincronizando com o SULTS…</span></header>';
+      return;
+    }
+
+    const syncMessage = sultsState === 'error'
+      ? '<p class="pmh-implant-note">Não foi possível sincronizar com o SULTS agora. As implantações manuais continuam disponíveis.</p>'
+      : '';
+
+    const markup = `<header><h3>Implantações cadastradas</h3><span>${items.length} ${items.length === 1 ? 'unidade' : 'unidades'}</span></header>${syncMessage}` +
       items.map((item) => `<article class="pmh-implant-card">
-        <div><small>EM IMPLANTAÇÃO</small><h4>${escapeHtml(item.unit)}</h4><p>${escapeHtml(item.location)} · Franqueado(a): ${escapeHtml(item.franchisee)}</p></div>
-        <aside><strong>Inauguração ${formatDate(item.openingDate)}</strong><span>0/15 etapas · 6 ações inaugurais</span></aside>
+        <div><small>${item.source === 'sults' ? statusLabel(item) : 'EM IMPLANTAÇÃO'}</small><h4>${escapeHtml(item.unit)}</h4><p>${escapeHtml(item.location)} · Responsável: ${escapeHtml(item.franchisee)}</p></div>
+        <aside><strong>${item.source === 'sults' ? 'Fim previsto ' : 'Inauguração '}${formatDate(item.openingDate)}</strong><span>${item.source === 'sults' ? 'Sincronizado com o SULTS' : '0/15 etapas · 6 ações inaugurais'}</span></aside>
       </article>`).join('');
+
     if (list.innerHTML !== markup) list.innerHTML = markup;
   };
 
-  const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[character]));
+  const loadSults = async () => {
+    sultsState = 'loading';
+    render();
+
+    try {
+      const response = await fetch(SULTS_API_URL, { headers: { Accept: 'application/json' } });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'Falha na sincronização');
+      sultsItems = Array.isArray(payload.data) ? payload.data : [];
+      sultsState = 'ready';
+    } catch (error) {
+      console.error('Planet Hub: erro ao consultar o SULTS', error);
+      sultsItems = [];
+      sultsState = 'error';
+    }
+
+    render();
+  };
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -112,6 +172,7 @@
     const items = read();
     items.unshift({
       id: `implant-${Date.now()}`,
+      source: 'manual',
       unit: data.get('unit').trim(),
       franchisee: data.get('franchisee').trim(),
       location: data.get('location').trim(),
@@ -129,4 +190,5 @@
   const observer = new MutationObserver(render);
   observer.observe(document.getElementById('root'), { childList: true, subtree: true });
   render();
+  loadSults();
 })();
