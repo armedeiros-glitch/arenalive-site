@@ -1,6 +1,7 @@
 const SULTS_ENDPOINT = 'https://api.sults.com.br/api/v1/chamado/ticket';
 const PAGE_LIMIT = 100;
 const ACTIVE_SITUATIONS = [1, 4, 5, 6];
+const MARKETING_DEPARTMENT_ID = 10;
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -27,6 +28,15 @@ const fetchTickets = async (token, params = {}) => {
 
   if (params.situation != null) {
     url.searchParams.set('situacao', String(params.situation));
+  }
+  if (params.department != null) {
+    url.searchParams.set('departamento', String(params.department));
+  }
+  if (params.responsible != null) {
+    url.searchParams.set('responsavel', String(params.responsible));
+  }
+  if (params.requester != null) {
+    url.searchParams.set('solicitante', String(params.requester));
   }
 
   const response = await fetch(url.toString(), {
@@ -81,6 +91,12 @@ const uniqueById = (tickets) =>
     array.findIndex((candidate) => candidate.id === ticket.id) === index,
   );
 
+const personIsIncluded = (ticket, personId) => {
+  if (!personId) return true;
+  if (ticket.responsibleId === personId || ticket.requesterId === personId) return true;
+  return ticket.support.some((item) => item?.pessoa?.id === personId);
+};
+
 export async function onRequestGet({ env, request }) {
   if (!env.SULTS_API_TOKEN) {
     return json({ error: 'SULTS_API_TOKEN não configurado.' }, 500);
@@ -88,12 +104,22 @@ export async function onRequestGet({ env, request }) {
 
   const incomingUrl = new URL(request.url);
   const includeClosed = incomingUrl.searchParams.get('includeClosed') === '1';
+  const scope = incomingUrl.searchParams.get('scope') || 'marketing';
+  const personId = Number.parseInt(incomingUrl.searchParams.get('personId') || '', 10) || null;
+  const departmentId = scope === 'all'
+    ? null
+    : Number.parseInt(incomingUrl.searchParams.get('departmentId') || String(MARKETING_DEPARTMENT_ID), 10);
+
+  if (scope === 'mine' && !personId) {
+    return json({ error: 'Para usar scope=mine, informe personId.' }, 400);
+  }
 
   try {
+    const baseFilters = { department: departmentId };
     const requests = includeClosed
-      ? [fetchTickets(env.SULTS_API_TOKEN)]
+      ? [fetchTickets(env.SULTS_API_TOKEN, baseFilters)]
       : ACTIVE_SITUATIONS.map((situation) =>
-          fetchTickets(env.SULTS_API_TOKEN, { situation }),
+          fetchTickets(env.SULTS_API_TOKEN, { ...baseFilters, situation }),
         );
 
     const results = await Promise.all(requests);
@@ -118,6 +144,7 @@ export async function onRequestGet({ env, request }) {
 
     const chamados = uniqueById(rawTickets)
       .map(mapTicket)
+      .filter((ticket) => scope !== 'mine' || personIsIncluded(ticket, personId))
       .sort((a, b) =>
         new Date(b.lastUpdatedAt || b.openedAt || 0).getTime() -
         new Date(a.lastUpdatedAt || a.openedAt || 0).getTime(),
@@ -125,6 +152,11 @@ export async function onRequestGet({ env, request }) {
 
     return json({
       data: chamados,
+      filters: {
+        scope,
+        departmentId,
+        personId,
+      },
       pagination: {
         mode: includeClosed ? 'all-first-page' : 'active-situations',
         situations: includeClosed ? [] : ACTIVE_SITUATIONS,
