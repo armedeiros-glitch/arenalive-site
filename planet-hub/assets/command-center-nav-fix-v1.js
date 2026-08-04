@@ -7,7 +7,26 @@
   const title = shell.querySelector('[data-pmh-title]');
   const search = shell.querySelector('.pmh-cc-search');
   const IMPLANTATIONS_API = '/api/sults/implantacoes?start=0&limit=100';
-  const LOCAL_IMPLANTATIONS_KEY = 'planet-hub-implantations-v1';
+  const TRACKED_KEY = 'planet-hub-inaugurations-v2';
+  const LEGACY_KEY = 'planet-hub-implantations-v1';
+
+  const checklistTemplate = [
+    { action: 'Número de telefone para redes sociais', owner: 'Franqueado', daysBefore: 30 },
+    { action: 'Criação/ajuste do Instagram', owner: 'Franqueado', daysBefore: 30 },
+    { action: 'Criação/ajuste do Facebook', owner: 'Franqueado', daysBefore: 30 },
+    { action: 'Google Meu Negócio', owner: 'Franqueado', daysBefore: 30 },
+    { action: 'Vídeo de inauguração', owner: 'Franqueadora', daysBefore: 20 },
+    { action: 'Enviar @ dos influenciadores', owner: 'Franqueado', daysBefore: 20 },
+    { action: 'Contratar influenciadores', owner: 'Franqueado', daysBefore: 15 },
+    { action: 'Contratar Social Media para inauguração', owner: 'Franqueado', daysBefore: 15 },
+    { action: 'Contratar ornamentação / arco de bolas', owner: 'Franqueado', daysBefore: 15 },
+    { action: 'Aprovar artes inaugurais', owner: 'Franqueadora', daysBefore: 12 },
+    { action: 'Fazer 1000 panfletos', owner: 'Franqueado', daysBefore: 10 },
+    { action: 'Entregar panfletos para lojistas', owner: 'Franqueado', daysBefore: 7 },
+    { action: 'Configurar tráfego pago', owner: 'Franqueadora', daysBefore: 7 },
+    { action: 'Separar brindes/cupons', owner: 'Franqueado', daysBefore: 5 },
+    { action: 'Conferência final da operação', owner: 'Franqueadora', daysBefore: 3 },
+  ];
 
   const labels = {
     inauguracoes: 'Inaugurações',
@@ -35,10 +54,25 @@
     "'": '&#039;',
   }[character]));
 
+  const dateValue = (value) => {
+    if (!value) return null;
+    const normalized = /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T12:00:00` : value;
+    const date = new Date(normalized);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const dateInput = (value) => {
+    const date = dateValue(value);
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const formatDate = (value) => {
-    if (!value) return 'Sem data prevista';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'Sem data prevista';
+    const date = dateValue(value);
+    if (!date) return 'Sem data prevista';
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -74,47 +108,300 @@
     if (title) title.textContent = labels[key];
   };
 
-  const readLocalImplantations = () => {
+  const makeChecklist = () => checklistTemplate.map((item) => ({ ...item, done: false }));
+
+  const readTracked = () => {
     try {
-      const items = JSON.parse(window.localStorage.getItem(LOCAL_IMPLANTATIONS_KEY) || '[]');
-      return Array.isArray(items) ? items : [];
+      const current = JSON.parse(window.localStorage.getItem(TRACKED_KEY) || '[]');
+      if (Array.isArray(current) && current.length) return current;
+
+      const legacy = JSON.parse(window.localStorage.getItem(LEGACY_KEY) || '[]');
+      if (!Array.isArray(legacy) || !legacy.length) return [];
+
+      const migrated = legacy.map((item) => ({
+        id: item.id || `inauguration-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        sourceProjectId: item.sultsProjectId || null,
+        unit: item.unit || 'Unidade sem nome',
+        responsible: item.franchisee || item.responsible || '',
+        location: item.location || '',
+        openingDate: item.openingDate || '',
+        createdAt: item.createdAt || new Date().toISOString(),
+        checklist: makeChecklist().map((check, index) => ({
+          ...check,
+          done: Array.isArray(item.checklistDone) && item.checklistDone.includes(index),
+        })),
+      }));
+      window.localStorage.setItem(TRACKED_KEY, JSON.stringify(migrated));
+      return migrated;
     } catch (_) {
       return [];
     }
   };
 
-  const implantationStatus = (item) => {
-    if (item.completed) return ['CONCLUÍDA', 'is-completed'];
-    if (item.paused) return ['PAUSADA', 'is-paused'];
-    if (item.active !== false) return ['EM IMPLANTAÇÃO', ''];
-    return ['INATIVA', 'is-inactive'];
+  const writeTracked = (items) => {
+    window.localStorage.setItem(TRACKED_KEY, JSON.stringify(items));
   };
 
-  const renderImplantationCards = (items) => {
-    if (!items.length) {
-      return '<div class="pmh-implant-command-empty">Nenhuma implantação encontrada no SULTS.</div>';
+  const projectDate = (item) => item.endDate || item.openingDate || item.startDate;
+
+  const daysUntil = (value) => {
+    const date = dateValue(value);
+    if (!date) return Number.POSITIVE_INFINITY;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.ceil((date.getTime() - today.getTime()) / 86400000);
+  };
+
+  const upcomingProjects = (items) => items
+    .filter((item) => !item.completed)
+    .filter((item) => {
+      const days = daysUntil(projectDate(item));
+      return days >= 0 && days <= 45;
+    })
+    .sort((a, b) => dateValue(projectDate(a)) - dateValue(projectDate(b)));
+
+  let projectsCache = null;
+  let projectsPromise = null;
+
+  const ensureProjects = async () => {
+    if (projectsCache) return projectsCache;
+    if (projectsPromise) return projectsPromise;
+
+    projectsPromise = fetch(IMPLANTATIONS_API, { headers: { Accept: 'application/json' } })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || 'Falha ao consultar implantações');
+        projectsCache = Array.isArray(payload.data) ? payload.data : [];
+        return projectsCache;
+      })
+      .finally(() => { projectsPromise = null; });
+
+    return projectsPromise;
+  };
+
+  const dueDateFor = (openingDate, daysBefore) => {
+    const date = dateValue(openingDate);
+    if (!date) return null;
+    date.setDate(date.getDate() - Number(daysBefore || 0));
+    return date;
+  };
+
+  const checklistStatus = (item, openingDate) => {
+    if (item.done) return ['Concluído', 'is-done'];
+    const due = dueDateFor(openingDate, item.daysBefore);
+    if (!due) return ['Sem prazo', ''];
+    const days = daysUntil(due);
+    if (days < 0) return ['Atrasado', 'is-late'];
+    if (days <= 5) return ['Atenção', 'is-warning'];
+    return ['Em dia', 'is-ok'];
+  };
+
+  const checklistSummary = (tracked) => {
+    let pending = 0;
+    let late = 0;
+    tracked.forEach((inauguration) => {
+      (inauguration.checklist || []).forEach((item) => {
+        if (item.done) return;
+        pending += 1;
+        if (checklistStatus(item, inauguration.openingDate)[1] === 'is-late') late += 1;
+      });
+    });
+    return { pending, late };
+  };
+
+  const renderUpcoming = (projects, tracked) => {
+    const trackedProjects = new Set(tracked.map((item) => String(item.sourceProjectId || '')));
+    const upcoming = upcomingProjects(projects).slice(0, 3);
+    if (!upcoming.length) {
+      return '<div class="pmh-implant-command-empty">Nenhuma inauguração prevista para os próximos 45 dias.</div>';
     }
 
-    return `<div class="pmh-implant-command-list">${items.map((item) => {
-      const [status, statusClass] = implantationStatus(item);
-      const unit = item.unit || item.projectName || 'Unidade sem nome';
-      const responsible = item.responsible || item.franchisee || 'Responsável não informado';
-      const context = [item.category, item.model, item.location].filter(Boolean).join(' · ');
-      const date = item.endDate || item.openingDate || item.startDate;
+    return `<div class="pmh-upcoming-grid">${upcoming.map((item) => {
+      const projectId = String(item.sultsProjectId || item.id || '');
+      const active = trackedProjects.has(projectId);
       return `
-        <article class="pmh-implant-command-card">
-          <div>
-            <header><span class="${statusClass}">${status}</span></header>
-            <h3>${esc(unit)}</h3>
-            <p>${esc(context || 'Projeto de implantação')}<br>Responsável: ${esc(responsible)}</p>
-          </div>
-          <aside>
-            <strong>${esc(formatDate(date))}</strong>
-            <span>${item.source === 'sults' ? 'Sincronizado com o SULTS' : 'Cadastro manual'}</span>
-          </aside>
-          ${item.attentionNote ? `<div class="pmh-implant-command-note">Atenção: ${esc(item.attentionNote)}</div>` : ''}
+        <article class="pmh-upcoming-card">
+          <div class="pmh-upcoming-date"><strong>${esc(formatDate(projectDate(item)))}</strong><span>inauguração prevista</span></div>
+          <div><h3>${esc(item.unit || item.projectName || 'Unidade sem nome')}</h3><p>${esc(item.category || item.model || 'Projeto SULTS')} · ${esc(item.responsible || 'Responsável não informado')}</p></div>
+          ${active
+            ? '<span class="pmh-upcoming-active">Checklist ativo</span>'
+            : `<button type="button" data-pmh-start-inauguration="${esc(projectId)}">Iniciar checklist</button>`}
         </article>`;
     }).join('')}</div>`;
+  };
+
+  const renderTracked = (tracked) => {
+    if (!tracked.length) {
+      return '<div class="pmh-implant-command-empty">Nenhuma inauguração em acompanhamento. Use “Nova inauguração” para iniciar um checklist.</div>';
+    }
+
+    const sorted = [...tracked].sort((a, b) => dateValue(a.openingDate) - dateValue(b.openingDate));
+    return `<div class="pmh-tracked-list">${sorted.map((inauguration) => {
+      const checks = Array.isArray(inauguration.checklist) && inauguration.checklist.length
+        ? inauguration.checklist
+        : makeChecklist();
+      const completed = checks.filter((item) => item.done).length;
+      const progress = Math.round((completed / checks.length) * 100);
+      return `
+        <article class="pmh-tracked-card">
+          <header>
+            <div><small>INAUGURAÇÃO EM ACOMPANHAMENTO</small><h3>${esc(inauguration.unit)}</h3><p>${esc(inauguration.location || 'Local não informado')} · ${esc(inauguration.responsible || 'Responsável não informado')}</p></div>
+            <div class="pmh-tracked-date"><strong>${esc(formatDate(inauguration.openingDate))}</strong><span>${completed}/${checks.length} concluídas</span></div>
+          </header>
+          <div class="pmh-progress"><i style="width:${progress}%"></i></div>
+          <div class="pmh-progress-label"><span>${progress}% concluído</span><b>${checks.length - completed} pendências</b></div>
+          <details>
+            <summary>Ver checklist de 15 etapas</summary>
+            <div class="pmh-checklist">${checks.map((item, index) => {
+              const [status, statusClass] = checklistStatus(item, inauguration.openingDate);
+              const due = dueDateFor(inauguration.openingDate, item.daysBefore);
+              return `
+                <label class="${item.done ? 'is-completed' : ''}">
+                  <input type="checkbox" data-pmh-check-inauguration="${esc(inauguration.id)}" data-pmh-check-index="${index}" ${item.done ? 'checked' : ''}>
+                  <span><strong>${esc(item.action)}</strong><small>${esc(item.owner)} · D-${item.daysBefore} · ${esc(formatDate(due))}</small></span>
+                  <em class="${statusClass}">${status}</em>
+                </label>`;
+            }).join('')}</div>
+          </details>
+        </article>`;
+    }).join('')}</div>`;
+  };
+
+  const patchHomeMetrics = async () => {
+    const welcome = content.querySelector('.pmh-cc-welcome');
+    if (!welcome) return;
+
+    try {
+      const projects = await ensureProjects();
+      const tracked = readTracked();
+      const upcoming = upcomingProjects(projects).length;
+      content.querySelectorAll('.pmh-cc-metric').forEach((card) => {
+        const label = normalize(card.querySelector('small')?.textContent);
+        if (label === 'implantacoes ativas') {
+          const small = card.querySelector('small');
+          const strong = card.querySelector('strong');
+          const span = card.querySelector('span');
+          if (small && small.textContent !== 'Inaugurações ativas') small.textContent = 'Inaugurações ativas';
+          if (strong && strong.textContent !== String(tracked.length)) strong.textContent = String(tracked.length);
+          if (span && span.textContent !== 'Checklists em acompanhamento') span.textContent = 'Checklists em acompanhamento';
+        }
+        if (label === 'proximas inauguracoes') {
+          const strong = card.querySelector('strong');
+          if (strong && strong.textContent !== String(upcoming)) strong.textContent = String(upcoming);
+        }
+      });
+    } catch (_) {}
+  };
+
+  let modal = null;
+
+  const ensureModal = (projects) => {
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.className = 'pmh-inauguration-modal';
+    modal.hidden = true;
+    modal.innerHTML = `
+      <section class="pmh-inauguration-dialog" role="dialog" aria-modal="true" aria-labelledby="pmh-new-inauguration-title">
+        <header>
+          <div><small>NOVA INAUGURAÇÃO</small><h2 id="pmh-new-inauguration-title">Iniciar checklist inaugural</h2><p>Escolha um projeto do SULTS ou faça um cadastro manual.</p></div>
+          <button type="button" data-pmh-close-inauguration aria-label="Fechar">×</button>
+        </header>
+        <form>
+          <label class="pmh-field-wide">Projeto do SULTS<select name="projectId"><option value="">Cadastro manual</option></select></label>
+          <label>Unidade<input name="unit" required></label>
+          <label>Data da inauguração<input name="openingDate" type="date" required></label>
+          <label>Responsável<input name="responsible"></label>
+          <label>Shopping / local<input name="location"></label>
+          <p>Ao salvar, a unidade entra no acompanhamento com o checklist oficial de 15 etapas.</p>
+          <footer><button type="button" data-pmh-close-inauguration>Cancelar</button><button type="submit">Criar inauguração</button></footer>
+        </form>
+      </section>`;
+    document.body.appendChild(modal);
+
+    const select = modal.querySelector('select[name="projectId"]');
+    const sortedProjects = [...projects].sort((a, b) => {
+      const aDays = daysUntil(projectDate(a));
+      const bDays = daysUntil(projectDate(b));
+      return aDays - bDays;
+    });
+    select.insertAdjacentHTML('beforeend', sortedProjects.map((item) => {
+      const id = String(item.sultsProjectId || item.id || '');
+      return `<option value="${esc(id)}">${esc(item.unit || item.projectName || 'Unidade sem nome')} · ${esc(formatDate(projectDate(item)))}</option>`;
+    }).join(''));
+
+    const fillProject = (projectId) => {
+      const item = projects.find((project) => String(project.sultsProjectId || project.id || '') === String(projectId));
+      if (!item) return;
+      modal.querySelector('input[name="unit"]').value = item.unit || item.projectName || '';
+      modal.querySelector('input[name="openingDate"]').value = dateInput(projectDate(item));
+      modal.querySelector('input[name="responsible"]').value = item.responsible || '';
+      modal.querySelector('input[name="location"]').value = item.category || item.model || '';
+    };
+
+    select.addEventListener('change', () => fillProject(select.value));
+    modal.querySelectorAll('[data-pmh-close-inauguration]').forEach((button) => {
+      button.addEventListener('click', () => {
+        modal.hidden = true;
+        document.body.style.overflow = '';
+      });
+    });
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        modal.hidden = true;
+        document.body.style.overflow = '';
+      }
+    });
+
+    modal.querySelector('form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!form.reportValidity()) return;
+      const data = new FormData(form);
+      const projectId = String(data.get('projectId') || '');
+      const tracked = readTracked();
+      const existing = projectId && tracked.find((item) => String(item.sourceProjectId || '') === projectId);
+      if (existing) {
+        window.alert('Essa unidade já possui um checklist ativo.');
+        return;
+      }
+
+      tracked.unshift({
+        id: `inauguration-${Date.now()}`,
+        sourceProjectId: projectId || null,
+        unit: String(data.get('unit') || '').trim(),
+        openingDate: String(data.get('openingDate') || ''),
+        responsible: String(data.get('responsible') || '').trim(),
+        location: String(data.get('location') || '').trim(),
+        createdAt: new Date().toISOString(),
+        checklist: makeChecklist(),
+      });
+      writeTracked(tracked);
+      modal.hidden = true;
+      document.body.style.overflow = '';
+      openImplantations(false);
+      patchHomeMetrics();
+    });
+
+    modal.fillProject = fillProject;
+    return modal;
+  };
+
+  const openNewInauguration = async (projectId = '') => {
+    try {
+      const projects = await ensureProjects();
+      const dialog = ensureModal(projects);
+      const form = dialog.querySelector('form');
+      form.reset();
+      if (projectId) {
+        dialog.querySelector('select[name="projectId"]').value = String(projectId);
+        dialog.fillProject(String(projectId));
+      }
+      dialog.hidden = false;
+      document.body.style.overflow = 'hidden';
+      window.setTimeout(() => dialog.querySelector('select')?.focus(), 20);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : String(error));
+    }
   };
 
   const openImplantations = async (updateUrl = true) => {
@@ -123,47 +410,31 @@
     content.innerHTML = `
       <section class="pmh-implant-command">
         <header class="pmh-implant-command-head">
-          <div>
-            <small>IMPLANTAÇÕES E INAUGURAÇÕES</small>
-            <h2>Unidades no radar do Marketing</h2>
-            <p>Acompanhe responsáveis, etapas e datas previstas em uma única tela.</p>
-          </div>
-          <button type="button">＋ Nova implantação</button>
+          <div><small>INAUGURAÇÕES</small><h2>Unidades no radar do Marketing</h2><p>As próximas datas aparecem primeiro. Só vira acompanhamento quando o checklist é iniciado.</p></div>
+          <a role="button" tabindex="0" data-pmh-new-inauguration>＋ Nova inauguração</a>
         </header>
-        <div class="pmh-implant-command-loading">Sincronizando implantações com o SULTS…</div>
+        <div class="pmh-implant-command-loading">Sincronizando projetos com o SULTS…</div>
       </section>`;
 
     if (updateUrl) history.replaceState(null, '', '#nucleo/inauguracoes');
 
     try {
-      const response = await fetch(IMPLANTATIONS_API, { headers: { Accept: 'application/json' } });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || 'Falha ao consultar implantações');
-
-      const sultsItems = Array.isArray(payload.data) ? payload.data : [];
-      const localItems = readLocalImplantations();
-      const items = [...sultsItems, ...localItems];
-      const active = items.filter((item) => item.active !== false && !item.completed && !item.paused).length;
-      const paused = items.filter((item) => item.paused).length;
-      const completed = items.filter((item) => item.completed).length;
-      const upcoming = items.filter((item) => {
-        const rawDate = item.endDate || item.openingDate || item.startDate;
-        if (!rawDate || item.completed) return false;
-        const days = (new Date(rawDate).getTime() - Date.now()) / 86400000;
-        return days >= 0 && days <= 45;
-      }).length;
-
+      const projects = await ensureProjects();
+      const tracked = readTracked();
+      const upcoming = upcomingProjects(projects);
+      const summary = checklistSummary(tracked);
       const page = content.querySelector('.pmh-implant-command');
       if (!page) return;
       page.querySelector('.pmh-implant-command-loading')?.remove();
       page.insertAdjacentHTML('beforeend', `
         <section class="pmh-implant-command-summary">
-          <article><small>TOTAL NO RADAR</small><strong>${items.length}</strong><span>Projetos encontrados</span></article>
-          <article><small>ATIVAS</small><strong>${active}</strong><span>Em implantação</span></article>
-          <article><small>PRÓXIMAS</small><strong>${upcoming}</strong><span>Nos próximos 45 dias</span></article>
-          <article><small>PAUSADAS / CONCLUÍDAS</small><strong>${paused + completed}</strong><span>${paused} pausadas · ${completed} concluídas</span></article>
+          <article><small>EM ACOMPANHAMENTO</small><strong>${tracked.length}</strong><span>Checklists ativos</span></article>
+          <article><small>PRÓXIMAS</small><strong>${upcoming.length}</strong><span>Nos próximos 45 dias</span></article>
+          <article><small>PENDÊNCIAS</small><strong>${summary.pending}</strong><span>Etapas ainda abertas</span></article>
+          <article><small>ATRASADAS</small><strong>${summary.late}</strong><span>Precisam de ação</span></article>
         </section>
-        ${renderImplantationCards(items)}`);
+        <section class="pmh-inauguration-section"><header><div><small>PRIORIDADE</small><h3>Próximas inaugurações</h3></div><span>Até 45 dias</span></header>${renderUpcoming(projects, tracked)}</section>
+        <section class="pmh-inauguration-section"><header><div><small>ACOMPANHAMENTO</small><h3>Checklists inaugurais</h3></div><span>${tracked.length} ativos</span></header>${renderTracked(tracked)}</section>`);
     } catch (error) {
       const loading = content.querySelector('.pmh-implant-command-loading');
       if (loading) {
@@ -232,9 +503,22 @@
   };
 
   shell.addEventListener('click', (event) => {
+    const newInauguration = event.target.closest('[data-pmh-new-inauguration]');
+    if (newInauguration) {
+      event.preventDefault();
+      openNewInauguration();
+      return;
+    }
+
+    const startInauguration = event.target.closest('[data-pmh-start-inauguration]');
+    if (startInauguration) {
+      event.preventDefault();
+      openNewInauguration(startInauguration.dataset.pmhStartInauguration);
+      return;
+    }
+
     const openButton = event.target.closest('[data-pmh-open]');
     if (!openButton) return;
-
     event.preventDefault();
     event.stopImmediatePropagation();
 
@@ -243,9 +527,21 @@
       window.location.href = '/planet-hub/?full=1';
       return;
     }
-
     openEmbedded(key);
   }, true);
+
+  shell.addEventListener('change', (event) => {
+    const checkbox = event.target.closest('[data-pmh-check-inauguration]');
+    if (!checkbox) return;
+    const tracked = readTracked();
+    const inauguration = tracked.find((item) => String(item.id) === String(checkbox.dataset.pmhCheckInauguration));
+    const index = Number.parseInt(checkbox.dataset.pmhCheckIndex || '', 10);
+    if (!inauguration || !Number.isInteger(index) || !inauguration.checklist?.[index]) return;
+    inauguration.checklist[index].done = checkbox.checked;
+    writeTracked(tracked);
+    openImplantations(false);
+    patchHomeMetrics();
+  });
 
   shell.addEventListener('click', (event) => {
     const viewButton = event.target.closest('[data-pmh-view]');
@@ -261,6 +557,10 @@
     const route = normalizeKey(window.location.hash.match(/^#nucleo\/(.+)$/)?.[1]);
     if (frame && labels[route] && route !== 'inauguracoes') navigateFrame(frame, route);
   });
+
+  const contentObserver = new MutationObserver(() => patchHomeMetrics());
+  contentObserver.observe(content, { childList: true, subtree: true });
+  ensureProjects().then(patchHomeMetrics).catch(() => {});
 
   let initialRoute = normalizeKey(window.location.hash.match(/^#nucleo\/(.+)$/)?.[1]);
   if (initialRoute === 'campanhas') initialRoute = 'calendario';
