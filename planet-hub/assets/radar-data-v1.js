@@ -7,6 +7,7 @@
     { key: 'demands', label: 'Demandas internas', url: '/api/hub/demandas-internas' },
     { key: 'contents', label: 'Conteúdos', url: '/api/hub/conteudos' },
     { key: 'campaigns', label: 'Campanhas', url: '/api/hub/campanhas' },
+    { key: 'contexts', label: 'Contextos operacionais', url: '/api/hub/radar-contextos' },
   ];
   const DEFAULT_MAX_AGE_MS = 15 * 1000;
 
@@ -171,6 +172,25 @@
       action: 'calendario',
     }));
 
+  const mergeContexts = (items, contexts) => {
+    const byId = new Map((Array.isArray(contexts) ? contexts : [])
+      .filter((context) => context?.itemId)
+      .map((context) => [String(context.itemId), context]));
+
+    return items.map((item) => {
+      const context = byId.get(item.id) || {};
+      return {
+        ...item,
+        operationalState: context.state || 'actionable',
+        blockerReason: String(context.reason || ''),
+        dependsOn: String(context.dependsOn || ''),
+        nextAction: String(context.nextAction || ''),
+        followUpDate: cleanDate(context.followUpDate),
+        contextUpdatedAt: String(context.updatedAt || ''),
+      };
+    });
+  };
+
   const sortItems = (items) => [...items].sort((a, b) => {
     const dueA = dueMeta(a.dueDate).weight;
     const dueB = dueMeta(b.dueDate).weight;
@@ -189,13 +209,14 @@
       .filter((_, index) => results[index].status === 'rejected')
       .map((source) => source.label);
 
-    const items = sortItems([
+    const rawItems = [
       ...fromTickets(values.tickets),
       ...fromInaugurations(values.inaugurations),
       ...fromInternalDemands(values.demands),
       ...fromContents(values.contents),
       ...fromCampaigns(values.campaigns),
-    ]);
+    ];
+    const items = sortItems(mergeContexts(rawItems, values.contexts));
 
     return { items, errors, loadedAt: new Date().toISOString() };
   };
@@ -234,6 +255,11 @@
     dueDate: cleanDate(item.dueDate),
     priority: item.priority,
     updatedAt: item.updatedAt,
+    operationalState: item.operationalState || 'actionable',
+    blockerReason: item.blockerReason || '',
+    dependsOn: item.dependsOn || '',
+    nextAction: item.nextAction || '',
+    followUpDate: cleanDate(item.followUpDate),
   }));
 
   window.PMHRadarData = Object.freeze({
