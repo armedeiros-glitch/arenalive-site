@@ -23,7 +23,7 @@
 
   const renderLogin = (message = '') => {
     document.documentElement.classList.remove('pmh-access-pending');
-    document.body.innerHTML = `<main class="pmh-access-screen"><form class="pmh-access-card"><div class="pmh-access-brand"><span>P</span><div><strong>Planet</strong><small>Marketing Hub</small></div></div><h1>Acesso restrito</h1><p>Entre com a senha interna para acessar chamados, inaugurações, fornecedores e pagamentos.</p><label>Senha de acesso<input name="password" type="password" autocomplete="current-password" required autofocus></label><button type="submit">Entrar no Hub</button><p class="pmh-access-error" ${message ? '' : 'hidden'}>${message}</p></form></main>`;
+    document.body.innerHTML = `<main class="pmh-access-screen"><form class="pmh-access-card"><div class="pmh-access-brand"><span>A</span><div><strong>André OS</strong><small>MARKETING COMMAND</small></div></div><h1>Acesso ao comando</h1><p>Entre com a senha interna para acessar chamados, inaugurações, fornecedores e pagamentos da operação.</p><label>Senha de acesso<input name="password" type="password" autocomplete="current-password" required autofocus></label><button type="submit">Entrar no sistema</button><p class="pmh-access-error" ${message ? '' : 'hidden'}>${message}</p></form></main>`;
     const form = document.querySelector('.pmh-access-card');
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
