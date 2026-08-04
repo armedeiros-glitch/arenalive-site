@@ -80,8 +80,10 @@
       ? `data-demand-edit="${esc(item.sourceId)}"`
       : `data-view="${esc(item.action)}"`;
     const detail = contextSummary(item);
+    const hasSuggestion = Boolean(item.contextSuggestion);
+    const contextLabel = hasDependency(item) ? 'Editar contexto' : hasSuggestion ? '💡 Sugestão' : '+ Contexto';
 
-    return `<article class="pmh-active-entry ${hasDependency(item) ? 'has-dependency' : ''}">
+    return `<article class="pmh-active-entry ${hasDependency(item) ? 'has-dependency' : ''} ${hasSuggestion ? 'has-suggestion' : ''}">
       <button type="button" class="pmh-active-row" ${attrs}>
         <span class="pmh-active-origin tone-${esc(item.originTone)}">${esc(item.origin)}</span>
         <span class="pmh-active-main"><strong>${esc(item.title)}</strong><small>${esc(detail || item.context)}</small></span>
@@ -89,7 +91,7 @@
         <span class="pmh-active-status operational-${esc(operational.tone)}">${esc(hasDependency(item) ? operational.label : item.status)}</span>
         <time class="${esc(due.tone)}">${esc(due.label)}</time>
       </button>
-      <button type="button" class="pmh-active-context" data-radar-context="${esc(item.id)}" aria-label="Definir contexto de ${esc(item.title)}">${hasDependency(item) ? 'Editar contexto' : '+ Contexto'}</button>
+      <button type="button" class="pmh-active-context ${hasSuggestion ? 'suggested' : ''}" data-radar-context="${esc(item.id)}" aria-label="Definir contexto de ${esc(item.title)}">${contextLabel}</button>
     </article>`;
   };
 
