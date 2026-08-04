@@ -28,6 +28,56 @@ Regras:
 6. Limitar payload, frequência e tamanho das respostas.
 7. Nunca chamar IA para tarefas determinísticas que o código pode resolver.
 
+## Pensar comigo
+
+`ThinkingAssistant` é o componente global de conversa contextual do André OS. Ele não deve ser tratado como um chat genérico colocado sobre cada tela.
+
+Responsabilidades atuais:
+
+- existir uma única vez no sistema;
+- identificar automaticamente a página e o módulo atuais;
+- reconhecer o item aberto quando houver chamado, campanha, conteúdo, demanda ou implantação selecionada;
+- apresentar ao usuário qual contexto será usado;
+- manter um rascunho separado para cada página ou item;
+- montar um payload estável para a futura API;
+- não chamar IA até que um `transport` seja conectado explicitamente.
+
+Cada tela recebe um `page_id` único e pode pertencer a um `module_id` maior. Exemplo:
+
+```js
+ThinkingAssistant.registerPage({
+  pageId: 'planet_marketing.inauguracoes',
+  moduleId: 'planet_marketing',
+  label: 'Inaugurações',
+  moduleLabel: 'Planet Marketing Hub',
+  contextPath: ['Planet Marketing Hub', 'Implantações e inaugurações'],
+  match: () => location.hash === '#inauguracoes',
+});
+```
+
+Novas fontes de contexto entram por providers reutilizáveis:
+
+```js
+ThinkingAssistant.registerContextProvider('documents', () => ({
+  selected: [],
+  related: [],
+}));
+```
+
+A conexão futura com a IA deve ser feita em um único ponto:
+
+```js
+ThinkingAssistant.setTransport(async (payload) => {
+  return fetch('/api/andre-os/pensar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).then((response) => response.json());
+});
+```
+
+Nenhuma página deve criar seu próprio chat, drawer ou chamada direta para IA. Páginas novas registram apenas identidade e providers de contexto.
+
 ## Atualização do Radar
 
 - Não usar cron para vigiar o Marketing Hub nesta fase.
