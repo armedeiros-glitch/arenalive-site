@@ -3,6 +3,7 @@
 
   let snapshot = null;
   let syncing = false;
+  let lastMarkup = '';
 
   const radar = () => window.PMHRadarData;
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -82,7 +83,6 @@
   const followUpNextAction = (item) => {
     const target = item.dependsOn || item.responsible || 'a pessoa responsável';
     return `Cobrar ${target} e registrar a nova previsão.`;
-
   };
 
   const recommendFocus = (items) => {
@@ -161,7 +161,7 @@
     if (!decision) return emptyMarkup(items);
 
     const { item, reason, nextAction: movement, type } = decision;
-    const due = radar().dueMeta(item.dueDate);
+    const due = radar().dueMeta(type === 'follow_up' ? item.followUpDate : item.dueDate);
     const summary = signals(items);
     const canPrepareMessage = type === 'follow_up' || (item.responsible
       && !/não definido|sem responsável|andré|andre/i.test(item.responsible));
@@ -207,7 +207,10 @@
       active.insertAdjacentElement('beforebegin', cockpit);
     }
 
-    cockpit.innerHTML = markup(Array.isArray(snapshot.items) ? snapshot.items : []);
+    const nextMarkup = markup(Array.isArray(snapshot.items) ? snapshot.items : []);
+    if (nextMarkup === lastMarkup && cockpit.innerHTML) return;
+    lastMarkup = nextMarkup;
+    cockpit.innerHTML = nextMarkup;
   };
 
   const sync = async () => {
@@ -256,6 +259,9 @@
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
-  window.addEventListener('hashchange', sync);
+  window.addEventListener('hashchange', () => {
+    lastMarkup = '';
+    sync();
+  });
   sync();
 })();
