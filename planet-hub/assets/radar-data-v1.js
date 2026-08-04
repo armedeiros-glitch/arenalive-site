@@ -24,6 +24,13 @@
     ? String(value).slice(0, 10)
     : '';
 
+  const normalizeText = (value) => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+
   const asDate = (value) => {
     const raw = cleanDate(value);
     if (!raw) return null;
@@ -73,6 +80,8 @@
       title: item.title || 'Demanda sem título',
       context: item.unit || item.department || 'Chamado do Marketing',
       responsible: item.responsible || 'Não definido',
+      requester: item.requester || '',
+      situationId: Number(item.situation?.id || item.situationId || 0),
       status: item.situation?.name || 'Aberta',
       dueDate: cleanDate(ticketDue(item)),
       priority: ticketDue(item) && (dayDiff(ticketDue(item)) ?? 1) < 0 ? 0 : 2,
@@ -172,6 +181,68 @@
       action: 'calendario',
     }));
 
+  const isAndre = (value) => /\bandre\b/.test(normalizeText(value));
+  const responsibleMissing = (item) => !item.responsible || /não definido|sem responsável/i.test(item.responsible);
+
+  const contextSuggestionFor = (item) => {
+    if (item.origin === 'SULTS' && item.situationId === 5) {
+      return {
+        state: 'waiting_info',
+        reason: 'O SULTS indica que este chamado está aguardando retorno do solicitante.',
+        dependsOn: item.requester || 'Solicitante',
+        nextAction: 'Receber o retorno, revisar o chamado e definir a próxima entrega.',
+        source: 'SULTS',
+        confidence: 'high',
+      };
+    }
+
+    if (item.origin === 'SULTS' && item.situationId === 6 && !responsibleMissing(item) && !isAndre(item.responsible)) {
+      return {
+        state: 'blocked',
+        reason: `O SULTS indica que o chamado aguarda ação de ${item.responsible}.`,
+        dependsOn: item.responsible,
+        nextAction: 'Acompanhar o retorno do responsável e atualizar o próximo passo.',
+        source: 'SULTS',
+        confidence: 'high',
+      };
+    }
+
+    if (/aprova/i.test(item.status) && !responsibleMissing(item) && !isAndre(item.responsible)) {
+      return {
+        state: 'waiting_approval',
+        reason: `O item está em aprovação com ${item.responsible}.`,
+        dependsOn: item.responsible,
+        nextAction: 'Acompanhar a aprovação e avançar assim que houver retorno.',
+        source: item.origin,
+        confidence: 'high',
+      };
+    }
+
+    if (/aguardando/i.test(item.status) && !responsibleMissing(item) && !isAndre(item.responsible)) {
+      return {
+        state: 'waiting_info',
+        reason: `O item está marcado como aguardando e possui ${item.responsible} como responsável.`,
+        dependsOn: item.responsible,
+        nextAction: 'Confirmar o que falta e registrar uma nova previsão.',
+        source: item.origin,
+        confidence: 'medium',
+      };
+    }
+
+    if (responsibleMissing(item)) {
+      return {
+        state: 'blocked',
+        reason: 'Ainda não existe um responsável definido para este item.',
+        dependsOn: 'Definição de responsável',
+        nextAction: 'Definir quem assume e registrar o próximo movimento.',
+        source: 'Radar',
+        confidence: 'medium',
+      };
+    }
+
+    return null;
+  };
+
   const mergeContexts = (items, contexts) => {
     const byId = new Map((Array.isArray(contexts) ? contexts : [])
       .filter((context) => context?.itemId)
@@ -179,6 +250,7 @@
 
     return items.map((item) => {
       const context = byId.get(item.id) || {};
+      const hasSavedContext = Boolean(context.itemId);
       return {
         ...item,
         operationalState: context.state || 'actionable',
@@ -187,6 +259,7 @@
         nextAction: String(context.nextAction || ''),
         followUpDate: cleanDate(context.followUpDate),
         contextUpdatedAt: String(context.updatedAt || ''),
+        contextSuggestion: hasSavedContext ? null : contextSuggestionFor(item),
       };
     });
   };

@@ -43,6 +43,21 @@
     followUpDate: item?.followUpDate || '',
   });
 
+  const suggestionMarkup = (item) => {
+    const suggestion = item?.contextSuggestion;
+    if (!suggestion) return '';
+    const confidence = suggestion.confidence === 'high' ? 'Sinal claro' : 'Vale conferir';
+    return `<section class="pmh-radar-suggestion wide">
+      <div>
+        <small>💡 SUGESTÃO DO RADAR · ${esc(confidence)}</small>
+        <strong>${esc(STATES[suggestion.state] || 'Contexto sugerido')}</strong>
+        <p>${esc(suggestion.reason)}</p>
+        <span>Fonte: ${esc(suggestion.source || item.origin)}${suggestion.dependsOn ? ` · Depende de ${esc(suggestion.dependsOn)}` : ''}</span>
+      </div>
+      <button type="button" data-apply-context-suggestion>Usar sugestão</button>
+    </section>`;
+  };
+
   const open = (itemId) => {
     const item = getItem(itemId);
     if (!item) return;
@@ -58,6 +73,7 @@
         <button type="button" data-radar-context-close aria-label="Fechar">×</button>
       </header>
       <main>
+        ${suggestionMarkup(item)}
         <label class="wide">Situação real
           <select name="state">
             ${Object.entries(STATES).map(([value, label]) => `<option value="${esc(value)}" ${values.state === value ? 'selected' : ''}>${esc(label)}</option>`).join('')}
@@ -87,6 +103,24 @@
 
     document.body.appendChild(modal);
     requestAnimationFrame(() => modal.classList.add('visible'));
+  };
+
+  const applySuggestion = (form) => {
+    const item = getItem(form?.dataset.itemId);
+    const suggestion = item?.contextSuggestion;
+    if (!form || !suggestion) return;
+
+    form.elements.state.value = suggestion.state || 'actionable';
+    form.elements.reason.value = suggestion.reason || '';
+    form.elements.dependsOn.value = suggestion.dependsOn || '';
+    form.elements.nextAction.value = suggestion.nextAction || '';
+    form.elements.reason.focus();
+
+    const button = form.querySelector('[data-apply-context-suggestion]');
+    if (button) {
+      button.textContent = 'Sugestão aplicada ✓';
+      button.disabled = true;
+    }
   };
 
   const refreshRadar = async () => {
@@ -146,6 +180,9 @@
       event.stopPropagation();
       return open(trigger.dataset.radarContext);
     }
+
+    const suggestion = event.target.closest('[data-apply-context-suggestion]');
+    if (suggestion) return applySuggestion(suggestion.closest('[data-radar-context-form]'));
 
     if (event.target.closest('[data-radar-context-close]') || event.target.matches('[data-radar-context-modal]')) {
       return close();
