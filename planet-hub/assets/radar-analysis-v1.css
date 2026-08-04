@@ -1,0 +1,252 @@
+.pmh-active-head { flex-wrap: wrap; }
+
+.pmh-analyze-radar-button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--aos-accent);
+  border-radius: 11px;
+  color: #fff;
+  background: var(--aos-accent);
+  box-shadow: 0 7px 18px rgba(104, 75, 255, .18);
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.pmh-analyze-radar-button:hover { transform: translateY(-1px); }
+.pmh-analyze-radar-button:disabled { opacity: .65; cursor: wait; transform: none; }
+
+.pmh-radar-analysis-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  opacity: 0;
+  background: rgba(20, 17, 31, .56);
+  backdrop-filter: blur(8px);
+  transition: opacity .18s ease;
+}
+.pmh-radar-analysis-modal.visible { opacity: 1; }
+
+.pmh-radar-analysis-dialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(1060px, 100%);
+  max-height: min(88vh, 900px);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 22px;
+  background: #f7f7fb;
+  box-shadow: 0 35px 90px rgba(17, 13, 35, .3);
+  transform: translateY(10px) scale(.985);
+  transition: transform .18s ease;
+}
+.pmh-radar-analysis-modal.visible .pmh-radar-analysis-dialog { transform: translateY(0) scale(1); }
+
+.pmh-radar-analysis-dialog > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 21px 24px;
+  border-bottom: 1px solid var(--aos-line);
+  background: #fff;
+}
+.pmh-radar-analysis-dialog > header small {
+  color: var(--aos-accent);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+.pmh-radar-analysis-dialog > header h2 {
+  margin: 5px 0 0;
+  color: var(--aos-ink);
+  font-size: 25px;
+}
+.pmh-radar-analysis-dialog > header p {
+  max-width: 760px;
+  margin: 7px 0 0;
+  color: var(--aos-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.pmh-radar-analysis-dialog > header > button {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--aos-line);
+  border-radius: 11px;
+  color: var(--aos-muted);
+  background: #fff;
+  font-size: 21px;
+  cursor: pointer;
+}
+
+.pmh-radar-analysis-dialog > main {
+  overflow-y: auto;
+  padding: 18px;
+}
+
+.pmh-radar-focus {
+  padding: 20px 22px;
+  border: 1px solid #d7ccff;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 94% 0%, rgba(112, 82, 255, .18), transparent 32%),
+    linear-gradient(145deg, #fff, #f6f2ff);
+  box-shadow: 0 12px 30px rgba(85, 62, 180, .07);
+}
+.pmh-radar-focus > small {
+  color: var(--aos-accent);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+.pmh-radar-focus h3 {
+  margin: 7px 0 0;
+  color: var(--aos-ink);
+  font-size: 21px;
+}
+.pmh-radar-focus p {
+  margin: 8px 0 0;
+  color: var(--aos-text);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.pmh-radar-focus footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+.pmh-radar-focus footer span,
+.pmh-radar-focus footer time {
+  padding: 6px 9px;
+  border-radius: 999px;
+  color: #5745b5;
+  background: rgba(112, 82, 255, .1);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.pmh-radar-analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 13px;
+}
+.pmh-radar-analysis-block {
+  overflow: hidden;
+  border: 1px solid var(--aos-line);
+  border-radius: 16px;
+  background: #fff;
+}
+.pmh-radar-analysis-block h3 {
+  margin: 0;
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--aos-line);
+  color: var(--aos-ink);
+  background: #fbfbfd;
+  font-size: 13px;
+}
+.pmh-radar-analysis-block > div {
+  display: grid;
+  gap: 1px;
+  background: var(--aos-line);
+}
+.pmh-radar-analysis-block article {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 11px 13px;
+  color: var(--aos-text);
+  background: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.pmh-radar-analysis-block article > b {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--aos-accent);
+  font-size: 10px;
+}
+.pmh-radar-analysis-block article > div { min-width: 0; }
+.pmh-radar-analysis-block article strong,
+.pmh-radar-analysis-block article small {
+  display: block;
+}
+.pmh-radar-analysis-block article strong {
+  color: var(--aos-ink);
+  font-size: 12px;
+}
+.pmh-radar-analysis-block article small {
+  margin-top: 3px;
+  color: var(--aos-muted-2);
+  font-size: 10px;
+}
+.pmh-radar-analysis-block article > span {
+  color: var(--aos-muted);
+}
+
+.pmh-radar-analysis-dialog > main > aside {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 13px;
+}
+.pmh-radar-analysis-dialog > main > aside span {
+  padding: 7px 9px;
+  border-radius: 10px;
+  color: #765b22;
+  background: #fff6df;
+  font-size: 11px;
+}
+
+.pmh-radar-analysis-dialog > footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--aos-line);
+  background: #fff;
+}
+.pmh-radar-analysis-dialog > footer > span {
+  margin-right: auto;
+  color: var(--aos-muted-2);
+  font-size: 11px;
+}
+.pmh-radar-analysis-dialog > footer button {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--aos-line-strong);
+  border-radius: 10px;
+  color: var(--aos-text);
+  background: #fff;
+  font-size: 11px;
+  font-weight: 820;
+  cursor: pointer;
+}
+.pmh-radar-analysis-dialog > footer button.primary {
+  border-color: var(--aos-accent);
+  color: #fff;
+  background: var(--aos-accent);
+}
+
+@media (max-width: 760px) {
+  .pmh-analyze-radar-button { order: 3; width: 100%; }
+  .pmh-radar-analysis-modal { padding: 10px; }
+  .pmh-radar-analysis-dialog { max-height: 94vh; border-radius: 17px; }
+  .pmh-radar-analysis-dialog > header { padding: 17px; }
+  .pmh-radar-analysis-dialog > main { padding: 11px; }
+  .pmh-radar-analysis-grid { grid-template-columns: 1fr; }
+  .pmh-radar-analysis-dialog > footer { flex-wrap: wrap; }
+  .pmh-radar-analysis-dialog > footer > span { width: 100%; margin: 0; }
+}
