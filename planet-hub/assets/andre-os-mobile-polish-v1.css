@@ -46,6 +46,8 @@ html.aos-mobile .aos-thinking-trigger:not(.floating) {
   border-radius: 12px !important;
   box-shadow: 0 7px 18px rgba(31, 28, 52, .07) !important;
   transform: none !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 html.aos-mobile .pmh-top-actions .aos-thinking-trigger .aos-thinking-orb,
