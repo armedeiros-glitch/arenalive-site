@@ -243,3 +243,89 @@
 .pmh-ticket-filters span { color: var(--aos-muted) !important; }
 .pmh-ticket-filters button { border-color: var(--aos-line) !important; color: var(--aos-text) !important; background: #fff !important; }
 .pmh-ticket-filters button.active { border-color: var(--aos-accent) !important; color: #fff !important; background: var(--aos-accent) !important; }
+
+/* Desktop V2 · Home como centro de decisão */
+@media (min-width: 821px) {
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-top: 24px;
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) > .pmh-alert { order: 0; margin: 0; }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) > [data-decision-cockpit] { order: 1; margin: 0; }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) > .pmh-metrics { order: 2; margin: 0; }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) > [data-active-workstream] { order: 3; margin: 0; }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) > .pmh-shortcuts { order: 4; margin: 0; }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) > [data-internal-demands] { order: 5; margin: 0; }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) > .pmh-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-metric {
+    grid-column: auto;
+    min-height: 88px;
+    padding: 14px 16px 13px;
+    border-radius: 15px;
+    box-shadow: 0 8px 24px rgba(31,28,52,.04);
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-metric::before { width: 3px; }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-metric::after {
+    right: -22px;
+    bottom: -30px;
+    width: 78px;
+    height: 78px;
+    border-radius: 24px;
+    opacity: .62;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-metric:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 11px 28px rgba(31,28,52,.065);
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-metric small {
+    font-size: 9px;
+    letter-spacing: .065em;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-metric strong {
+    margin-top: 6px;
+    font-size: 27px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-metric span {
+    max-width: 90%;
+    margin-top: 5px;
+    font-size: 10px;
+    line-height: 1.25;
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) > .pmh-shortcuts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-shortcuts button,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-shortcuts button:nth-child(n) {
+    grid-column: auto;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 2px 11px;
+    min-height: 68px;
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-shortcuts button:hover { transform: translateY(-1px); }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-shortcuts i {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    font-size: 16px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-shortcuts strong { font-size: 13px; }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-shortcuts span { font-size: 10px; }
+}
+
+@media (min-width: 821px) and (max-width: 1180px) {
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) > .pmh-metrics,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) > .pmh-shortcuts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
