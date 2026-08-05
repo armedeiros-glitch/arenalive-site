@@ -53,7 +53,7 @@ body .pmh-sults-toast { color: #fff !important; background: #1f1b2c !important; 
 .pmh-content button { transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
 .pmh-content button:active { transform: translateY(0); }
 
-/* Responsive */
+/* Responsive content. The mobile shell itself is controlled by html.aos-mobile. */
 @media (max-width: 1180px) {
   .pmh-metric:nth-child(1), .pmh-metric:nth-child(2), .pmh-metric:nth-child(3), .pmh-metric:nth-child(4) { grid-column: span 6; }
   .pmh-shortcuts button:nth-child(1), .pmh-shortcuts button:nth-child(2), .pmh-shortcuts button:nth-child(3), .pmh-shortcuts button:nth-child(4) { grid-column: span 6; }
@@ -66,23 +66,6 @@ body .pmh-sults-toast { color: #fff !important; background: #1f1b2c !important; 
 }
 
 @media (max-width: 820px) {
-  .pmh-sidebar {
-    position: sticky;
-    top: 0;
-    width: 100%;
-    height: auto;
-    padding: 10px;
-    flex-direction: row;
-    align-items: center;
-    overflow-x: auto;
-  }
-  .pmh-sidebar::after, .pmh-brand small, .pmh-sidebar footer { display: none; }
-  .pmh-brand { flex: 0 0 auto; padding: 0 10px 0 0; }
-  .pmh-brand > span { width: 40px; height: 40px; border-radius: 12px; }
-  .pmh-brand strong::before { font-size: 14px; }
-  .pmh-sidebar nav { display: flex; }
-  .pmh-sidebar nav button { white-space: nowrap; min-height: 44px; }
-  .pmh-main { margin-left: 0; }
   .pmh-topbar { min-height: 82px; padding: 14px 16px; }
   .pmh-content { padding: 20px 15px 46px; }
   .pmh-hero, .pmh-section-head { min-height: 0; align-items: stretch; flex-direction: column; padding: 26px 24px; }
@@ -99,7 +82,6 @@ body .pmh-sults-toast { color: #fff !important; background: #1f1b2c !important; 
 }
 
 @media (max-width: 560px) {
-  .pmh-topbar > div:first-child > small::before { content: 'PLANET CHOCOLATE'; }
   .pmh-topbar h1 { font-size: 24px; }
   .pmh-top-actions label { display: none; }
   .pmh-metric:nth-child(1), .pmh-metric:nth-child(2), .pmh-metric:nth-child(3), .pmh-metric:nth-child(4),
