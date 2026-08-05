@@ -53,13 +53,10 @@
 
   const cleanDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) ? String(value) : '';
   const nowIso = () => new Date().toISOString();
-  const todayIso = () => {
-    const formatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Sao_Paulo',
-      year: 'numeric', month: '2-digit', day: '2-digit',
-    });
-    return formatter.format(new Date());
-  };
+  const todayIso = () => new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
 
   const normalizeSteps = (items) => (Array.isArray(items) ? items : [])
     .slice(0, 12)
@@ -90,6 +87,7 @@
     completedAt: String(item.completedAt || ''),
   });
 
+  const mount = () => document.querySelector('[data-internal-demands]');
   const readLocal = () => {
     try {
       const payload = JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}');
@@ -99,7 +97,6 @@
       return [];
     }
   };
-
   const writeLocal = () => localStorage.setItem(LOCAL_KEY, JSON.stringify({ data: state.items, updatedAt: nowIso() }));
 
   const apiJson = async (url, options = {}) => {
@@ -127,6 +124,8 @@
     });
     return [...merged.values()];
   };
+
+  const notifyUpdated = () => document.dispatchEvent(new CustomEvent('pmh:demands-updated'));
 
   const load = async () => {
     if (state.loaded) return;
@@ -175,56 +174,8 @@
       state.saving = false;
     }
     if (rerender) render();
+    notifyUpdated();
   };
-
-  const isHome = () => normalizeText(document.querySelector('[data-title]')?.textContent).includes('painel de marketing');
-  const mount = () => document.querySelector('[data-internal-demands]');
-
-  const dateValue = (value) => {
-    if (!value) return null;
-    const date = new Date(`${value}T12:00:00`);
-    return Number.isNaN(date.getTime()) ? null : date;
-  };
-
-  const fmtDate = (value) => {
-    const date = dateValue(value);
-    return date ? new Intl.DateTimeFormat('pt-BR').format(date) : 'Sem prazo';
-  };
-
-  const dayDiff = (value) => {
-    const due = dateValue(value);
-    if (!due) return null;
-    const today = dateValue(todayIso());
-    return Math.round((due - today) / 86400000);
-  };
-
-  const dueInfo = (item) => {
-    const diff = dayDiff(item.dueDate);
-    if (diff == null) return { label: 'Sem prazo', tone: 'none' };
-    if (diff < 0) return { label: `Atrasada há ${Math.abs(diff)} ${Math.abs(diff) === 1 ? 'dia' : 'dias'}`, tone: 'late' };
-    if (diff === 0) return { label: 'Vence hoje', tone: 'today' };
-    if (diff === 1) return { label: 'Vence amanhã', tone: 'soon' };
-    if (diff <= 7) return { label: `Vence em ${diff} dias`, tone: 'soon' };
-    return { label: fmtDate(item.dueDate), tone: 'later' };
-  };
-
-  const priorityWeight = { urgent: 0, high: 1, normal: 2, low: 3 };
-  const sortedActive = () => state.items
-    .filter((item) => !['completed', 'cancelled'].includes(item.status))
-    .sort((a, b) => {
-      const dueA = dayDiff(a.dueDate);
-      const dueB = dayDiff(b.dueDate);
-      const safeA = dueA == null ? 99999 : dueA;
-      const safeB = dueB == null ? 99999 : dueB;
-      if (safeA !== safeB) return safeA - safeB;
-      const priority = priorityWeight[a.priority] - priorityWeight[b.priority];
-      if (priority !== 0) return priority;
-      return Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0);
-    });
-
-  const completedItems = () => state.items
-    .filter((item) => item.status === 'completed')
-    .sort((a, b) => Date.parse(b.completedAt || b.updatedAt || 0) - Date.parse(a.completedAt || a.updatedAt || 0));
 
   const toast = (message, tone = 'success') => {
     document.querySelector('.pmh-demand-toast')?.remove();
@@ -243,13 +194,19 @@
     .map(([value, label]) => `<option value="${esc(value)}" ${value === selected ? 'selected' : ''}>${esc(label)}</option>`)
     .join('');
 
+  const fmtDate = (value) => {
+    if (!value) return 'Sem prazo';
+    const date = new Date(`${value}T12:00:00`);
+    return Number.isNaN(date.getTime()) ? 'Sem prazo' : new Intl.DateTimeFormat('pt-BR').format(date);
+  };
+
   const renderPreview = () => {
     if (!state.preview) return '';
     const item = normalizeDemand(state.preview.data || {});
     const warnings = Array.isArray(state.preview.warnings) ? state.preview.warnings : [];
     const modeLabel = state.preview.mode === 'ai' ? 'Organizado com IA' : state.preview.mode === 'rules' ? 'Organizado localmente' : 'Cadastro manual';
     return `<form class="pmh-demand-preview" data-demand-preview>
-      <header><div><small>PRÉVIA EDITÁVEL · ${esc(modeLabel)}</small><h3>Confirme antes de registrar</h3><p>A IA apenas estruturou a ideia. Você continua no volante.</p></div><button type="button" data-demand-cancel>×</button></header>
+      <header><div><small>PRÉVIA EDITÁVEL · ${esc(modeLabel)}</small><h3>Confirme antes de registrar</h3><p>A IA apenas estruturou a ideia. Você continua no volante.</p></div><button type="button" data-demand-cancel aria-label="Fechar">×</button></header>
       ${warnings.length ? `<div class="pmh-demand-warnings">${warnings.map((warning) => `<span>⚠ ${esc(warning)}</span>`).join('')}</div>` : ''}
       <div class="pmh-demand-form-grid">
         <label class="wide">Título<input name="title" required maxlength="220" value="${esc(item.title)}"></label>
@@ -268,58 +225,41 @@
     </form>`;
   };
 
-  const renderDemandCard = (item) => {
-    const due = dueInfo(item);
-    const done = item.steps.filter((step) => step.done).length;
-    const description = item.description && item.description !== item.title ? `<p>${esc(item.description)}</p>` : '';
-    return `<article class="pmh-demand-card priority-${esc(item.priority)} ${due.tone === 'late' ? 'late' : ''}" data-demand-id="${esc(item.id)}">
-      <header><div><div class="pmh-demand-tags"><span class="priority">${esc(LABELS.priority[item.priority])}</span><span>${esc(LABELS.origin[item.origin])}</span>${item.category ? `<span>${esc(item.category)}</span>` : ''}</div><h4>${esc(item.title)}</h4>${description}</div><span class="pmh-demand-due ${esc(due.tone)}">${esc(due.label)}</span></header>
-      <div class="pmh-demand-meta"><span><small>RESPONSÁVEL</small><strong>${esc(item.responsible || 'Não definido')}</strong></span><span><small>SOLICITADO POR</small><strong>${esc(item.requestedBy || LABELS.origin[item.origin])}</strong></span><span><small>STATUS</small><strong>${esc(LABELS.status[item.status])}</strong></span></div>
-      ${item.steps.length ? `<details class="pmh-demand-steps"><summary><span>Etapas</span><b>${done}/${item.steps.length}</b></summary><div>${item.steps.map((step) => `<label class="${step.done ? 'done' : ''}"><input type="checkbox" data-demand-step="${esc(step.id)}" data-demand-id="${esc(item.id)}" ${step.done ? 'checked' : ''}><span>${esc(step.text)}</span></label>`).join('')}</div></details>` : ''}
-      ${item.notes ? `<aside>${esc(item.notes)}</aside>` : ''}
-      <footer><small>${item.aiMode === 'ai' ? '✨ Organizada com IA' : item.aiMode === 'rules' ? '⚙ Organizada localmente' : 'Cadastro manual'}</small><div><button type="button" data-demand-edit="${esc(item.id)}">Editar</button><button type="button" class="success" data-demand-complete="${esc(item.id)}">Concluir</button><button type="button" class="danger" data-demand-delete="${esc(item.id)}">Excluir</button></div></footer>
-    </article>`;
-  };
+  const renderArchive = () => {
+    const completed = state.items
+      .filter((item) => item.status === 'completed')
+      .sort((a, b) => Date.parse(b.completedAt || b.updatedAt || 0) - Date.parse(a.completedAt || a.updatedAt || 0));
+    if (!completed.length) return '';
 
-  const renderCompleted = (items) => {
-    if (!items.length) return '';
-    return `<details class="pmh-demand-completed"><summary><span>Demandas concluídas</span><b>${items.length}</b></summary><div>${items.map((item) => `<article><div><strong>${esc(item.title)}</strong><small>${esc(item.responsible || 'Sem responsável')} · ${esc(fmtDate(item.dueDate))}</small></div><button type="button" data-demand-reopen="${esc(item.id)}">Reabrir</button></article>`).join('')}</div></details>`;
+    return `<details class="pmh-demand-archive">
+      <summary><span>Demandas concluídas</span><b>${completed.length}</b></summary>
+      <div>${completed.map((item) => `<article>
+        <div><strong>${esc(item.title)}</strong><small>${esc(item.responsible || 'Sem responsável')} · ${esc(fmtDate(item.dueDate))}</small></div>
+        <div><button type="button" data-demand-reopen="${esc(item.id)}">Reabrir</button><button type="button" data-demand-delete="${esc(item.id)}">Excluir</button></div>
+      </article>`).join('')}</div>
+    </details>`;
   };
 
   const render = () => {
     const target = mount();
-    if (!target || !state.loaded) return;
-    const active = sortedActive();
-    const completed = completedItems();
-    const overdue = active.filter((item) => (dayDiff(item.dueDate) ?? 0) < 0).length;
-    const urgent = active.filter((item) => item.priority === 'urgent').length;
-    const today = active.filter((item) => dayDiff(item.dueDate) === 0).length;
+    if (!target) return;
+    if (!state.loaded) {
+      target.innerHTML = '<div class="pmh-demand-loading">Carregando demandas internas…</div>';
+      return;
+    }
 
-    target.innerHTML = `
-      <header class="pmh-demand-section-head"><div><small>DEMANDAS INTERNAS</small><h2>O que não chega pelo SULTS</h2><p>Pedidos da direção, reuniões, WhatsApp e decisões internas do Marketing.</p></div><button type="button" data-demand-manual>+ Cadastro manual</button></header>
-      <section class="pmh-demand-capture">
-        <div><small>DESCREVA DO SEU JEITO</small><h3>Jogue a ideia aqui. A IA organiza.</h3><p>Ex.: “A direção pediu uma campanha para os colaboradores dos shoppings ainda este mês. A Ágata faz as artes e eu aprovo.”</p></div>
-        <textarea data-demand-input maxlength="4000" placeholder="Escreva a demanda como você falaria…">${esc(state.inputText)}</textarea>
-        <footer><span>${esc(state.aiMessage || 'Você revisa tudo antes de salvar.')}</span><button type="button" data-demand-organize>✨ Organizar com IA</button></footer>
-      </section>
-      ${renderPreview()}
-      <section class="pmh-demand-kpis"><article><small>ATIVAS</small><strong>${active.length}</strong><span>Demandas em aberto</span></article><article class="red"><small>ATRASADAS</small><strong>${overdue}</strong><span>Prazo já vencido</span></article><article class="orange"><small>VENCEM HOJE</small><strong>${today}</strong><span>Precisam de ação</span></article><article class="purple"><small>URGENTES</small><strong>${urgent}</strong><span>Prioridade máxima</span></article></section>
-      <section class="pmh-demand-list"><header><div><small>FILA INTERNA</small><h3>Demandas confirmadas</h3></div><span>${active.length} ativas</span></header><div>${active.length ? active.map(renderDemandCard).join('') : '<div class="pmh-demand-empty"><strong>Nenhuma demanda interna ativa.</strong><span>Use o campo acima para registrar a primeira.</span></div>'}</div></section>
-      ${renderCompleted(completed)}`;
+    target.innerHTML = `<section class="pmh-demand-capture pmh-demand-capture-compact">
+      <div><small>NOVA DEMANDA INTERNA</small><h3>Descreva. A IA organiza.</h3><p>Escreva do seu jeito e revise antes de registrar.</p></div>
+      <textarea data-demand-input maxlength="4000" placeholder="Ex.: A direção pediu uma campanha para os colaboradores dos shoppings até o fim do mês. A Ágata faz as artes e eu aprovo.">${esc(state.inputText)}</textarea>
+      <footer><span>${esc(state.aiMessage || 'Você revisa tudo antes de salvar.')}</span><button type="button" class="pmh-demand-manual-compact" data-demand-manual>Cadastro manual</button><button type="button" data-demand-organize>✨ Organizar demanda</button></footer>
+    </section>
+    ${renderPreview()}
+    ${renderArchive()}`;
   };
 
-  const ensureMount = async () => {
-    if (!isHome()) return;
-    if (mount()) return;
-    const hero = document.querySelector('.pmh-hero');
-    if (!hero) return;
-    const section = document.createElement('section');
-    section.className = 'pmh-internal-demands';
-    section.dataset.internalDemands = '1';
-    section.innerHTML = '<div class="pmh-demand-loading">Carregando demandas internas…</div>';
-    const metrics = hero.nextElementSibling;
-    if (metrics) metrics.after(section);
-    else hero.after(section);
+  const mountHome = async () => {
+    if (!mount()) return;
+    render();
     await load();
     render();
   };
@@ -349,7 +289,7 @@
       previewFromData({ ...payload.data, originalText: text, aiMode: payload.mode }, payload.mode, payload.warnings || []);
     } catch (error) {
       toast(error.message || 'Não foi possível organizar a demanda.', 'error');
-      if (button) { button.disabled = false; button.textContent = '✨ Organizar com IA'; }
+      if (button) { button.disabled = false; button.textContent = '✨ Organizar demanda'; }
     }
   };
 
@@ -418,6 +358,7 @@
 
     const edit = event.target.closest('[data-demand-edit]');
     if (edit) {
+      await load();
       const item = state.items.find((candidate) => candidate.id === edit.dataset.demandEdit);
       if (!item) return;
       state.editingId = item.id;
@@ -456,7 +397,7 @@
     }
   });
 
-  const observer = new MutationObserver(() => ensureMount());
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-  ensureMount();
+  window.addEventListener('pmh:view-rendered', (event) => {
+    if (event.detail?.view === 'inicio') mountHome();
+  });
 })();

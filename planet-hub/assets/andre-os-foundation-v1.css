@@ -93,42 +93,27 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   overflow: hidden;
   border: 1px solid rgba(255,255,255,.14);
   border-radius: 15px;
-  color: transparent;
+  color: #fff;
   background: linear-gradient(145deg, #8c78ff, #6049ea);
   box-shadow: 0 15px 34px rgba(92, 69, 237, .38);
-  font-size: 0;
-}
-.pmh-brand > span::before {
-  content: 'A';
-  color: #fff;
   font-size: 21px;
   font-weight: 900;
   letter-spacing: -.06em;
 }
 .pmh-brand strong, .pmh-brand small { display: block; }
 .pmh-brand strong {
-  color: transparent;
-  font-size: 0;
-  line-height: 1.1;
-}
-.pmh-brand strong::before {
-  content: 'ANDRÉ OS';
   color: #fff;
   font-size: 17px;
   font-weight: 900;
+  line-height: 1.1;
   letter-spacing: -.02em;
 }
 .pmh-brand small {
   margin-top: 4px;
-  color: transparent;
-  font-size: 0;
-  line-height: 1;
-}
-.pmh-brand small::before {
-  content: 'MARKETING COMMAND';
   color: #aaa6bd;
   font-size: 10px;
   font-weight: 700;
+  line-height: 1;
   letter-spacing: .13em;
 }
 .pmh-sidebar nav {
@@ -225,15 +210,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .pmh-topbar > div:first-child > small {
   display: block;
   margin-bottom: 6px;
-  color: transparent;
-  font-size: 0;
-  line-height: 1;
-}
-.pmh-topbar > div:first-child > small::before {
-  content: 'OPERAÇÃO · PLANET CHOCOLATE';
   color: var(--aos-accent);
   font-size: 11px;
   font-weight: 900;
+  line-height: 1;
   letter-spacing: .13em;
 }
 .pmh-topbar h1 {

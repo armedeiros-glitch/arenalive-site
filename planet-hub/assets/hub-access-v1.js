@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const SCRIPT_SEQUENCE = [
-    '/planet-hub/assets/unified-hub-v1.js?v=20260804-2',
+    '/planet-hub/assets/unified-hub-v1.js?v=20260805-1',
     '/planet-hub/assets/financeiro-v1.js?v=20260804-1',
   ];
 
@@ -14,11 +14,38 @@
     document.head.appendChild(script);
   });
 
+  const currentView = () => {
+    const value = String(location.hash || '#inicio').replace(/^#/, '').toLowerCase();
+    if (value.includes('cham')) return 'chamados';
+    if (value.includes('inaug')) return 'inauguracoes';
+    if (value.includes('calend') || value.includes('campanha')) return 'calendario';
+    if (value.includes('conte')) return 'conteudos';
+    return 'inicio';
+  };
+
+  const replayRenderedView = () => {
+    const content = document.querySelector('[data-content]');
+    if (!content) return;
+    window.dispatchEvent(new CustomEvent('pmh:view-rendered', {
+      detail: { view: currentView(), content, replayed: true },
+    }));
+  };
+
+  const scheduleViewReplay = () => {
+    const replay = () => requestAnimationFrame(replayRenderedView);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', replay, { once: true });
+    } else {
+      replay();
+    }
+  };
+
   const startHub = async (access) => {
     window.PMH_ACCESS = access;
     document.documentElement.classList.remove('pmh-access-pending');
     for (const src of SCRIPT_SEQUENCE) await loadScript(src);
     window.dispatchEvent(new CustomEvent('pmh:access-ready', { detail: access }));
+    scheduleViewReplay();
   };
 
   const renderLogin = (message = '') => {
