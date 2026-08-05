@@ -18,6 +18,13 @@ html.aos-mobile .pmh-top-actions {
 }
 
 /* O cérebro vira uma ação do cabeçalho, em vez de flutuar sobre o conteúdo. */
+html.aos-mobile .aos-thinking-floating-trigger,
+html.aos-mobile .aos-thinking-trigger.floating {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 html.aos-mobile .pmh-top-actions .aos-thinking-trigger,
 html.aos-mobile .aos-thinking-trigger:not(.floating) {
   position: static !important;
@@ -44,8 +51,8 @@ html.aos-mobile .aos-thinking-trigger:not(.floating) .aos-thinking-orb {
   font-size: 15px !important;
 }
 
-html.aos-mobile .pmh-top-actions .aos-thinking-trigger > span:last-child,
-html.aos-mobile .aos-thinking-trigger:not(.floating) > span:last-child {
+html.aos-mobile .pmh-top-actions .aos-thinking-trigger > span:last-child:not(.aos-thinking-orb),
+html.aos-mobile .aos-thinking-trigger:not(.floating) > span:last-child:not(.aos-thinking-orb) {
   display: none !important;
 }
 
@@ -56,6 +63,80 @@ html.aos-mobile .pmh-top-actions > button {
   min-height: 38px !important;
   border-radius: 12px !important;
   font-size: 17px !important;
+}
+
+/* Nova demanda interna compacta: campo + ação, sem card gigante. */
+html.aos-mobile .pmh-internal-demands {
+  gap: 8px !important;
+  margin: 10px 0 !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+  padding: 12px !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 24px rgba(31, 28, 52, .05) !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact > div {
+  grid-column: 1 / -1 !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact h3,
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact p {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact small {
+  display: block !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  letter-spacing: .08em !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact textarea {
+  grid-column: 1 !important;
+  width: 100% !important;
+  min-height: 54px !important;
+  height: 54px !important;
+  max-height: 96px !important;
+  padding: 10px 11px !important;
+  border-radius: 11px !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  resize: vertical !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact footer {
+  grid-column: 2 !important;
+  align-self: stretch !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  justify-content: flex-end !important;
+  gap: 0 !important;
+  margin: 0 !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact footer > span,
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact [data-demand-manual] {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact [data-demand-organize] {
+  width: auto !important;
+  max-width: 112px !important;
+  min-height: 54px !important;
+  height: 54px !important;
+  padding: 0 12px !important;
+  border-radius: 11px !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+  white-space: normal !important;
 }
 
 /* Mantém os cinco destinos do dock em uma única linha entre 390px e 430px. */
