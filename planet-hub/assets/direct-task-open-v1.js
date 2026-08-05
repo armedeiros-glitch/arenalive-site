@@ -15,6 +15,13 @@
       return null;
     }
   };
+  const readStored = (key) => {
+    try {
+      return sessionStorage.getItem(key) || '';
+    } catch {
+      return '';
+    }
+  };
 
   const readHandoff = () => {
     const value = readJson(HANDOFF_KEY);
@@ -22,6 +29,12 @@
   };
 
   const tokenFor = (handoff) => `${handoff?.itemId || ''}:${handoff?.createdAt || ''}`;
+  const normalizeText = (value) => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
   const currentView = () => {
     const value = String(location.hash || '#inicio').replace(/^#/, '').toLowerCase();
     if (value.includes('cham')) return 'chamados';
@@ -95,6 +108,12 @@
     return true;
   };
 
+  const modalMatches = (selector, handoff) => {
+    const modal = document.querySelector(selector);
+    const expected = normalizeText(handoff?.title);
+    return Boolean(modal && expected && normalizeText(modal.textContent).includes(expected));
+  };
+
   const openTicket = async (handoff) => {
     const id = sourceIdOf(handoff);
     if (!id) return false;
@@ -114,6 +133,7 @@
   };
 
   const openDemand = async (handoff) => {
+    if (modalMatches('[data-demand-preview]', handoff)) return true;
     const id = sourceIdOf(handoff);
     const selector = `[data-demand-edit="${cssValue(id)}"]`;
     let target = document.querySelector(selector);
@@ -127,6 +147,7 @@
   };
 
   const openContent = async (handoff) => {
+    if (modalMatches('.pmh-assets-modal', handoff)) return true;
     const id = sourceIdOf(handoff);
     const selector = `[data-content-edit="${cssValue(id)}"]`;
     let target = document.querySelector(selector);
@@ -141,6 +162,7 @@
   };
 
   const openCampaign = async (handoff) => {
+    if (modalMatches('.pmh-campaign-modal', handoff)) return true;
     const id = sourceIdOf(handoff);
     const target = await waitForSelector(`[data-edit-campaign="${cssValue(id)}"]`);
     if (!target) return false;
@@ -176,7 +198,7 @@
   const openCurrentHandoff = async () => {
     const handoff = readHandoff();
     const token = tokenFor(handoff);
-    if (!handoff || !token || token === activeToken || readJson(HANDLED_KEY) === token) return;
+    if (!handoff || !token || token === activeToken || readStored(HANDLED_KEY) === token) return;
 
     activeToken = token;
     await sleep(OPEN_DELAY_MS);
