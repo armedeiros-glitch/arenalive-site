@@ -37,17 +37,33 @@ const usefulInteractions = (reference) => (Array.isArray(reference?.interactions
   }))
   .filter((entry) => entry.text);
 
+const bestDateCue = (value) => {
+  const text = clean(value, 1200);
+  const matches = [...text.matchAll(new RegExp(DATE_CUE_PATTERN.source, 'gi'))]
+    .map((match) => clean(match[1], 120))
+    .filter(Boolean);
+
+  const score = (cue) => {
+    if (/\d/.test(cue) && /(?:segunda|terça|terca|quarta|quinta|sexta)/i.test(cue)) return 4;
+    if (/\d/.test(cue)) return 3;
+    if (/(?:segunda|terça|terca|quarta|quinta|sexta)/i.test(cue)) return 2;
+    return 1;
+  };
+
+  return matches.reduce((best, current) => score(current) >= score(best) ? current : best, '');
+};
+
 const commitmentFrom = (interactions) => {
   for (let index = 0; index < interactions.length; index += 1) {
     const entry = interactions[index];
-    const dateCue = entry.text.match(DATE_CUE_PATTERN)?.[1] || '';
+    const dateCue = bestDateCue(entry.text);
     if (!dateCue || !COMMITMENT_PATTERN.test(entry.text)) continue;
 
     const newerEntries = interactions.slice(0, index);
     const confirmedAfter = newerEntries.some((candidate) => COMPLETION_PATTERN.test(candidate.text));
     return {
       ...entry,
-      dateCue: clean(dateCue, 120),
+      dateCue,
       confirmedAfter,
     };
   }
