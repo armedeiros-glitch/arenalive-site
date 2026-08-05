@@ -164,4 +164,5 @@
   });
 
   document.addEventListener('pmh:demands-updated', refresh);
+  document.addEventListener('pmh:active-refresh', refresh);
 })();
