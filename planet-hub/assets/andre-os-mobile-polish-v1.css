@@ -2,9 +2,16 @@
    Ajustes pequenos sobre o shell v2, sem efeito no desktop. */
 
 html.aos-mobile .pmh-topbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 90 !important;
+  isolation: isolate;
   min-height: 64px !important;
   padding-top: 8px !important;
   padding-bottom: 8px !important;
+  background: rgba(248, 248, 251, .96) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.25);
+  backdrop-filter: blur(22px) saturate(1.25);
 }
 
 html.aos-mobile .pmh-topbar h1 {
@@ -17,7 +24,11 @@ html.aos-mobile .pmh-top-actions {
   gap: 6px !important;
 }
 
-/* O cérebro vira uma ação do cabeçalho, em vez de flutuar sobre o conteúdo. */
+/* No celular, o Pensar comigo vive somente no cabeçalho. */
+html.aos-mobile .aos-thinking-floating-trigger {
+  display: none !important;
+}
+
 html.aos-mobile .pmh-top-actions .aos-thinking-trigger,
 html.aos-mobile .aos-thinking-trigger:not(.floating) {
   position: static !important;
