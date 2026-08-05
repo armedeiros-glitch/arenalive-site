@@ -34,13 +34,26 @@ const describeMatch = (context) => {
 const forwardWithSecret = (context) => {
   const secret = routeSecret(context.params?.secret);
   const url = new URL(context.request.url);
+  const headers = new Headers(context.request.headers);
+
   url.pathname = '/api/integrations/planet/rd/events';
   url.search = '';
-  if (secret) url.searchParams.set('secret', secret);
+
+  if (secret) {
+    url.searchParams.set('secret', secret);
+    headers.set('X-RD-Webhook-Secret', secret);
+  }
 
   return {
     ...context,
-    request: new Request(url.toString(), context.request),
+    request: new Request(url.toString(), {
+      method: context.request.method,
+      headers,
+      body: ['GET', 'HEAD'].includes(context.request.method)
+        ? undefined
+        : context.request.body,
+      redirect: context.request.redirect,
+    }),
   };
 };
 
