@@ -10,6 +10,7 @@
     week: 'Esta semana',
     noDate: 'Sem prazo',
   };
+  const MOBILE_LIMIT = 6;
 
   const OPERATIONAL = {
     actionable: { label: 'Posso agir', tone: 'actionable' },
@@ -25,10 +26,12 @@
     loaded: false,
     loading: false,
     errors: [],
+    mobileExpanded: false,
   };
 
   const radar = () => window.PMHRadarData;
   const mount = () => document.querySelector('[data-active-workstream]');
+  const isMobile = () => document.documentElement.classList.contains('aos-mobile');
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
   }[char]));
@@ -89,12 +92,14 @@
     const target = mount();
     if (!target) return;
 
-    const visible = radar()?.sortItems(state.items.filter((item) => matchesFilter(item, state.filter))) || [];
+    const allVisible = radar()?.sortItems(state.items.filter((item) => matchesFilter(item, state.filter))) || [];
+    const limited = isMobile() && !state.mobileExpanded && allVisible.length > MOBILE_LIMIT;
+    const visible = limited ? allVisible.slice(0, MOBILE_LIMIT) : allVisible;
     const totals = filterCounts();
 
     target.innerHTML = `<header class="pmh-active-head">
       <div><small>RADAR OPERACIONAL</small><h2>Tudo que está ativo</h2><p>A fila mostra o prazo. O contexto explica se o item realmente pode andar.</p></div>
-      <b>${visible.length} ${visible.length === 1 ? 'demanda' : 'demandas'}</b>
+      <b>${allVisible.length} ${allVisible.length === 1 ? 'demanda' : 'demandas'}</b>
     </header>
     <nav class="pmh-active-filters" aria-label="Filtrar demandas ativas">
       ${Object.entries(FILTERS).map(([key, label]) => `<button type="button" data-active-filter="${esc(key)}" class="${state.filter === key ? 'active' : ''}">${esc(label)} <b>${totals[key] || 0}</b></button>`).join('')}
@@ -102,6 +107,7 @@
     <div class="pmh-active-list">
       ${state.loading ? '<div class="pmh-active-empty">Carregando o radar…</div>' : visible.length ? visible.map(card).join('') : '<div class="pmh-active-empty">Nenhuma demanda ativa neste filtro.</div>'}
     </div>
+    ${isMobile() && allVisible.length > MOBILE_LIMIT ? `<button type="button" class="pmh-active-expand" data-active-expand aria-expanded="${state.mobileExpanded}">${state.mobileExpanded ? 'Mostrar menos' : `Ver todas as ${allVisible.length} demandas`}</button>` : ''}
     ${state.errors.length ? `<footer class="pmh-active-warning">Algumas fontes não carregaram: ${esc(state.errors.join(', '))}.</footer>` : ''}`;
   };
 
@@ -142,10 +148,23 @@
     load({ force: true });
   };
 
+  const expandAndFocus = () => {
+    state.mobileExpanded = true;
+    render();
+    requestAnimationFrame(() => mount()?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
+
   document.addEventListener('click', (event) => {
     const filter = event.target.closest('[data-active-filter]');
     if (filter) {
       state.filter = filter.dataset.activeFilter || 'all';
+      state.mobileExpanded = false;
+      render();
+      return;
+    }
+
+    if (event.target.closest('[data-active-expand]')) {
+      state.mobileExpanded = !state.mobileExpanded;
       render();
       return;
     }
@@ -159,10 +178,17 @@
 
   window.addEventListener('pmh:view-rendered', (event) => {
     if (event.detail?.view !== 'inicio') return;
+    state.mobileExpanded = false;
     render();
     if (!state.loaded && !state.loading) load();
   });
 
+  window.addEventListener('resize', () => {
+    if (!isMobile()) state.mobileExpanded = false;
+    render();
+  }, { passive: true });
+
   document.addEventListener('pmh:demands-updated', refresh);
   document.addEventListener('pmh:active-refresh', refresh);
+  document.addEventListener('pmh:active-expand', expandAndFocus);
 })();
