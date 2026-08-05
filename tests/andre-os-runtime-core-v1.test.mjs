@@ -108,6 +108,18 @@ AndreOS.events.replay('navigation.viewChanged', {
 });
 assert.equal(replayCount, 1);
 
+const legacyViewDetail = { view: 'chamados' };
+windowTarget.dispatchEvent(new CustomEvent('pmh:view-rendered', {
+  detail: legacyViewDetail,
+}));
+assert.match(legacyViewDetail.viewId, /^chamados:\d+$/);
+assert.equal(
+  AndreOS.events.latest('navigation.viewChanged').detail.viewId,
+  legacyViewDetail.viewId,
+);
+
+assert.ok(AndreOS.events.history({ filter: 'focus.' }).length >= 3);
+
 AndreOS.state.registerSlice('navigation', { view: 'inicio' });
 assert.equal(AndreOS.state.get('navigation.view'), 'inicio');
 let change = null;
