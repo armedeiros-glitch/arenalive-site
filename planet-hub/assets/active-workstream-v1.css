@@ -87,6 +87,52 @@
 .pmh-active-empty { padding: 30px; color: var(--aos-muted); background: #fff; text-align: center; font-size: 13px; }
 .pmh-active-warning { padding: 10px 14px; color: #9a681f; background: #fff8e8; font-size: 11px; }
 
+/* Desktop: dados, contexto e ações não disputam mais a mesma faixa. */
+@media (min-width: 721px) {
+  html:not(.aos-mobile) .pmh-active-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+  }
+
+  html:not(.aos-mobile) .pmh-active-row {
+    grid-column: 1;
+    min-width: 0;
+    padding: 12px 14px 12px 16px;
+  }
+
+  html:not(.aos-mobile) .pmh-active-context {
+    position: static;
+    grid-column: 2;
+    align-self: center;
+    min-width: 96px;
+    margin: 0 14px 0 4px;
+    white-space: nowrap;
+  }
+
+  html:not(.aos-mobile) .pmh-active-demand-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+    padding: 8px 14px 11px;
+    border-top: 1px solid #f0eff5;
+    background: #fcfcfe;
+  }
+}
+
+@media (max-width: 1380px) and (min-width: 721px) {
+  html:not(.aos-mobile) .pmh-active-row {
+    grid-template-columns: 105px minmax(190px, 1fr) minmax(115px, .55fr) 105px auto;
+    gap: 11px;
+  }
+}
+
+@media (max-width: 1180px) and (min-width: 721px) {
+  html:not(.aos-mobile) .pmh-active-row {
+    grid-template-columns: 100px minmax(180px, 1fr) 105px auto;
+  }
+  html:not(.aos-mobile) .pmh-active-person { display: none; }
+}
+
 @media (max-width: 1050px) {
   .pmh-active-row { grid-template-columns: 115px minmax(220px, 1fr) 130px 88px; }
   .pmh-active-person { display: none; }
