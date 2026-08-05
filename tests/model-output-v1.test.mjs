@@ -5,10 +5,15 @@ const helperPath = new URL('../functions/_shared/ai/model-output.js', import.met
 const source = fs.readFileSync(helperPath, 'utf8');
 const moduleUrl = `data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
 const {
+  FINAL_ANSWER_MODEL_OPTIONS,
   extractModelText,
   extractFinishReason,
   inspectModelOutput,
 } = await import(moduleUrl);
+
+assert.deepEqual(FINAL_ANSWER_MODEL_OPTIONS, {
+  chat_template_kwargs: { thinking: false },
+});
 
 const productionShape = {
   response: {
