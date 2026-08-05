@@ -3,8 +3,10 @@
 
   const API_URL = '/api/hub/pensar-comigo';
   const HISTORY_PREFIX = 'andre-os:thinking-history:v1:';
-  const FLOATING_TRIGGER_SELECTOR = '[data-thinking-floating-trigger]';
+  const TRIGGER_SELECTOR = '[data-thinking-assistant-trigger]';
+  const LEGACY_FLOATING_SELECTOR = '[data-thinking-floating-trigger]';
   const MAX_HISTORY_MESSAGES = 12;
+  const MOBILE_MAX = 820;
 
   let installed = false;
   let observerTimer = 0;
@@ -12,6 +14,8 @@
 
   const assistant = () => window.ThinkingAssistant;
   const currentContext = () => activeContext || assistant()?.getContext?.() || {};
+  const mobileViewport = () => document.documentElement.classList.contains('aos-mobile')
+    || window.matchMedia(`(max-width: ${MOBILE_MAX}px)`).matches;
 
   const contextKey = (context = currentContext()) => [
     context.page_id || 'dashboard',
@@ -60,36 +64,39 @@
       .trim();
   };
 
-  const ensureFloatingTrigger = () => {
+  const placeTrigger = () => {
     if (!document.body || !assistant()) return null;
 
-    let trigger = document.querySelector(FLOATING_TRIGGER_SELECTOR);
-    if (!trigger) {
-      trigger = document.createElement('button');
-      trigger.type = 'button';
-      trigger.className = 'aos-thinking-floating-trigger';
-      trigger.dataset.thinkingFloatingTrigger = '1';
-      trigger.setAttribute('aria-label', 'Pensar comigo');
-      trigger.innerHTML = '<span class="aos-thinking-orb" aria-hidden="true">🧠</span>';
-      document.body.appendChild(trigger);
-    } else if (trigger.parentElement !== document.body) {
+    document.querySelectorAll(LEGACY_FLOATING_SELECTOR).forEach((legacy) => legacy.remove());
+
+    const trigger = document.querySelector(TRIGGER_SELECTOR);
+    if (!trigger) return null;
+
+    const mobile = mobileViewport();
+    const topActions = document.querySelector('.pmh-top-actions');
+
+    trigger.hidden = false;
+    trigger.removeAttribute('aria-hidden');
+    trigger.removeAttribute('tabindex');
+    trigger.classList.toggle('floating', !mobile);
+    trigger.dataset.thinkingPlacement = mobile ? 'header' : 'floating';
+
+    if (mobile && topActions) {
+      if (trigger.parentElement !== topActions) topActions.insertBefore(trigger, topActions.firstChild);
+    } else if (!mobile && trigger.parentElement !== document.body) {
       document.body.appendChild(trigger);
     }
 
     const context = assistant()?.getContext?.() || {};
     const path = Array.isArray(context.context_path) ? context.context_path.join(' › ') : '';
     trigger.title = path ? `Pensar no contexto: ${path}` : 'Pensar comigo';
-
-    document.querySelectorAll('[data-thinking-assistant-trigger]').forEach((legacyTrigger) => {
-      legacyTrigger.setAttribute('aria-hidden', 'true');
-      legacyTrigger.setAttribute('tabindex', '-1');
-    });
+    trigger.setAttribute('aria-label', path ? `Pensar no contexto: ${path}` : 'Pensar comigo');
 
     return trigger;
   };
 
   const ensureChat = () => {
-    ensureFloatingTrigger();
+    placeTrigger();
 
     const root = document.querySelector('[data-thinking-assistant-root]');
     const main = root?.querySelector('.aos-thinking-main');
@@ -372,7 +379,7 @@
       installed = true;
     }
 
-    ensureFloatingTrigger();
+    placeTrigger();
     ensureChat();
     renderHistory();
     return true;
@@ -382,13 +389,6 @@
     clearTimeout(observerTimer);
     observerTimer = setTimeout(() => install(), 70);
   };
-
-  document.addEventListener('click', (event) => {
-    if (!event.target.closest?.(FLOATING_TRIGGER_SELECTOR)) return;
-    event.preventDefault();
-    event.stopPropagation();
-    assistant()?.open?.();
-  }, true);
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter' || event.shiftKey) return;
@@ -422,6 +422,9 @@
     scheduleSync();
   });
   window.addEventListener('pmh:access-ready', scheduleSync);
+  window.addEventListener('resize', scheduleSync, { passive: true });
+  window.addEventListener('orientationchange', scheduleSync, { passive: true });
+  window.addEventListener('aos:mobile-change', scheduleSync);
 
   const observer = new MutationObserver(scheduleSync);
   observer.observe(document.documentElement, { childList: true, subtree: true });
