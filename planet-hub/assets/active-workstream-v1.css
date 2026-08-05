@@ -103,3 +103,63 @@
   .pmh-active-context { top: auto; right: 14px; bottom: 12px; }
   .pmh-active-demand-actions { position: absolute; left: 8px; bottom: 6px; padding: 0; }
 }
+
+/* Desktop V2 · Radar mais próximo, denso e operacional */
+@media (min-width: 821px) {
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) > [data-active-workstream] {
+    border-radius: 16px;
+    box-shadow: 0 9px 28px rgba(31,28,52,.04);
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-head {
+    padding: 14px 18px 12px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-head h2 {
+    margin-top: 3px;
+    font-size: 20px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-head p {
+    margin-top: 3px;
+    font-size: 11px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-head > b {
+    padding: 6px 9px;
+    font-size: 11px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-filters {
+    gap: 6px;
+    padding: 8px 12px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-filters button {
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 10px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-row {
+    grid-template-columns: 108px minmax(220px, 1fr) minmax(130px, .5fr) 112px 82px;
+    gap: 12px;
+    min-height: 60px;
+    padding: 10px 120px 10px 14px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-origin {
+    max-width: 104px;
+    padding: 5px 7px;
+    font-size: 9px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-main strong { font-size: 13px; }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-main small { margin-top: 3px; font-size: 10px; }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-person strong,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-status { font-size: 10px; }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-row time {
+    padding: 5px 7px;
+    font-size: 9px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-context {
+    top: 13px;
+    right: 12px;
+    min-height: 32px;
+    font-size: 9px;
+  }
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-active-demand-actions {
+    padding: 0 12px 10px;
+  }
+}
