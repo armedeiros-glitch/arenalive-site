@@ -5,7 +5,7 @@
     if (document.querySelector('link[data-mobile-sidebar-style]')) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = '/planet-hub/assets/andre-os-mobile-sidebar-v1.css?v=20260805-2';
+    link.href = '/planet-hub/assets/andre-os-mobile-sidebar-v1.css?v=20260805-3';
     link.dataset.mobileSidebarStyle = '1';
     document.head.appendChild(link);
   };
