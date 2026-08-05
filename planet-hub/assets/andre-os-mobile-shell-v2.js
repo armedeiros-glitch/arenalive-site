@@ -5,6 +5,8 @@
   const ROOT_CLASS = 'aos-mobile';
   const BODY_CLASS = 'aos-mobile-ready';
   const MOBILE_VIEWS = new Set(['inicio', 'chamados', 'inauguracoes', 'calendario', 'conteudos']);
+  const THINKING_TRIGGER_SELECTOR = '[data-thinking-assistant-trigger]';
+  const THINKING_PROXY_SELECTOR = '[data-thinking-mobile-proxy]';
   let frame = 0;
   let observer;
 
@@ -60,6 +62,39 @@
     return dock;
   };
 
+  const createThinkingProxy = () => {
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'aos-thinking-trigger aos-thinking-mobile-proxy';
+    trigger.dataset.thinkingMobileProxy = '1';
+    trigger.setAttribute('aria-label', 'Pensar comigo');
+    trigger.innerHTML = '<span class="aos-thinking-orb" aria-hidden="true">🧠</span>';
+    trigger.addEventListener('click', () => window.ThinkingAssistant?.open?.());
+    return trigger;
+  };
+
+  const syncThinkingTrigger = (shell, active) => {
+    const proxy = document.querySelector(THINKING_PROXY_SELECTOR);
+    if (!active) {
+      proxy?.remove();
+      return;
+    }
+
+    const topActions = shell.querySelector('.pmh-top-actions');
+    if (!topActions) return;
+
+    const official = document.querySelector(THINKING_TRIGGER_SELECTOR);
+    const trigger = official || proxy || createThinkingProxy();
+
+    if (official && proxy && proxy !== official) proxy.remove();
+    if (trigger.parentElement !== topActions) topActions.insertBefore(trigger, topActions.firstChild);
+
+    trigger.classList.remove('floating');
+    trigger.removeAttribute('aria-hidden');
+    trigger.removeAttribute('tabindex');
+    trigger.hidden = false;
+  };
+
   const sync = () => {
     frame = 0;
 
@@ -87,6 +122,7 @@
       sidebar.insertBefore(nav, footer || null);
     }
 
+    syncThinkingTrigger(shell, active);
     return true;
   };
 
