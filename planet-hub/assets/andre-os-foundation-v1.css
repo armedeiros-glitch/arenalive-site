@@ -5,6 +5,7 @@
   --aos-ink-soft: #202231;
   --aos-sidebar: #17141f;
   --aos-sidebar-soft: #242033;
+  --aos-sidebar-width: 248px;
   --aos-accent: #735cff;
   --aos-accent-strong: #5b43ed;
   --aos-accent-soft: #eeebff;
@@ -48,151 +49,214 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 
 /* Shell */
-.pmh-sidebar {
+html:not(.aos-mobile) .pmh-sidebar {
   position: fixed;
   inset: 0 auto 0 0;
   z-index: 20;
-  width: 238px;
+  width: var(--aos-sidebar-width);
   display: flex;
   flex-direction: column;
-  padding: 24px 16px 18px;
-  overflow: hidden;
+  padding: 18px 18px 16px;
+  overflow: hidden auto;
   color: #fff;
   background:
-    radial-gradient(circle at 15% 5%, rgba(115, 92, 255, .32), transparent 34%),
-    radial-gradient(circle at 100% 86%, rgba(255, 107, 95, .16), transparent 32%),
-    var(--aos-sidebar);
-  border-right: 1px solid rgba(255, 255, 255, .06);
+    radial-gradient(circle at 8% 0%, rgba(115, 92, 255, .18), transparent 30%),
+    linear-gradient(180deg, #191620 0%, #15131b 100%);
+  border-right: 1px solid rgba(255, 255, 255, .065);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .14) transparent;
 }
-.pmh-sidebar::after {
+html:not(.aos-mobile) .pmh-sidebar::-webkit-scrollbar { width: 5px; }
+html:not(.aos-mobile) .pmh-sidebar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .14);
+}
+html:not(.aos-mobile) .pmh-sidebar::after {
   content: '';
   position: absolute;
-  right: -92px;
-  bottom: 76px;
-  width: 180px;
-  height: 180px;
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: 44px;
-  transform: rotate(24deg);
+  right: -90px;
+  bottom: 84px;
+  width: 170px;
+  height: 170px;
+  border: 1px solid rgba(255,255,255,.035);
+  border-radius: 48px;
+  transform: rotate(22deg);
   pointer-events: none;
 }
-.pmh-brand {
+html:not(.aos-mobile) .pmh-brand {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 2px 7px 28px;
+  gap: 12px;
+  min-height: 54px;
+  padding: 0 4px 17px;
+  border-bottom: 1px solid rgba(255,255,255,.065);
 }
-.pmh-brand > span {
+html:not(.aos-mobile) .pmh-brand > span {
   position: relative;
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,.14);
-  border-radius: 15px;
+  border-radius: 13px;
   color: #fff;
-  background: linear-gradient(145deg, #8c78ff, #6049ea);
-  box-shadow: 0 15px 34px rgba(92, 69, 237, .38);
-  font-size: 21px;
+  background: linear-gradient(145deg, #826fff, #624be6);
+  box-shadow: 0 10px 24px rgba(92, 69, 237, .25);
+  font-size: 20px;
   font-weight: 900;
   letter-spacing: -.06em;
 }
-.pmh-brand strong, .pmh-brand small { display: block; }
-.pmh-brand strong {
+html:not(.aos-mobile) .pmh-brand strong,
+html:not(.aos-mobile) .pmh-brand small { display: block; }
+html:not(.aos-mobile) .pmh-brand strong {
   color: #fff;
   font-size: 17px;
-  font-weight: 900;
-  line-height: 1.1;
-  letter-spacing: -.02em;
+  font-weight: 850;
+  line-height: 1.08;
+  letter-spacing: -.025em;
 }
-.pmh-brand small {
-  margin-top: 4px;
-  color: #aaa6bd;
-  font-size: 10px;
-  font-weight: 700;
+html:not(.aos-mobile) .pmh-brand small {
+  margin-top: 5px;
+  color: #9d99ad;
+  font-size: 9px;
+  font-weight: 750;
   line-height: 1;
-  letter-spacing: .13em;
+  letter-spacing: .15em;
+  text-transform: uppercase;
 }
-.pmh-sidebar nav {
+html:not(.aos-mobile) .pmh-sidebar nav {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 7px;
+  gap: 4px;
+  padding: 18px 0 16px;
 }
-.pmh-sidebar nav button {
+html:not(.aos-mobile) .pmh-sidebar nav::before {
+  content: 'NAVEGAÇÃO';
+  display: block;
+  padding: 0 10px 7px;
+  color: #706c7e;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+html:not(.aos-mobile) .pmh-sidebar nav button {
+  position: relative;
   display: grid;
-  grid-template-columns: 25px minmax(0, 1fr) auto;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-  min-height: 50px;
-  padding: 0 13px;
+  min-height: 46px;
+  padding: 0 11px;
   border: 1px solid transparent;
-  border-radius: 14px;
-  color: #c7c4d3;
+  border-radius: 11px;
+  color: #aaa6b7;
   background: transparent;
   text-align: left;
-  font-size: 14px;
-  font-weight: 720;
-  transition: .18s ease;
+  font-size: 13px;
+  font-weight: 680;
+  line-height: 1.2;
+  transition: color .16s ease, background .16s ease, border-color .16s ease;
 }
-.pmh-sidebar nav button:hover {
+html:not(.aos-mobile) .pmh-sidebar nav button:hover {
+  color: #eceaf2;
+  background: rgba(255,255,255,.045);
+  border-color: rgba(255,255,255,.045);
+}
+html:not(.aos-mobile) .pmh-sidebar nav button:focus-visible {
+  outline: 2px solid rgba(155,139,255,.62);
+  outline-offset: 2px;
+}
+html:not(.aos-mobile) .pmh-sidebar nav button.active {
   color: #fff;
-  background: rgba(255,255,255,.055);
-  border-color: rgba(255,255,255,.06);
+  background: rgba(115,92,255,.14);
+  border-color: rgba(147,129,255,.13);
+  box-shadow: none;
 }
-.pmh-sidebar nav button.active {
-  color: #fff;
-  background: linear-gradient(90deg, rgba(115,92,255,.3), rgba(115,92,255,.12));
-  border-color: rgba(147,129,255,.24);
-  box-shadow: inset 3px 0 #9b8bff, 0 12px 26px rgba(0,0,0,.12);
+html:not(.aos-mobile) .pmh-sidebar nav button.active::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 999px 999px 0;
+  background: #9b8bff;
 }
-.pmh-sidebar nav button i {
+html:not(.aos-mobile) .pmh-sidebar nav button i {
   display: grid;
   place-items: center;
-  width: 25px;
-  height: 25px;
-  color: #a79cff;
+  width: 24px;
+  height: 24px;
+  color: #8d83c7;
   font-style: normal;
-  font-size: 17px;
+  font-size: 16px;
+  line-height: 1;
+  transition: color .16s ease;
 }
-.pmh-sidebar nav button b {
-  min-width: 28px;
-  padding: 4px 7px;
+html:not(.aos-mobile) .pmh-sidebar nav button:hover i,
+html:not(.aos-mobile) .pmh-sidebar nav button.active i { color: #b7adff; }
+html:not(.aos-mobile) .pmh-sidebar nav button b {
+  min-width: 24px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 7px;
+  border: 1px solid rgba(255,255,255,.055);
   border-radius: 999px;
-  color: #e6e3ef;
-  background: rgba(255,255,255,.09);
+  color: #c8c4d2;
+  background: rgba(255,255,255,.065);
   text-align: center;
-  font-size: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
-.pmh-sidebar footer {
+html:not(.aos-mobile) .pmh-sidebar nav button b:first-letter { letter-spacing: 0; }
+html:not(.aos-mobile) .pmh-sidebar nav button.active b {
+  color: #e7e3ff;
+  background: rgba(155,139,255,.14);
+  border-color: rgba(155,139,255,.14);
+}
+html:not(.aos-mobile) .pmh-sidebar nav button b:only-child { opacity: .7; }
+html:not(.aos-mobile) .pmh-sidebar footer {
   position: relative;
   z-index: 1;
   margin-top: auto;
-  padding: 18px 8px 2px;
-  border-top: 1px solid rgba(255,255,255,.08);
+  padding: 15px 9px 3px;
+  border-top: 1px solid rgba(255,255,255,.07);
 }
-.pmh-sidebar footer small {
+html:not(.aos-mobile) .pmh-sidebar footer small {
   display: block;
+  max-width: 190px;
   color: #8f8b9f;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 550;
   line-height: 1.5;
 }
-.pmh-sidebar footer span {
+html:not(.aos-mobile) .pmh-sidebar footer small::first-line {
+  color: #d5d1dc;
+  font-weight: 750;
+  letter-spacing: .015em;
+}
+html:not(.aos-mobile) .pmh-sidebar footer span {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 12px;
-  color: #b8b4c4;
-  font-size: 12px;
+  min-height: 30px;
+  margin-top: 9px;
+  color: #aba7b6;
+  font-size: 11px;
+  font-weight: 650;
 }
-.pmh-sidebar footer i { width: 8px; height: 8px; border-radius: 50%; }
-.pmh-sidebar footer i.shared { background: #4fd09b; box-shadow: 0 0 0 5px rgba(79,208,155,.1); }
-.pmh-sidebar footer i.local { background: #f2b85e; box-shadow: 0 0 0 5px rgba(242,184,94,.1); }
+html:not(.aos-mobile) .pmh-sidebar footer i { flex: 0 0 7px; width: 7px; height: 7px; border-radius: 50%; }
+html:not(.aos-mobile) .pmh-sidebar footer i.shared { background: #4fd09b; box-shadow: 0 0 0 4px rgba(79,208,155,.09); }
+html:not(.aos-mobile) .pmh-sidebar footer i.local { background: #f2b85e; box-shadow: 0 0 0 4px rgba(242,184,94,.09); }
 
-.pmh-main { min-height: 100vh; margin-left: 238px; }
+html:not(.aos-mobile) .pmh-main { min-height: 100vh; margin-left: var(--aos-sidebar-width); }
 .pmh-topbar {
   position: sticky;
   top: 0;
@@ -269,4 +333,14 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   background: rgba(255,255,255,.72);
   text-align: center;
   font-size: 14px;
+}
+
+@media (max-height: 790px) and (min-width: 821px) {
+  html:not(.aos-mobile) .pmh-sidebar { padding-top: 13px; padding-bottom: 12px; }
+  html:not(.aos-mobile) .pmh-brand { min-height: 48px; padding-bottom: 13px; }
+  html:not(.aos-mobile) .pmh-brand > span { width: 42px; height: 42px; flex-basis: 42px; }
+  html:not(.aos-mobile) .pmh-sidebar nav { gap: 2px; padding-top: 12px; padding-bottom: 11px; }
+  html:not(.aos-mobile) .pmh-sidebar nav::before { padding-bottom: 4px; }
+  html:not(.aos-mobile) .pmh-sidebar nav button { min-height: 43px; }
+  html:not(.aos-mobile) .pmh-sidebar footer { padding-top: 11px; }
 }
