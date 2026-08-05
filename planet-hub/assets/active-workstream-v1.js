@@ -37,7 +37,6 @@
   }[char]));
 
   const hasDependency = (item) => (item.operationalState || 'actionable') !== 'actionable';
-
   const matchesFilter = (item, filter) => {
     const bucket = radar()?.dueMeta(item.dueDate).bucket;
     if (filter === 'all') return true;
@@ -53,7 +52,6 @@
   }, {});
 
   const operationalMeta = (item) => OPERATIONAL[item.operationalState] || OPERATIONAL.actionable;
-
   const contextSummary = (item) => {
     if (!hasDependency(item)) return '';
     return [item.dependsOn, item.blockerReason].filter(Boolean).join(' · ');
@@ -183,9 +181,13 @@
     if (!state.loaded && !state.loading) load();
   });
 
+  window.addEventListener('aos:mobile-change', () => {
+    state.mobileExpanded = false;
+    render();
+  });
+
   window.addEventListener('resize', () => {
     if (!isMobile()) state.mobileExpanded = false;
-    render();
   }, { passive: true });
 
   document.addEventListener('pmh:demands-updated', refresh);
