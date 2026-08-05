@@ -98,3 +98,134 @@
     flex: 1 1 160px;
   }
 }
+
+/* Desktop V2 · demanda discreta até o usuário decidir registrar */
+@media (min-width: 821px) {
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-internal-demands {
+    gap: 10px;
+    margin: 0;
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture.pmh-demand-capture-compact {
+    grid-template-columns: minmax(230px, .85fr) minmax(340px, 1.4fr);
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-color: var(--aos-line);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(31,28,52,.035);
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact > div:first-child {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 2px 9px;
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact > div:first-child small {
+    grid-column: 2;
+    font-size: 8px;
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact > div:first-child h3 {
+    grid-column: 2;
+    margin: 0;
+    font-size: 15px;
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact > div:first-child h3::before {
+    content: '+';
+    grid-column: 1;
+    grid-row: 1 / 3;
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    margin-right: 9px;
+    border-radius: 9px;
+    color: var(--aos-accent);
+    background: var(--aos-accent-soft);
+    font-size: 18px;
+    line-height: 1;
+    vertical-align: middle;
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact > div:first-child p { display: none; }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact textarea {
+    min-height: 44px;
+    max-height: 44px;
+    padding: 10px 12px;
+    overflow: hidden;
+    border-color: var(--aos-line);
+    border-radius: 10px;
+    font-size: 12px;
+    resize: none;
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact footer { display: none; }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:focus-within,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:has(textarea:not(:placeholder-shown)),
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-internal-demands:has(.pmh-demand-preview) .pmh-demand-capture-compact {
+    grid-template-columns: minmax(240px, .8fr) minmax(360px, 1.7fr);
+    align-items: start;
+    gap: 14px;
+    padding: 16px;
+    border-color: #d9d1ff;
+    background: linear-gradient(145deg, #fbfaff, #f7f5ff);
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:focus-within > div:first-child,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:has(textarea:not(:placeholder-shown)) > div:first-child,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-internal-demands:has(.pmh-demand-preview) .pmh-demand-capture-compact > div:first-child {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 7px 11px;
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:focus-within > div:first-child small,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:focus-within > div:first-child h3,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:has(textarea:not(:placeholder-shown)) > div:first-child small,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:has(textarea:not(:placeholder-shown)) > div:first-child h3,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-internal-demands:has(.pmh-demand-preview) .pmh-demand-capture-compact > div:first-child small,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-internal-demands:has(.pmh-demand-preview) .pmh-demand-capture-compact > div:first-child h3 {
+    grid-column: auto;
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:focus-within > div:first-child h3,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:has(textarea:not(:placeholder-shown)) > div:first-child h3,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-internal-demands:has(.pmh-demand-preview) .pmh-demand-capture-compact > div:first-child h3 { font-size: 17px; }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:focus-within > div:first-child h3::before,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:has(textarea:not(:placeholder-shown)) > div:first-child h3::before,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-internal-demands:has(.pmh-demand-preview) .pmh-demand-capture-compact > div:first-child h3::before { display: none; }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:focus-within > div:first-child p,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:has(textarea:not(:placeholder-shown)) > div:first-child p,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-internal-demands:has(.pmh-demand-preview) .pmh-demand-capture-compact > div:first-child p {
+    display: block;
+    flex: 1 1 320px;
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:focus-within textarea,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:has(textarea:not(:placeholder-shown)) textarea,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-internal-demands:has(.pmh-demand-preview) .pmh-demand-capture-compact textarea {
+    min-height: 100px;
+    max-height: 180px;
+    padding: 12px 14px;
+    overflow: auto;
+    font-size: 13px;
+    resize: vertical;
+  }
+
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:focus-within footer,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-demand-capture-compact:has(textarea:not(:placeholder-shown)) footer,
+  html:not(.aos-mobile) .pmh-content:has(> [data-decision-cockpit]) .pmh-internal-demands:has(.pmh-demand-preview) .pmh-demand-capture-compact footer {
+    grid-column: 1 / -1;
+    display: flex;
+  }
+}
