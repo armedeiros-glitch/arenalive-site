@@ -40,6 +40,17 @@
     return doc;
   };
   const manualActionId = (paymentId) => `manual-${paymentId}`;
+  const cloneItems = (items) => items.map((item) => ({ ...item }));
+  const mergeChangedItems = (remoteItems, localItems, changedIds = []) => {
+    const merged = new Map((remoteItems || []).map((item) => [String(item.id || ''), item]));
+    const localById = new Map((localItems || []).map((item) => [String(item.id || ''), item]));
+    changedIds.forEach((id) => {
+      const key = String(id || '');
+      const local = localById.get(key);
+      if (key && local) merged.set(key, local);
+    });
+    return [...merged.values()];
+  };
 
   const apiJson = async (url, options = {}) => {
     const response = await fetch(url, {
@@ -117,7 +128,13 @@
     }
   };
 
-  const saveFinance = async () => {
+  const saveFinance = async ({
+    changedSupplierIds = [],
+    changedPaymentIds = [],
+    attempt = 0,
+  } = {}) => {
+    const localSuppliers = cloneItems(state.suppliers);
+    const localPayments = cloneItems(state.payments);
     try {
       const payload = await apiJson(API.finance, {
         method: 'PUT',
@@ -133,14 +150,29 @@
       state.configured = true;
       state.error = '';
     } catch (error) {
-      if (error.status === 409 && error.payload) {
-        state.suppliers = error.payload.suppliers || state.suppliers;
-        state.payments = error.payload.payments || state.payments;
+      if (error.status === 409 && error.payload && attempt < 2) {
+        state.suppliers = mergeChangedItems(
+          error.payload.suppliers || [],
+          localSuppliers,
+          changedSupplierIds,
+        );
+        state.payments = mergeChangedItems(
+          error.payload.payments || [],
+          localPayments,
+          changedPaymentIds,
+        );
         state.revision = error.payload.revision || null;
-        return saveFinance();
+        return saveFinance({
+          changedSupplierIds,
+          changedPaymentIds,
+          attempt: attempt + 1,
+        });
       }
-      state.error = error.message;
-      throw error;
+      const finalError = error.status === 409
+        ? new Error('Os dados financeiros mudaram novamente. Reabra o painel e tente salvar outra vez.')
+        : error;
+      state.error = finalError.message;
+      throw finalError;
     }
   };
 
@@ -225,11 +257,16 @@
       legalName: '', tradeName: '', document: '', phone: '', email: '', pixKey: '',
       bankDetails: '', serviceType: '', notes: '', createdAt: new Date().toISOString(),
     };
-    const modal = showModal(`<section class="pmh-finance-dialog"><header><div><h2>${existing ? 'Editar' : 'Novo'} fornecedor</h2><p>Dados bancários e fiscais criptografados antes de entrar no KV.</p></div><button data-finance-close>×</button></header><form class="pmh-finance-form"><label>Nome / razão social<input name="legalName" value="${esc(supplier.legalName)}" required></label><label>Nome fantasia<input name="tradeName" value="${esc(supplier.tradeName)}"></label><label>CPF ou CNPJ<input name="document" value="${esc(supplier.document)}" required></label><label>Tipo de serviço<input name="serviceType" value="${esc(supplier.serviceType)}"></label><label>Telefone<input name="phone" value="${esc(supplier.phone)}"></label><label>E-mail<input name="email" type="email" value="${esc(supplier.email)}"></label><label class="wide">Chave Pix<input name="pixKey" value="${esc(supplier.pixKey)}"></label><label class="wide">Dados bancários<textarea name="bankDetails">${esc(supplier.bankDetails)}</textarea></label><label class="wide">Observações<textarea name="notes">${esc(supplier.notes)}</textarea></label><footer><button type="button" data-finance-close>Cancelar</button><button class="primary" type="submit">Salvar fornecedor</button></footer></form></section>`, renderPanel);
+    const modal = showModal(`<section class="pmh-finance-dialog"><header><div><h2>${existing ? 'Editar' : 'Novo'} fornecedor</h2><p>Dados bancários e fiscais criptografados antes de entrar no KV.</p></div><button data-finance-close>×</button></header><form class="pmh-finance-form"><label>Nome / razão social<input name="legalName" value="${esc(supplier.legalName)}" required></label><label>Nome fantasia<input name="tradeName" value="${esc(supplier.tradeName)}"></label><label>CPF ou CNPJ<input name="document" value="${esc(supplier.document)}" required></label><label>Tipo de serviço<input name="serviceType" value="${esc(supplier.serviceType)}"></label><label>Telefone<input name="phone" value="${esc(supplier.phone)}"></label><label>E-mail<input name="email" type="email" value="${esc(supplier.email)}"></label><label class="wide">Chave Pix<input name="pixKey" value="${esc(supplier.pixKey)}"></label><label class="wide">Dados bancários<textarea name="bankDetails">${esc(supplier.bankDetails)}</textarea></label><label class="wide">Observações<textarea name="notes">${esc(supplier.notes)}</textarea></label><p class="pmh-alert wide" data-finance-supplier-error hidden></p><footer><button type="button" data-finance-close>Cancelar</button><button class="primary" type="submit">Salvar fornecedor</button></footer></form></section>`, renderPanel);
 
     modal.querySelector('form').addEventListener('submit', async (event) => {
       event.preventDefault();
-      const data = Object.fromEntries(new FormData(event.currentTarget));
+      const form = event.currentTarget;
+      const submitButton = form.querySelector('button[type="submit"]');
+      const errorBox = form.querySelector('[data-finance-supplier-error]');
+      const originalButtonText = submitButton?.textContent || 'Salvar fornecedor';
+      const previousSuppliers = cloneItems(state.suppliers);
+      const data = Object.fromEntries(new FormData(form));
       const updated = {
         ...supplier,
         ...data,
@@ -239,10 +276,33 @@
       const index = state.suppliers.findIndex((item) => item.id === updated.id);
       if (index >= 0) state.suppliers[index] = updated;
       else state.suppliers.push(updated);
-      closeModal(false);
-      await saveFinance();
-      if (afterSave) afterSave(updated);
-      else renderPanel();
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Salvando…';
+      }
+      if (errorBox) {
+        errorBox.hidden = true;
+        errorBox.textContent = '';
+      }
+
+      try {
+        await saveFinance({ changedSupplierIds: [updated.id] });
+        closeModal(false);
+        if (afterSave) afterSave(updated);
+        else renderPanel();
+      } catch (error) {
+        state.suppliers = previousSuppliers;
+        state.error = '';
+        if (errorBox) {
+          errorBox.textContent = error instanceof Error ? error.message : 'Não foi possível salvar o fornecedor.';
+          errorBox.hidden = false;
+        }
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = originalButtonText;
+        }
+      }
     });
   };
 
@@ -282,7 +342,7 @@
       const submitButton = form.querySelector('button[type="submit"]');
       const errorBox = form.querySelector('[data-finance-payment-error]');
       const originalButtonText = submitButton?.textContent || 'Salvar pagamento';
-      const previousPayments = state.payments.map((item) => ({ ...item }));
+      const previousPayments = cloneItems(state.payments);
       const data = Object.fromEntries(new FormData(form));
       const updated = {
         ...payment,
@@ -307,7 +367,7 @@
       }
 
       try {
-        await saveFinance();
+        await saveFinance({ changedPaymentIds: [updated.id] });
         closeModal(false);
         renderPanel();
       } catch (error) {
@@ -463,15 +523,19 @@
     if (!select) return;
     const payment = state.payments.find((item) => item.id === select.dataset.paymentStatus);
     if (!payment) return;
+    const previousPayments = cloneItems(state.payments);
+    select.disabled = true;
     payment.status = select.value;
     payment.updatedAt = new Date().toISOString();
     if (payment.status === 'sent_finance') payment.sentAt = payment.sentAt || new Date().toISOString();
     if (payment.status === 'paid') payment.paidAt = payment.paidAt || new Date().toISOString();
     try {
-      await saveFinance();
+      await saveFinance({ changedPaymentIds: [payment.id] });
       renderPanel();
     } catch (error) {
-      alert(error.message);
+      state.payments = previousPayments;
+      state.error = error instanceof Error ? error.message : 'Não foi possível atualizar o status.';
+      renderPanel();
     }
   });
 
