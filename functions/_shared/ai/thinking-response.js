@@ -9,8 +9,8 @@ export const buildThinkingResponseMetadata = ({ context = {}, payload = {}, plan
   resolved_ticket_id: Number(context.ticket_reference?.id || context.ticket_lookup?.requested_id) || null,
   ticket_reference: context.ticket_reference || null,
   knowledge: {
-    brain: clean(planetBrain.brain, 120),
-    version: clean(planetBrain.version, 80),
+    brain: planetBrain.brain ?? '',
+    version: planetBrain.version ?? '',
     selected_sections: Array.isArray(planetBrain.selected_sections)
       ? planetBrain.selected_sections.slice(0, 12)
       : [],
