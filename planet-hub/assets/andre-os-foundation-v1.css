@@ -135,15 +135,6 @@ html:not(.aos-mobile) .pmh-sidebar nav {
   gap: 4px;
   padding: 18px 0 16px;
 }
-html:not(.aos-mobile) .pmh-sidebar nav::before {
-  content: 'NAVEGAÇÃO';
-  display: block;
-  padding: 0 10px 7px;
-  color: #706c7e;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: .14em;
-}
 html:not(.aos-mobile) .pmh-sidebar nav button {
   position: relative;
   display: grid;
@@ -215,13 +206,11 @@ html:not(.aos-mobile) .pmh-sidebar nav button b {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
-html:not(.aos-mobile) .pmh-sidebar nav button b:first-letter { letter-spacing: 0; }
 html:not(.aos-mobile) .pmh-sidebar nav button.active b {
   color: #e7e3ff;
   background: rgba(155,139,255,.14);
   border-color: rgba(155,139,255,.14);
 }
-html:not(.aos-mobile) .pmh-sidebar nav button b:only-child { opacity: .7; }
 html:not(.aos-mobile) .pmh-sidebar footer {
   position: relative;
   z-index: 1;
@@ -340,7 +329,6 @@ html:not(.aos-mobile) .pmh-main { min-height: 100vh; margin-left: var(--aos-side
   html:not(.aos-mobile) .pmh-brand { min-height: 48px; padding-bottom: 13px; }
   html:not(.aos-mobile) .pmh-brand > span { width: 42px; height: 42px; flex-basis: 42px; }
   html:not(.aos-mobile) .pmh-sidebar nav { gap: 2px; padding-top: 12px; padding-bottom: 11px; }
-  html:not(.aos-mobile) .pmh-sidebar nav::before { padding-bottom: 4px; }
   html:not(.aos-mobile) .pmh-sidebar nav button { min-height: 43px; }
   html:not(.aos-mobile) .pmh-sidebar footer { padding-top: 11px; }
 }
