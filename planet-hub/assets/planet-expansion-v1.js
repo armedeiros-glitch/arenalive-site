@@ -33,27 +33,31 @@
       .pmh-expansion-lead strong,.pmh-expansion-lead span{display:block}.pmh-expansion-lead small{color:#7a675f}.pmh-expansion-status{padding:7px 10px;border-radius:999px;background:#eee9ff;color:#5e46c8;font-size:12px;font-weight:900;text-transform:uppercase}
       .pmh-expansion-empty{padding:48px 24px;border:1px dashed #d7c4ba;border-radius:18px;background:#fff;text-align:center}.pmh-expansion-empty b{display:block;margin-bottom:8px;font-size:20px}.pmh-expansion-empty span{color:#78665e}
       .pmh-expansion-error{padding:14px;border:1px solid #f0b8b8;border-radius:12px;background:#fff1f1;color:#8f2727}
-      @media(max-width:760px){.pmh-expansion-head{padding:18px}.pmh-expansion-head h2{font-size:25px}.pmh-expansion-metrics{grid-template-columns:1fr}.pmh-expansion-lead{grid-template-columns:1fr;gap:8px}}
+      @media(max-width:760px){.pmh-expansion-head{padding:18px}.pmh-expansion-head h2{font-size:25px}.pmh-expansion-metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.pmh-expansion-metrics article{padding:12px 9px}.pmh-expansion-metrics small{font-size:9px}.pmh-expansion-metrics strong{font-size:22px}.pmh-expansion-lead{grid-template-columns:1fr;gap:8px}}
     `;
     document.head.appendChild(style);
   };
 
-  const navCandidates = () => [...document.querySelectorAll('[data-view="conteudos"], [data-view="calendario"], [data-view="inauguracoes"]')];
-
   const injectNavigation = () => {
-    if (document.querySelector('[data-expansion-nav]')) return;
-    const reference = navCandidates().find((item) => item.closest('nav,aside'));
-    if (!reference) return;
-    const button = reference.cloneNode(true);
-    button.removeAttribute('data-view');
-    button.dataset.expansionNav = '1';
+    const nav = document.querySelector('.pmh-sidebar nav, .aos-mobile-dock nav');
+    if (!nav || nav.querySelector(':scope > [data-expansion-nav]')) return;
+
+    const reference = nav.querySelector(':scope > [data-view="inauguracoes"]')
+      || nav.querySelector(':scope > [data-view="chamados"]')
+      || nav.lastElementChild;
+
+    const button = document.createElement('button');
     button.type = 'button';
-    const icon = button.querySelector('i,span:first-child');
-    const label = button.querySelector('strong,span:last-child');
-    if (icon) icon.textContent = '📈';
-    if (label) label.textContent = 'Expansão';
-    if (!label) button.textContent = '📈 Expansão';
-    reference.insertAdjacentElement('afterend', button);
+    button.dataset.view = VIEW;
+    button.dataset.expansionNav = '1';
+    button.className = 'pmh-expansion-nav';
+    button.setAttribute('aria-label', 'Expansão');
+    button.innerHTML = '<i aria-hidden="true">↗</i>Expansão';
+
+    if (reference) reference.insertAdjacentElement('afterend', button);
+    else nav.appendChild(button);
+
+    window.dispatchEvent(new CustomEvent('pmh:navigation-updated', { detail: { view: VIEW } }));
   };
 
   const metrics = () => {
@@ -140,7 +144,11 @@
   };
 
   const open = () => {
-    location.hash = '#expansao';
+    if (location.hash !== '#expansao') {
+      location.hash = '#expansao';
+      return;
+    }
+
     state.selectedLeadId = sessionStorage.getItem('planet-expansion-open-lead') || state.selectedLeadId;
     sessionStorage.removeItem('planet-expansion-open-lead');
     document.querySelectorAll('[data-view], [data-expansion-nav]').forEach((item) => item.classList.remove('active'));
