@@ -6,6 +6,7 @@
   const BODY_CLASS = 'aos-mobile-ready';
   let frame = 0;
   let observer;
+  let lastActive = null;
 
   const mobileViewport = () => {
     const viewport = Number(window.innerWidth) || 9999;
@@ -41,6 +42,12 @@
     return dock;
   };
 
+  const announceMode = (active) => {
+    if (lastActive === active) return;
+    lastActive = active;
+    window.dispatchEvent(new CustomEvent('aos:mobile-change', { detail: { active } }));
+  };
+
   const sync = () => {
     frame = 0;
 
@@ -58,15 +65,13 @@
     document.documentElement.classList.toggle(ROOT_CLASS, active);
     document.body.classList.toggle(BODY_CLASS, active);
 
-    if (active && nav.parentElement !== dock) {
-      dock.appendChild(nav);
-    }
-
+    if (active && nav.parentElement !== dock) dock.appendChild(nav);
     if (!active && nav.parentElement !== sidebar) {
       const footer = sidebar.querySelector(':scope > footer');
       sidebar.insertBefore(nav, footer || null);
     }
 
+    announceMode(active);
     return true;
   };
 
