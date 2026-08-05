@@ -61,16 +61,23 @@
   const statusOptions = (selected) => Object.entries(STATUS_LABELS)
     .map(([value, label]) => `<option value="${value}" ${value === selected ? 'selected' : ''}>${label}</option>`)
     .join('');
-  const metrics = (payments) => ({
-    total: payments.reduce((sum, item) => sum + Number(item.amount || 0), 0),
-    sent: payments
-      .filter((item) => ['sent_finance', 'paid'].includes(item.status))
-      .reduce((sum, item) => sum + Number(item.amount || 0), 0),
-    paid: payments
-      .filter((item) => item.status === 'paid')
-      .reduce((sum, item) => sum + Number(item.amount || 0), 0),
-    pending: payments.filter((item) => !['paid', 'rejected'].includes(item.status)).length,
-  });
+  const metrics = (payments) => {
+    const active = payments.filter((item) => item.status !== 'rejected');
+    return {
+      total: active.reduce((sum, item) => sum + Number(item.amount || 0), 0),
+      sent: active
+        .filter((item) => ['sent_finance', 'paid'].includes(item.status))
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0),
+      paid: active
+        .filter((item) => item.status === 'paid')
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0),
+      pending: active.filter((item) => item.status !== 'paid').length,
+    };
+  };
+  const committedAmount = (payments, actualValue = 0) => Math.max(
+    Number(actualValue) || 0,
+    metrics(payments).total,
+  );
 
   const closeModal = (runCallback = true) => {
     document.querySelector('.pmh-finance-modal')?.remove();
@@ -179,8 +186,9 @@
     const kpi = metrics(payments);
     const budget = Number(context.budget || 0);
     const actualValue = Number(context.actualValue || 0);
-    const balanceValue = budget - actualValue;
-    const balanceLabel = context.balance || money(balanceValue);
+    const committedValue = committedAmount(payments, actualValue);
+    const balanceValue = budget - committedValue;
+    const balanceLabel = money(balanceValue);
 
     showModal(`<section class="pmh-inauguration-finance-panel">
       <header><div><small>FINANCEIRO DA IMPLANTAÇÃO</small><h2>${esc(context.unit)}</h2><p>${esc(context.openingDate || 'Data não informada')} · ${payments.length} pagamento(s)</p></div><button data-finance-close>×</button></header>
@@ -388,7 +396,11 @@
     }
     if (state.panelContext) {
       state.panelContext.budget = Number(input.value || 0);
-      const balance = state.panelContext.budget - Number(state.panelContext.actualValue || 0);
+      const committedValue = committedAmount(
+        panelPayments(),
+        Number(state.panelContext.actualValue || 0),
+      );
+      const balance = state.panelContext.budget - committedValue;
       state.panelContext.balance = money(balance);
       const card = document.querySelector('[data-inauguration-balance-card]');
       if (card) {
