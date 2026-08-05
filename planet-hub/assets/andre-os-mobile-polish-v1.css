@@ -1,5 +1,5 @@
 /* André OS · mobile polish
-   Ajustes pequenos sobre o shell v2, sem efeito no desktop. */
+   Ajustes consolidados do shell e da Home mobile, sem efeito no desktop. */
 
 html.aos-mobile .pmh-topbar {
   min-height: 64px !important;
@@ -17,7 +17,6 @@ html.aos-mobile .pmh-top-actions {
   gap: 6px !important;
 }
 
-/* O cérebro vira uma ação do cabeçalho, em vez de flutuar sobre o conteúdo. */
 html.aos-mobile .pmh-top-actions .aos-thinking-trigger,
 html.aos-mobile .aos-thinking-trigger:not(.floating) {
   position: static !important;
@@ -58,21 +57,376 @@ html.aos-mobile .pmh-top-actions > button {
   font-size: 17px !important;
 }
 
-/* Botões do Radar mais leves e menos altos. */
+/* A Home usa os mesmos componentes e muda somente a ordem visual no mobile. */
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) {
+  display: flex;
+  flex-direction: column;
+}
+
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) > .pmh-alert { order: 0; }
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) > [data-decision-cockpit] { order: 1; }
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) > [data-active-workstream] { order: 2; }
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) > .pmh-mobile-demand-launcher { order: 3; }
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) > [data-internal-demands] { order: 4; }
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) > .pmh-metrics { order: 5; }
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) > .pmh-shortcuts { display: none !important; }
+
+/* Aviso parcial do SULTS. */
+html.aos-mobile .pmh-alert.pmh-alert-partial {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 9px 8px 12px !important;
+  border-radius: 13px !important;
+  font-size: 11.5px !important;
+  line-height: 1.3 !important;
+}
+
+html.aos-mobile .pmh-alert-partial span {
+  min-width: 0;
+}
+
+html.aos-mobile .pmh-alert-partial button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 11px;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+  color: inherit;
+  background: rgba(255, 255, 255, .72);
+  font: inherit;
+  font-weight: 850;
+}
+
+/* Radar Agora: uma ação principal e duas secundárias compactas. */
+html.aos-mobile .pmh-decision-cockpit {
+  margin-bottom: 10px !important;
+  padding: 16px !important;
+}
+
+html.aos-mobile .pmh-decision-top {
+  gap: 12px !important;
+}
+
+html.aos-mobile .pmh-decision-main h2 {
+  font-size: clamp(22px, 6.5vw, 27px) !important;
+}
+
+html.aos-mobile .pmh-decision-main > p {
+  font-size: 13px !important;
+  line-height: 1.42 !important;
+}
+
+html.aos-mobile .pmh-decision-next {
+  margin-top: 11px !important;
+  padding: 11px 12px !important;
+}
+
 html.aos-mobile .pmh-decision-actions {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
   gap: 7px !important;
 }
 
-html.aos-mobile .pmh-decision-actions button,
-html.aos-mobile .pmh-decision-actions button.primary {
-  min-height: 39px !important;
+html.aos-mobile .pmh-decision-actions button {
+  min-height: 41px !important;
   padding: 0 9px !important;
   border-radius: 10px !important;
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   line-height: 1.15 !important;
 }
 
-/* Botões de cabeçalho não precisam ocupar a largura inteira no celular. */
+html.aos-mobile .pmh-decision-actions button.primary {
+  grid-column: 1 / -1;
+  min-height: 44px !important;
+  font-size: 12px !important;
+}
+
+html.aos-mobile .pmh-decision-signals {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px !important;
+  overflow: visible !important;
+}
+
+html.aos-mobile .pmh-decision-signals span {
+  min-width: 0;
+  padding: 8px 9px !important;
+  text-align: center;
+  white-space: normal;
+}
+
+html.aos-mobile .pmh-decision-signals span:nth-child(n + 3) {
+  display: none !important;
+}
+
+/* Outros pontos de atenção ficam compactos e levam ao Radar completo. */
+html.aos-mobile .pmh-attention-queue {
+  margin-top: 12px !important;
+}
+
+html.aos-mobile .pmh-attention-queue > header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+html.aos-mobile .pmh-attention-queue > header span {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-attention-queue > header button {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 10px;
+  color: #fff;
+  background: rgba(255, 255, 255, .08);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+html.aos-mobile .pmh-attention-queue > div {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 7px !important;
+}
+
+html.aos-mobile .pmh-attention-card {
+  min-height: 0 !important;
+  padding: 10px 11px !important;
+}
+
+html.aos-mobile .pmh-attention-card small,
+html.aos-mobile .pmh-attention-card footer span {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-attention-card strong {
+  margin-top: 4px !important;
+  font-size: 12px !important;
+  line-height: 1.3 !important;
+}
+
+/* Radar operacional: três filtros principais e seis itens por padrão. */
+html.aos-mobile [data-active-workstream] {
+  margin-top: 0 !important;
+}
+
+html.aos-mobile .pmh-active-head {
+  padding: 14px 14px 11px !important;
+}
+
+html.aos-mobile .pmh-active-head p {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-active-filters button:not([data-active-filter="all"]):not([data-active-filter="actionable"]):not([data-active-filter="blocked"]) {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-active-list {
+  gap: 7px !important;
+  padding: 8px !important;
+}
+
+html.aos-mobile .pmh-active-entry {
+  border-radius: 13px !important;
+}
+
+html.aos-mobile .pmh-active-row {
+  padding: 11px 12px !important;
+}
+
+html.aos-mobile .pmh-active-main small,
+html.aos-mobile .pmh-active-person {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-active-status {
+  grid-column: 1 !important;
+  font-size: 10.5px !important;
+}
+
+html.aos-mobile .pmh-active-context {
+  min-height: 36px !important;
+}
+
+html.aos-mobile .pmh-active-demand-actions {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  border-top: 1px solid var(--aos-line);
+}
+
+html.aos-mobile .pmh-active-demand-actions button {
+  min-height: 38px;
+  border: 0;
+  background: #fff;
+  color: var(--aos-muted);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+html.aos-mobile .pmh-active-expand {
+  width: calc(100% - 16px);
+  min-height: 42px;
+  margin: 8px;
+  border: 1px solid var(--aos-line-strong);
+  border-radius: 12px;
+  color: var(--aos-accent);
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+/* Nova demanda vira um bottom sheet e deixa apenas um lançador na Home. */
+html:not(.aos-mobile) .pmh-mobile-demand-launcher,
+html:not(.aos-mobile) .pmh-mobile-demand-close {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-mobile-demand-launcher {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 68px;
+  margin-top: 12px;
+  padding: 11px 13px;
+  border: 1px solid #d9d1ff;
+  border-radius: 16px;
+  color: var(--aos-text);
+  background: linear-gradient(145deg, #fbfaff, #f7f5ff);
+  box-shadow: 0 9px 24px rgba(83, 65, 180, .05);
+  text-align: left;
+}
+
+html.aos-mobile .pmh-mobile-demand-launcher > span:first-child {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  color: #fff;
+  background: var(--aos-accent);
+  font-size: 22px;
+}
+
+html.aos-mobile .pmh-mobile-demand-launcher strong,
+html.aos-mobile .pmh-mobile-demand-launcher small {
+  display: block;
+}
+
+html.aos-mobile .pmh-mobile-demand-launcher strong {
+  font-size: 13px;
+}
+
+html.aos-mobile .pmh-mobile-demand-launcher small {
+  margin-top: 3px;
+  color: var(--aos-muted);
+  font-size: 10.5px;
+}
+
+html.aos-mobile .pmh-mobile-demand-launcher i {
+  color: var(--aos-accent);
+  font-size: 22px;
+  font-style: normal;
+}
+
+html.aos-mobile [data-internal-demands] {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 180;
+  display: none;
+  max-height: min(88dvh, 760px);
+  margin: 0 !important;
+  padding: 48px 14px calc(18px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 24px 24px 0 0;
+  background: #f7f7fa;
+  box-shadow: 0 -24px 70px rgba(18, 14, 34, .34);
+}
+
+html.aos-mobile [data-internal-demands].is-mobile-open {
+  display: grid;
+}
+
+html.aos-mobile body.aos-demand-sheet-open {
+  overflow: hidden;
+}
+
+html.aos-mobile body.aos-demand-sheet-open::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 170;
+  background: rgba(17, 14, 29, .54);
+  backdrop-filter: blur(4px);
+}
+
+html.aos-mobile .pmh-mobile-demand-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--aos-line);
+  border-radius: 12px;
+  color: var(--aos-muted);
+  background: #fff;
+  font-size: 22px;
+}
+
+html.aos-mobile [data-internal-demands] .pmh-demand-capture {
+  margin: 0 !important;
+}
+
+html.aos-mobile [data-internal-demands] textarea {
+  min-height: 100px !important;
+}
+
+html.aos-mobile [data-internal-demands] .pmh-demand-preview {
+  max-height: none;
+}
+
+/* Indicadores completos ficam depois do Radar e da ação de demanda. */
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) > .pmh-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin-top: 12px !important;
+}
+
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) > .pmh-metrics .pmh-metric {
+  min-height: 94px !important;
+  padding: 12px !important;
+  border-radius: 15px !important;
+}
+
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) > .pmh-metrics .pmh-metric small {
+  min-height: 0;
+  font-size: 9.5px !important;
+}
+
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) > .pmh-metrics .pmh-metric strong {
+  margin-top: 5px !important;
+  font-size: 25px !important;
+}
+
+html.aos-mobile .pmh-content:has([data-decision-cockpit]) > .pmh-metrics .pmh-metric span {
+  margin-top: 4px !important;
+  font-size: 9.5px !important;
+}
+
 html.aos-mobile .pmh-section-head button,
 html.aos-mobile .pmh-hero > button {
   align-self: flex-start !important;
@@ -83,33 +437,17 @@ html.aos-mobile .pmh-hero > button {
   font-size: 12px !important;
 }
 
-/* Atalhos continuam em 2x2, mas deixam de parecer cards gigantes. */
-html.aos-mobile .pmh-shortcuts button,
-html.aos-mobile .pmh-shortcuts button:nth-child(1),
-html.aos-mobile .pmh-shortcuts button:nth-child(2),
-html.aos-mobile .pmh-shortcuts button:nth-child(3),
-html.aos-mobile .pmh-shortcuts button:nth-child(4) {
-  min-height: 70px !important;
-  padding: 10px !important;
-  grid-template-columns: 34px minmax(0, 1fr) !important;
-  gap: 2px 8px !important;
-}
+@media (max-width: 350px) {
+  html.aos-mobile .pmh-decision-actions {
+    grid-template-columns: 1fr !important;
+  }
 
-html.aos-mobile .pmh-shortcuts i {
-  width: 34px !important;
-  height: 34px !important;
-  border-radius: 11px !important;
-  font-size: 16px !important;
-}
+  html.aos-mobile .pmh-decision-actions button.primary {
+    grid-column: 1;
+  }
 
-html.aos-mobile .pmh-shortcuts strong {
-  font-size: 12px !important;
-}
-
-html.aos-mobile .pmh-shortcuts span {
-  font-size: 10px !important;
-}
-
-html.aos-mobile .pmh-active-context {
-  min-height: 34px !important;
+  html.aos-mobile .pmh-mobile-demand-launcher {
+    grid-template-columns: 34px minmax(0, 1fr) 16px;
+    padding-inline: 10px;
+  }
 }
