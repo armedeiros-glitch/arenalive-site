@@ -58,6 +58,52 @@ html.aos-mobile .pmh-top-actions > button {
   font-size: 17px !important;
 }
 
+/* Mantém os cinco destinos do dock em uma única linha entre 390px e 430px. */
+html.aos-mobile .aos-mobile-dock {
+  padding-inline: 4px !important;
+}
+
+html.aos-mobile .aos-mobile-dock nav {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  grid-auto-flow: column !important;
+  gap: 1px !important;
+  overflow: hidden !important;
+}
+
+html.aos-mobile .aos-mobile-dock nav button {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  gap: 2px !important;
+  padding: 5px 1px 4px !important;
+  font-size: 9px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
+html.aos-mobile .aos-mobile-dock nav button i {
+  width: 24px !important;
+  height: 22px !important;
+  font-size: 17px !important;
+}
+
+html.aos-mobile .aos-mobile-dock .aos-mobile-nav-label {
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+html.aos-mobile .aos-mobile-dock nav button b {
+  top: 1px !important;
+  right: max(2px, calc(50% - 25px)) !important;
+  min-width: 17px !important;
+  height: 17px !important;
+  padding-inline: 4px !important;
+  font-size: 8px !important;
+}
+
 /* Botões do Radar mais leves e menos altos. */
 html.aos-mobile .pmh-decision-actions {
   gap: 7px !important;
