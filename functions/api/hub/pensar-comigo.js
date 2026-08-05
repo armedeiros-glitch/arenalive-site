@@ -1,3 +1,4 @@
+import { inspectModelOutput } from '../../_shared/ai/model-output.js';
 import { selectPlanetKnowledge } from '../../_shared/knowledge/planet-brain.js';
 
 const MODEL = '@cf/zai-org/glm-4.7-flash';
@@ -10,7 +11,10 @@ const headers = {
   'X-Content-Type-Options': 'nosniff',
 };
 
-const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers });
+const json = (body, status = 200, extraHeaders = {}) => new Response(JSON.stringify(body), {
+  status,
+  headers: { ...headers, ...extraHeaders },
+});
 const clean = (value, max = 1200) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 const cleanDate = (value) => clean(value, 40);
 
@@ -251,47 +255,6 @@ const enrichContext = async (env, prompt, history, context) => {
   }
 };
 
-const rawModelText = (result) => {
-  const value = result?.response
-    ?? result?.result?.response
-    ?? result?.choices?.[0]?.message?.content
-    ?? result?.output_text
-    ?? result;
-  if (typeof value === 'string') return value.trim();
-  if (Array.isArray(value)) {
-    return value.map((part) => typeof part === 'string' ? part : part?.text || part?.content || '').join('\n').trim();
-  }
-  if (value && typeof value === 'object') return String(value.text || value.content || JSON.stringify(value)).trim();
-  return '';
-};
-
-const cleanModelAnswer = (result) => {
-  let text = rawModelText(result);
-  if (!text) return '';
-  if ((text.match(/\n/g) || []).length < 2 && /\\n/.test(text)) {
-    text = text.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
-  }
-  text = text.replace(/^```(?:markdown|text|md)?\s*/i, '').replace(/```\s*$/i, '').trim();
-
-  const preferredMarker = /\*{0,2}\s*(?:refinement(?:\s*\([^)]*\))?|final answer|resposta final)\s*:?[\s*]*/gi;
-  let preferredEnd = -1;
-  for (const match of text.matchAll(preferredMarker)) preferredEnd = match.index + match[0].length;
-  if (preferredEnd >= 0) text = text.slice(preferredEnd);
-  else {
-    const draftMarker = /\*{0,2}\s*draft\s*\d*\s*:?[\s*]*/gi;
-    let draftEnd = -1;
-    for (const match of text.matchAll(draftMarker)) draftEnd = match.index + match[0].length;
-    if (draftEnd >= 0) text = text.slice(draftEnd);
-  }
-
-  return text
-    .replace(/^\s*response\s+internal\s+monologue\/trial\)?\s*:?[\s*]*/i, '')
-    .replace(/^\s*(?:analysis|reasoning|chain of thought)\s*:?[\s*]*/i, '')
-    .replace(/^\*{1,2}|\*{1,2}$/g, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-};
-
 export async function onRequestPost({ env, request }) {
   if (!env.AI) return json({ error: 'Workers AI não está configurado neste ambiente.' }, 503);
 
@@ -312,7 +275,7 @@ export async function onRequestPost({ env, request }) {
   const contextText = JSON.stringify(context, null, 2).slice(0, 18000);
   const brainText = JSON.stringify(planetBrain, null, 2).slice(0, 12000);
 
-  const system = `Você é o cérebro contextual do André OS para a operação da Planet Chocolate. Responda em português brasileiro, com clareza e foco operacional. Você não é um chat genérico. Use esta ordem de confiança: 1) dados atuais do SULTS, Radar, página e item aberto; 2) contexto confirmado pelo usuário; 3) Planet Brain como referência permanente. Quando existir ticket_reference, ele contém dados reais do chamado citado e deve ser sua fonte principal. Nunca transforme conhecimento histórico do Brain em fato atual sem confirmação. Nunca invente tarefa, prazo, responsável, status, dependência, documento ou interação. Quando faltar informação, diga exatamente o que falta. Diferencie execução de cobrança: um item bloqueado não deve ser tratado como trabalho executável. Quando a pergunta pedir direção, entregue uma recomendação principal e o próximo movimento concreto. Não registre, conclua, altere nem crie tarefas. Retorne somente a resposta final para o usuário. É proibido exibir rascunhos, Draft, Refinement, Internal Monologue, raciocínio privado, cadeia de pensamento ou comentários sobre como você produziu a resposta.`;
+  const system = `Você é o cérebro contextual do André OS para a operação da Planet Chocolate. Responda em português brasileiro, com clareza e foco operacional, usando no máximo 220 palavras. Você não é um chat genérico. Use esta ordem de confiança: 1) dados atuais do SULTS, Radar, página e item aberto; 2) contexto confirmado pelo usuário; 3) Planet Brain como referência permanente. Quando existir ticket_reference, ele contém dados reais do chamado citado e deve ser sua fonte principal. Nunca transforme conhecimento histórico do Brain em fato atual sem confirmação. Nunca invente tarefa, prazo, responsável, status, dependência, documento ou interação. Quando faltar informação, diga exatamente o que falta. Diferencie execução de cobrança: um item bloqueado não deve ser tratado como trabalho executável. Quando a pergunta pedir direção, entregue uma recomendação principal e o próximo movimento concreto. Não registre, conclua, altere nem crie tarefas. Retorne somente a resposta final para o usuário. É proibido exibir rascunhos, Draft, Refinement, Internal Monologue, raciocínio privado, cadeia de pensamento ou comentários sobre como você produziu a resposta.`;
 
   const messages = [
     { role: 'system', content: system },
@@ -328,11 +291,11 @@ export async function onRequestPost({ env, request }) {
       temperature: 0.15,
       max_completion_tokens: 900,
     });
-    const answer = cleanModelAnswer(result);
-    if (!answer) throw new Error('A IA não retornou uma resposta utilizável.');
+    const inspected = inspectModelOutput(result);
+    if (!inspected.text) throw new Error('A IA não retornou uma resposta utilizável.');
 
     return json({
-      answer: answer.slice(0, 7000),
+      answer: inspected.text.slice(0, 7000),
       model: MODEL,
       page_id: context.page_id,
       request_id: clean(payload?.request_id, 160),
@@ -343,6 +306,9 @@ export async function onRequestPost({ env, request }) {
         version: planetBrain.version,
         selected_sections: planetBrain.selected_sections,
       },
+    }, 200, {
+      'X-AndreOS-AI-Finish-Reason': inspected.finishReason || 'unknown',
+      'X-AndreOS-AI-Unsafe': inspected.unsafe ? '1' : '0',
     });
   } catch (error) {
     return json({
