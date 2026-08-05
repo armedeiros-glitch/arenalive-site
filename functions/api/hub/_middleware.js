@@ -122,7 +122,11 @@ const secureThinkingResponse = async (response, env, originalPayload) => {
   const rawAnswer = String(payload?.answer || '').trim();
   if (!rawAnswer) return response;
 
-  const inspected = inspectModelOutput(rawAnswer);
+  const inspected = inspectModelOutput(rawAnswer, {
+    finishReason: response.headers.get('X-AndreOS-AI-Finish-Reason') || '',
+    forceUnsafe: response.headers.get('X-AndreOS-AI-Unsafe') === '1',
+  });
+
   if (!inspected.unsafe) {
     if (inspected.text === rawAnswer) return response;
     return json({
@@ -178,6 +182,8 @@ export async function onRequest({ request, env, next }) {
   }
 
   const securedHeaders = new Headers(response.headers);
+  securedHeaders.delete('X-AndreOS-AI-Finish-Reason');
+  securedHeaders.delete('X-AndreOS-AI-Unsafe');
   securedHeaders.set('X-Content-Type-Options', 'nosniff');
   securedHeaders.set('Referrer-Policy', 'same-origin');
   return new Response(response.body, {
