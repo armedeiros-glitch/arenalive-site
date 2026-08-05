@@ -28,27 +28,10 @@
   };
 
   const radar = () => window.PMHRadarData;
+  const mount = () => document.querySelector('[data-active-workstream]');
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
   }[char]));
-
-  const normalize = (value) => String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-
-  const isHome = () => normalize(document.querySelector('[data-title]')?.textContent).includes('painel de marketing');
-  const demandsRoot = () => document.querySelector('[data-internal-demands]');
-
-  const suppressOldBlocks = () => {
-    const root = demandsRoot();
-    if (!root) return;
-    root.querySelector('.pmh-demand-section-head')?.setAttribute('hidden', '');
-    root.querySelector('.pmh-demand-kpis')?.setAttribute('hidden', '');
-    root.querySelector('.pmh-demand-list')?.setAttribute('hidden', '');
-    root.querySelector('.pmh-demand-completed')?.setAttribute('hidden', '');
-  };
 
   const hasDependency = (item) => (item.operationalState || 'actionable') !== 'actionable';
 
@@ -73,6 +56,12 @@
     return [item.dependsOn, item.blockerReason].filter(Boolean).join(' · ');
   };
 
+  const demandActions = (item) => item.action === 'demand' ? `<div class="pmh-active-demand-actions" aria-label="Ações da demanda">
+    <button type="button" data-demand-edit="${esc(item.sourceId)}">Editar</button>
+    <button type="button" data-demand-complete="${esc(item.sourceId)}">Concluir</button>
+    <button type="button" data-demand-delete="${esc(item.sourceId)}">Excluir</button>
+  </div>` : '';
+
   const card = (item) => {
     const due = radar().dueMeta(item.dueDate);
     const operational = operationalMeta(item);
@@ -92,24 +81,13 @@
         <time class="${esc(due.tone)}">${esc(due.label)}</time>
       </button>
       <button type="button" class="pmh-active-context ${hasSuggestion ? 'suggested' : ''}" data-radar-context="${esc(item.id)}" aria-label="Definir contexto de ${esc(item.title)}">${contextLabel}</button>
+      ${demandActions(item)}
     </article>`;
   };
 
   const render = () => {
-    if (!isHome()) return;
-    suppressOldBlocks();
-    const root = demandsRoot();
-    if (!root) return;
-
-    let target = root.querySelector('[data-active-workstream]');
-    if (!target) {
-      target = document.createElement('section');
-      target.dataset.activeWorkstream = '1';
-      const preview = root.querySelector('.pmh-demand-preview');
-      const capture = root.querySelector('.pmh-demand-capture');
-      (preview || capture)?.insertAdjacentElement('afterend', target);
-      if (!target.isConnected) root.appendChild(target);
-    }
+    const target = mount();
+    if (!target) return;
 
     const visible = radar()?.sortItems(state.items.filter((item) => matchesFilter(item, state.filter))) || [];
     const totals = filterCounts();
@@ -137,7 +115,7 @@
   };
 
   const load = async ({ force = false } = {}) => {
-    if (state.loading || !isHome()) return;
+    if (state.loading || !mount()) return;
     const service = radar();
     if (!service) {
       state.errors = ['Serviço de dados do Radar'];
@@ -158,7 +136,7 @@
   };
 
   const refresh = () => {
-    if (!isHome()) return;
+    if (!mount()) return;
     radar()?.invalidate();
     state.loaded = false;
     load({ force: true });
@@ -172,37 +150,18 @@
       return;
     }
 
-    if (event.target.closest('[data-refresh]') && isHome()) setTimeout(refresh, 100);
-    if (event.target.closest('[data-demand-complete], [data-demand-reopen], [data-demand-delete]')) setTimeout(refresh, 500);
-  });
-
-  document.addEventListener('submit', (event) => {
-    if (event.target.matches('[data-demand-preview]')) setTimeout(refresh, 650);
+    if (event.target.closest('[data-refresh]') && mount()) setTimeout(refresh, 100);
   });
 
   window.addEventListener('pmh:radar-data', (event) => {
-    if (isHome()) applySnapshot(event.detail);
+    if (mount()) applySnapshot(event.detail);
   });
 
-  const sync = () => {
-    if (!isHome()) return;
-    suppressOldBlocks();
-    const root = demandsRoot();
-    if (!root) return;
-    if (!root.querySelector('[data-active-workstream]')) render();
+  window.addEventListener('pmh:view-rendered', (event) => {
+    if (event.detail?.view !== 'inicio') return;
+    render();
     if (!state.loaded && !state.loading) load();
-  };
-
-  let syncTimer = 0;
-  const observer = new MutationObserver(() => {
-    clearTimeout(syncTimer);
-    syncTimer = setTimeout(sync, 30);
   });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
 
-  window.addEventListener('hashchange', () => {
-    if (isHome()) refresh();
-  });
-  document.addEventListener('pmh:active-refresh', refresh);
-  sync();
+  document.addEventListener('pmh:demands-updated', refresh);
 })();
