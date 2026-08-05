@@ -71,6 +71,14 @@ const involvedPeople = (interactions, responsible) => {
   return `${names.slice(0, -1).join(', ')} e ${names.at(-1)}`;
 };
 
+const schedulePhrase = (value) => {
+  const cue = clean(value, 120);
+  if (!cue) return '';
+  if (/^(?:na|no)\s/i.test(cue)) return cue;
+  if (/^dia\s/i.test(cue)) return `para o ${cue}`;
+  return `para ${cue}`;
+};
+
 const isGenericDelay = (value) => GENERIC_DELAY_PATTERN.test(clean(value));
 const isGenericMove = (value) => GENERIC_MOVE_PATTERN.test(clean(value));
 
@@ -102,7 +110,7 @@ export const buildThinkingFallback = (payload = {}) => {
 
   if (commitment && !commitment.confirmedAfter) {
     const author = commitment.author ? `${commitment.author} registrou que ` : '';
-    parts.push(`O atraso é consequência, não o bloqueio real. O histórico mostra que ${author}a ação ficou combinada para ${commitment.dateCue}, mas não há registro posterior confirmando o resultado.`);
+    parts.push(`O atraso é consequência, não o bloqueio real. O histórico mostra que ${author}a ação ficou combinada ${schedulePhrase(commitment.dateCue)}, mas não há registro posterior confirmando o resultado.`);
 
     const contactTarget = contacts || responsible || 'as pessoas envolvidas';
     parts.push(`Próximo passo: confirmar com ${contactTarget} se a ação aconteceu. Se aconteceu, registrar o resultado e concluir o chamado; se não, definir uma nova data e quem executará.`);
