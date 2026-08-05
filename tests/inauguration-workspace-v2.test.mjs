@@ -5,6 +5,7 @@ const read = (relativePath) => fs.readFileSync(new URL(`../${relativePath}`, imp
 
 const rootEntry = read('index.html');
 const hubEntry = read('planet-hub/index.html');
+const unifiedHub = read('planet-hub/assets/unified-hub-v1.js');
 const workspace = read('planet-hub/assets/inauguration-workspace-v2.js');
 const workspaceCss = read('planet-hub/assets/inauguration-workspace-v2.css');
 const finance = read('planet-hub/assets/financeiro-v1.js');
@@ -17,8 +18,12 @@ for (const entry of [rootEntry, hubEntry]) {
   assert.match(entry, /andre-os-mobile-shell-v2\.js\?v=/);
 }
 
-assert.match(workspace, /Separar brindes\/cupons/);
-assert.match(workspace, /50 potes P para degustação/);
+assert.match(unifiedHub, /\['Separar brindes\/cupons', 'Franqueado', 5\]/);
+assert.doesNotMatch(unifiedHub, /50 potes P para degustação/);
+assert.match(workspace, /const OLD_CHECKLIST_LABEL = 'Separar brindes\/cupons'/);
+assert.match(workspace, /const NEW_CHECKLIST_LABEL = '50 potes P para degustação'/);
+assert.match(workspace, /label\.textContent = NEW_CHECKLIST_LABEL/);
+assert.doesNotMatch(workspace, /entry\.action\s*=/);
 assert.match(workspace, /aos-thinking-floating-trigger pmh-inauguration-finance-access/);
 assert.match(workspace, /actions\?\.remove\(\)/);
 assert.match(workspace, /pmh:view-rendered/);
