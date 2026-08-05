@@ -13,6 +13,7 @@ Este repositório começou como o site da Arena Live e hoje hospeda o André OS 
 
 - [Visão e arquitetura de destino](docs/vision.md)
 - [Inventário, responsabilidades e regras de manutenção](docs/system-inventory.md)
+- [Auditoria estrutural do Financeiro](docs/finance-structural-audit.md)
 
 ## Fronteira de trabalho
 
