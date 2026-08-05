@@ -4,9 +4,15 @@ import { webcrypto } from 'node:crypto';
 
 if (!globalThis.crypto) globalThis.crypto = webcrypto;
 
-const source = fs.readFileSync(new URL('../functions/api/hub/inauguracoes.js', import.meta.url), 'utf8');
-const moduleUrl = `data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
+const endpointSource = fs.readFileSync(new URL('../functions/api/hub/inauguracoes.js', import.meta.url), 'utf8');
+const hubSource = fs.readFileSync(new URL('../planet-hub/assets/unified-hub-v1.js', import.meta.url), 'utf8');
+const moduleUrl = `data:text/javascript;base64,${Buffer.from(endpointSource).toString('base64')}`;
 const { onRequestGet, onRequestPut } = await import(moduleUrl);
+
+assert.match(hubSource, /const writeLocal = \(items\) => localStorage\.setItem/);
+assert.match(hubSource, /state\.inaugurations = state\.inaugurations\.map\(\(item\) => normalizeInauguration\(item\)\);\s*writeLocal\(state\.inaugurations\);\s*try \{/s);
+assert.match(hubSource, /state\.inaugurations = mergeInaugurations\(error\.payload\.data, state\.inaugurations\)/);
+assert.match(hubSource, /Alteração salva neste navegador, mas a sincronização compartilhada falhou/);
 
 class MemoryKv {
   constructor() {
