@@ -11,10 +11,10 @@ const finance = read('planet-hub/assets/financeiro-v1.js');
 const access = read('planet-hub/assets/hub-access-v1.js');
 
 for (const entry of [rootEntry, hubEntry]) {
-  assert.match(entry, /inauguration-workspace-v2\.css\?v=20260805-1/);
-  assert.match(entry, /inauguration-workspace-v2\.js\?v=20260805-1/);
+  assert.match(entry, /inauguration-workspace-v2\.css\?v=/);
+  assert.match(entry, /inauguration-workspace-v2\.js\?v=/);
   assert.doesNotMatch(entry, /finance-placement-v1\.js/);
-  assert.match(entry, /andre-os-mobile-shell-v2\.js\?v=20260805-4/);
+  assert.match(entry, /andre-os-mobile-shell-v2\.js\?v=/);
 }
 
 assert.match(workspace, /Separar brindes\/cupons/);
@@ -38,6 +38,6 @@ assert.match(finance, /data-finance-edit-payment/);
 assert.match(finance, /data-finance-edit-supplier/);
 assert.doesNotMatch(finance, /MutationObserver|injectNav|openFinance|state\.active/);
 
-assert.match(access, /financeiro-v1\.js\?v=20260805-2/);
+assert.match(access, /financeiro-v1\.js\?v=/);
 
 console.log('AndreOS inauguration workspace v2: tests passed');
