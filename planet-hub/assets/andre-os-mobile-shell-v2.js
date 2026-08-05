@@ -4,6 +4,7 @@
   const MOBILE_MAX = 820;
   const ROOT_CLASS = 'aos-mobile';
   const BODY_CLASS = 'aos-mobile-ready';
+  const MOBILE_VIEWS = new Set(['inicio', 'chamados', 'inauguracoes', 'calendario', 'conteudos']);
   let frame = 0;
   let observer;
 
@@ -27,6 +28,26 @@
       label.dataset.fullLabel = fullLabel;
       button.insertBefore(label, button.querySelector('b'));
       button.setAttribute('aria-label', fullLabel || button.dataset.view || 'Navegação');
+    });
+  };
+
+  const syncMobileEntries = (nav, active) => {
+    nav.querySelectorAll('button').forEach((button) => {
+      const view = String(button.dataset.view || '');
+      const financeEntry = button.hasAttribute('data-finance-open');
+      const unsupportedView = Boolean(view) && !MOBILE_VIEWS.has(view);
+      const excluded = financeEntry || unsupportedView;
+
+      button.classList.toggle('aos-mobile-nav-excluded', active && excluded);
+      if (active && excluded) {
+        button.hidden = true;
+        button.setAttribute('aria-hidden', 'true');
+        button.tabIndex = -1;
+      } else if (!excluded) {
+        button.hidden = false;
+        button.removeAttribute('aria-hidden');
+        button.removeAttribute('tabindex');
+      }
     });
   };
 
@@ -57,6 +78,7 @@
     const active = mobileViewport();
     document.documentElement.classList.toggle(ROOT_CLASS, active);
     document.body.classList.toggle(BODY_CLASS, active);
+    syncMobileEntries(nav, active);
 
     if (active && nav.parentElement !== dock) {
       dock.appendChild(nav);
