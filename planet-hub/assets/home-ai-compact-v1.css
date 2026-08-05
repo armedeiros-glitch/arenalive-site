@@ -3,7 +3,6 @@
   margin-top: 12px;
 }
 
-/* Mantido porque a captura compacta é renderizada diretamente por internal-demands-v1.js. */
 .pmh-demand-capture.pmh-demand-capture-compact {
   grid-template-columns: minmax(0, 1fr);
   gap: 10px;
