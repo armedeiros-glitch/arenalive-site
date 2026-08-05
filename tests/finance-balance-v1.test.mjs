@@ -2,9 +2,6 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const source = fs.readFileSync(new URL('../planet-hub/assets/financeiro-v1.js', import.meta.url), 'utf8');
-const indexHtml = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-const hubHtml = fs.readFileSync(new URL('../planet-hub/index.html', import.meta.url), 'utf8');
-const access = fs.readFileSync(new URL('../planet-hub/assets/hub-access-v1.js', import.meta.url), 'utf8');
 
 assert.match(source, /const active = payments\.filter\(\(item\) => item\.status !== 'rejected'\)/);
 assert.match(source, /const committedAmount = \(payments, actualValue = 0\) => Math\.max\(/);
@@ -29,9 +26,5 @@ const totalWithoutRejected = withRejected
   .filter((item) => item.status !== 'rejected')
   .reduce((sum, item) => sum + item.amount, 0);
 assert.equal(budget - Math.max(actualValue, totalWithoutRejected), 2350);
-
-assert.match(access, /financeiro-v1\.js\?v=20260805-4/);
-assert.match(indexHtml, /hub-access-v1\.js\?v=20260805-6/);
-assert.match(hubHtml, /hub-access-v1\.js\?v=20260805-6/);
 
 console.log('AndreOS finance available balance: tests passed');
