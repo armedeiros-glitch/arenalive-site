@@ -118,6 +118,7 @@
 
   window.addEventListener('pmh:view-rendered', onViewRendered);
   window.addEventListener('pmh:radar-data', () => requestAnimationFrame(ensureAttentionAction));
+  window.addEventListener('aos:mobile-change', syncMobileHome);
   window.addEventListener('resize', syncMobileHome, { passive: true });
 
   document.addEventListener('click', (event) => {
