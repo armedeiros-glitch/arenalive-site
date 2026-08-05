@@ -1,4 +1,5 @@
 import { getAuthState } from '../../_lib/hub-auth.js';
+import { inspectModelOutput } from '../../_shared/ai/model-output.js';
 
 const headers = {
   'Content-Type': 'application/json; charset=UTF-8',
@@ -58,7 +59,7 @@ const rateLimitAi = (request, pathname) => {
   }, 429, { 'Retry-After': String(retryAfter) });
 };
 
-const finalAnswerDirective = `INSTRUÇÃO DE SAÍDA OBRIGATÓRIA: responda somente em português brasileiro e entregue diretamente a resposta que será mostrada ao usuário. Não mostre planejamento, tradução, análise, rascunho, etapas internas ou títulos como Goal, Blocker, Last Action, Current State, Draft, Refinement, Internal Monologue, Formulate the Response ou Final Answer. Não explique como você chegou à resposta. Comece pela conclusão útil e termine com um próximo movimento concreto quando houver base nos dados.`;
+const finalAnswerDirective = `INSTRUÇÃO DE SAÍDA OBRIGATÓRIA: responda somente em português brasileiro e entregue diretamente a resposta que será mostrada ao usuário, com no máximo 220 palavras. Não mostre planejamento, tradução, análise, rascunho, etapas internas ou títulos como Goal, Blocker, Last Action, Current State, Draft, Refinement, Internal Monologue, Formulate the Response ou Final Answer. Não explique como você chegou à resposta. Comece pela conclusão útil e termine com um próximo movimento concreto quando houver base nos dados.`;
 
 const prepareThinkingRequest = async (request, pathname) => {
   if (pathname !== THINKING_PATH || request.method !== 'POST') {
@@ -87,32 +88,14 @@ const prepareThinkingRequest = async (request, pathname) => {
   }
 };
 
-const internalDraftPattern = /(?:response\s+internal\s+monologue|internal\s+monologue|\bdraft\s*\d*\b|\brefinement\b|\bformulate\s+the\s+response\b|^\s*[-*•]?\s*(?:goal|blocker|last\s+action|current\s+state)\s*:)/im;
-
-const looksLikeInternalDraft = (value) => internalDraftPattern.test(String(value || ''));
-
-const extractModelText = (result) => {
-  const value = result?.response
-    ?? result?.result?.response
-    ?? result?.choices?.[0]?.message?.content
-    ?? result?.output_text
-    ?? result;
-  if (typeof value === 'string') return value.trim();
-  if (Array.isArray(value)) {
-    return value.map((part) => typeof part === 'string' ? part : part?.text || part?.content || '').join('\n').trim();
-  }
-  if (value && typeof value === 'object') return String(value.text || value.content || '').trim();
-  return '';
-};
-
 const finalizeLeakedAnswer = async (env, rawAnswer, originalPrompt) => {
-  if (!env.AI) return '';
+  if (!env.AI) return inspectModelOutput('');
 
   const result = await env.AI.run(THINKING_MODEL, {
     messages: [
       {
         role: 'system',
-        content: 'Você é um editor de resposta final. Transforme o rascunho recebido em uma resposta direta, natural e exclusivamente em português brasileiro. Preserve somente fatos presentes no rascunho. Não invente nada. Não mostre análise, passos internos, tradução, rascunho, títulos em inglês ou comentários sobre o processo. Entregue a conclusão e, quando os dados permitirem, um próximo movimento concreto.',
+        content: 'Você é um editor de resposta final. Transforme o rascunho recebido em uma resposta direta, natural, exclusivamente em português brasileiro e com no máximo 220 palavras. Preserve somente fatos presentes no rascunho. Não invente nada. Não mostre análise, passos internos, tradução, rascunho, títulos em inglês ou comentários sobre o processo. Entregue a conclusão e, quando os dados permitirem, um próximo movimento concreto.',
       },
       {
         role: 'user',
@@ -123,7 +106,7 @@ const finalizeLeakedAnswer = async (env, rawAnswer, originalPrompt) => {
     max_completion_tokens: 500,
   });
 
-  return extractModelText(result);
+  return inspectModelOutput(result);
 };
 
 const secureThinkingResponse = async (response, env, originalPayload) => {
@@ -136,15 +119,29 @@ const secureThinkingResponse = async (response, env, originalPayload) => {
     return response;
   }
 
-  const answer = String(payload?.answer || '').trim();
-  if (!answer || !looksLikeInternalDraft(answer)) return response;
+  const rawAnswer = String(payload?.answer || '').trim();
+  if (!rawAnswer) return response;
+
+  const inspected = inspectModelOutput(rawAnswer);
+  if (!inspected.unsafe) {
+    if (inspected.text === rawAnswer) return response;
+    return json({
+      ...payload,
+      answer: inspected.text.slice(0, 7000),
+      output_guard: 'normalized',
+    }, response.status);
+  }
 
   try {
-    const finalized = await finalizeLeakedAnswer(env, answer, originalPayload?.prompt);
-    if (finalized && !looksLikeInternalDraft(finalized)) {
+    const finalized = await finalizeLeakedAnswer(
+      env,
+      inspected.text || rawAnswer,
+      originalPayload?.prompt,
+    );
+    if (finalized.text && !finalized.unsafe) {
       return json({
         ...payload,
-        answer: finalized.slice(0, 7000),
+        answer: finalized.text.slice(0, 7000),
         output_guard: 'rewritten',
       }, response.status);
     }
