@@ -52,13 +52,18 @@ body.aos-thinking-open .aos-thinking-floating-trigger {
   }
 }
 
+.aos-thinking-main {
+  scroll-behavior: smooth;
+}
+
 .aos-thinking-conversation {
   display: grid;
   gap: 10px;
   max-height: 340px;
   overflow-y: auto;
-  padding: 2px;
+  padding: 2px 4px 8px 2px;
   scroll-behavior: smooth;
+  scroll-margin-block: 18px;
 }
 
 .aos-thinking-conversation[hidden] { display: none; }
@@ -83,6 +88,7 @@ body.aos-thinking-open .aos-thinking-floating-trigger {
   line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  scroll-margin-block: 32px;
 }
 
 .aos-thinking-message small {
@@ -113,10 +119,39 @@ body.aos-thinking-open .aos-thinking-floating-trigger {
 
 .aos-thinking-message.assistant small { color: var(--aos-accent, #735cff); }
 
+.aos-thinking-message.assistant.latest {
+  border-color: rgba(115, 92, 255, .34);
+  box-shadow: 0 16px 38px rgba(91, 67, 237, .14), 0 0 0 3px rgba(115, 92, 255, .07);
+  animation: aos-thinking-response-ready .55s ease both;
+}
+
+.aos-thinking-message.pending {
+  color: var(--aos-muted, #747684);
+  border-style: dashed;
+  background: linear-gradient(90deg, #fff, #f7f5ff, #fff);
+  background-size: 220% 100%;
+  animation: aos-thinking-pending 1.5s linear infinite;
+}
+
 .aos-thinking-form[data-thinking-busy="1"] textarea,
 .aos-thinking-form[data-thinking-busy="1"] button { opacity: .68; }
 
 .aos-thinking-form[data-thinking-busy="1"] button { pointer-events: none; }
+
+.aos-thinking-status[data-tone="success"] {
+  cursor: default;
+  font-weight: 850;
+}
+
+@keyframes aos-thinking-response-ready {
+  from { opacity: .45; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes aos-thinking-pending {
+  from { background-position: 100% 0; }
+  to { background-position: -120% 0; }
+}
 
 @media (max-width: 640px) {
   .aos-thinking-floating-trigger {
@@ -141,10 +176,12 @@ body.aos-thinking-open .aos-thinking-floating-trigger {
     }
   }
 
-  .aos-thinking-conversation { max-height: 280px; }
+  .aos-thinking-conversation { max-height: 300px; }
   .aos-thinking-message { max-width: 96%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .aos-thinking-floating-trigger { transition: none; }
+  .aos-thinking-floating-trigger,
+  .aos-thinking-message.assistant.latest,
+  .aos-thinking-message.pending { animation: none; transition: none; }
 }
