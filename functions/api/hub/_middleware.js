@@ -1,5 +1,6 @@
 import { getAuthState } from '../../_lib/hub-auth.js';
-import { inspectModelOutput } from '../../_shared/ai/model-output.js';
+import { FINAL_ANSWER_MODEL_OPTIONS, inspectModelOutput } from '../../_shared/ai/model-output.js';
+import { buildThinkingFallback } from '../../_shared/ai/thinking-fallback.js';
 
 const headers = {
   'Content-Type': 'application/json; charset=UTF-8',
@@ -92,6 +93,7 @@ const finalizeLeakedAnswer = async (env, rawAnswer, originalPrompt) => {
   if (!env.AI) return inspectModelOutput('');
 
   const result = await env.AI.run(THINKING_MODEL, {
+    ...FINAL_ANSWER_MODEL_OPTIONS,
     messages: [
       {
         role: 'system',
@@ -109,8 +111,28 @@ const finalizeLeakedAnswer = async (env, rawAnswer, originalPrompt) => {
   return inspectModelOutput(result);
 };
 
+const deterministicThinkingResponse = (payload, originalPayload) => {
+  const answer = buildThinkingFallback(originalPayload);
+  if (!answer) return null;
+
+  const safePayload = payload && typeof payload === 'object' ? { ...payload } : {};
+  delete safePayload.error;
+  delete safePayload.code;
+  delete safePayload.details;
+
+  return json({
+    ...safePayload,
+    answer,
+    model: safePayload.model || 'andre-os-context-fallback',
+    page_id: safePayload.page_id || String(originalPayload?.context?.page_id || ''),
+    request_id: safePayload.request_id || String(originalPayload?.request_id || ''),
+    output_guard: 'deterministic-fallback',
+    degraded: true,
+  });
+};
+
 const secureThinkingResponse = async (response, env, originalPayload) => {
-  if (!response.ok || !response.headers.get('Content-Type')?.includes('application/json')) return response;
+  if (!response.headers.get('Content-Type')?.includes('application/json')) return response;
 
   let payload;
   try {
@@ -120,7 +142,10 @@ const secureThinkingResponse = async (response, env, originalPayload) => {
   }
 
   const rawAnswer = String(payload?.answer || '').trim();
-  if (!rawAnswer) return response;
+  if (!rawAnswer) {
+    if (response.ok) return response;
+    return deterministicThinkingResponse(payload, originalPayload) || response;
+  }
 
   const inspected = inspectModelOutput(rawAnswer, {
     finishReason: response.headers.get('X-AndreOS-AI-Finish-Reason') || '',
@@ -150,10 +175,10 @@ const secureThinkingResponse = async (response, env, originalPayload) => {
       }, response.status);
     }
   } catch {
-    // Cai no bloqueio seguro abaixo.
+    // Usa o contexto determinístico abaixo.
   }
 
-  return json({
+  return deterministicThinkingResponse(payload, originalPayload) || json({
     error: 'A IA organizou os dados, mas a resposta final não ficou utilizável. Envie novamente para eu responder de forma direta.',
     code: 'THINKING_INTERNAL_DRAFT_BLOCKED',
   }, 502);

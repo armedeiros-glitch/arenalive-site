@@ -4,6 +4,12 @@ const INTERNAL_DRAFT_PATTERN = /(?:response\s+internal\s+monologue|internal\s+mo
 const PROVIDER_ENVELOPE_PATTERN = /(?:["']?(?:logprobs|finish_reason|prompt_tokens|completion_tokens|token_ids|service_tier|system_fingerprint)["']?\s*:|["']choices["']\s*:\s*\[|["']usage["']\s*:\s*\{)/i;
 const TRUNCATED_REASONS = new Set(['length', 'max_tokens', 'max_output_tokens']);
 
+export const FINAL_ANSWER_MODEL_OPTIONS = Object.freeze({
+  chat_template_kwargs: Object.freeze({
+    thinking: false,
+  }),
+});
+
 const textFromContent = (value) => {
   if (typeof value === 'string') return value.trim();
   if (!Array.isArray(value)) return '';

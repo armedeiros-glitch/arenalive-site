@@ -1,4 +1,4 @@
-import { inspectModelOutput } from '../../_shared/ai/model-output.js';
+import { FINAL_ANSWER_MODEL_OPTIONS, inspectModelOutput } from '../../_shared/ai/model-output.js';
 import { selectPlanetKnowledge } from '../../_shared/knowledge/planet-brain.js';
 
 const MODEL = '@cf/zai-org/glm-4.7-flash';
@@ -287,6 +287,7 @@ export async function onRequestPost({ env, request }) {
 
   try {
     const result = await env.AI.run(MODEL, {
+      ...FINAL_ANSWER_MODEL_OPTIONS,
       messages,
       temperature: 0.15,
       max_completion_tokens: 900,
@@ -313,6 +314,7 @@ export async function onRequestPost({ env, request }) {
   } catch (error) {
     return json({
       error: 'Não foi possível concluir o pensamento agora.',
+      code: 'THINKING_MODEL_FAILED',
       details: error instanceof Error ? error.message : String(error),
     }, 502);
   }
