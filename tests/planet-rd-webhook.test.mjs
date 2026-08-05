@@ -10,6 +10,8 @@ assert.match(file, /searchParams\.get\('secret'\)/);
 assert.match(file, /source: 'rd_station'/);
 assert.match(file, /PLANET_HUB_DATA/);
 assert.match(file, /Lead sem telefone e e-mail/);
+assert.match(file, /mergeExternalData/);
+assert.match(file, /if \(value\) merged\[key\] = incoming\[key\]/);
 assert.match(file, /relevantChanges/);
 assert.match(file, /NOTIFICATIONS_KEY/);
 assert.match(file, /lead\.new/);
