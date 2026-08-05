@@ -1,4 +1,5 @@
 import { FINAL_ANSWER_MODEL_OPTIONS, inspectModelOutput } from '../../_shared/ai/model-output.js';
+import { buildThinkingErrorPayload, buildThinkingResponseMetadata } from '../../_shared/ai/thinking-response.js';
 import { selectPlanetKnowledge } from '../../_shared/knowledge/planet-brain.js';
 
 const MODEL = '@cf/zai-org/glm-4.7-flash';
@@ -272,6 +273,7 @@ export async function onRequestPost({ env, request }) {
   const baseContext = sanitizeContext(payload?.context || {});
   const context = sanitizeContext(await enrichContext(env, prompt, history, baseContext));
   const planetBrain = selectPlanetKnowledge({ prompt, history, context, maxSections: 4 });
+  const responseMetadata = buildThinkingResponseMetadata({ context, payload, planetBrain });
   const contextText = JSON.stringify(context, null, 2).slice(0, 18000);
   const brainText = JSON.stringify(planetBrain, null, 2).slice(0, 12000);
 
@@ -298,24 +300,17 @@ export async function onRequestPost({ env, request }) {
     return json({
       answer: inspected.text.slice(0, 7000),
       model: MODEL,
-      page_id: context.page_id,
-      request_id: clean(payload?.request_id, 160),
-      resolved_ticket_id: context.ticket_reference?.id || context.ticket_lookup?.requested_id || null,
-      ticket_reference: context.ticket_reference || null,
-      knowledge: {
-        brain: planetBrain.brain,
-        version: planetBrain.version,
-        selected_sections: planetBrain.selected_sections,
-      },
+      ...responseMetadata,
     }, 200, {
       'X-AndreOS-AI-Finish-Reason': inspected.finishReason || 'unknown',
       'X-AndreOS-AI-Unsafe': inspected.unsafe ? '1' : '0',
     });
   } catch (error) {
-    return json({
-      error: 'Não foi possível concluir o pensamento agora.',
-      code: 'THINKING_MODEL_FAILED',
-      details: error instanceof Error ? error.message : String(error),
-    }, 502);
+    return json(buildThinkingErrorPayload({
+      error,
+      context,
+      payload,
+      planetBrain,
+    }), 502);
   }
 }
