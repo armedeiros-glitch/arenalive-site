@@ -3,6 +3,7 @@
   margin-top: 12px;
 }
 
+/* Mantido porque a captura compacta é renderizada diretamente por internal-demands-v1.js. */
 .pmh-demand-capture.pmh-demand-capture-compact {
   grid-template-columns: minmax(0, 1fr);
   gap: 10px;
@@ -18,22 +19,83 @@
   flex-wrap: wrap;
   gap: 7px 11px;
 }
-.pmh-demand-capture-compact > div:first-child small { flex: 0 0 auto; }
-.pmh-demand-capture-compact > div:first-child h3 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
-.pmh-demand-capture-compact > div:first-child p { flex: 1 1 320px; margin: 0; font-size: 12px; }
-.pmh-demand-capture-compact textarea { min-height: 76px; max-height: 180px; padding: 12px 14px; border-radius: 12px; font-size: 14px; }
-.pmh-demand-capture-compact footer { grid-column: auto; gap: 8px; margin-top: 0; }
-.pmh-demand-capture-compact footer span { font-size: 11px; }
-.pmh-demand-capture-compact footer button { min-height: 38px; padding-inline: 13px; border-radius: 10px; }
-.pmh-demand-capture-compact .pmh-demand-manual-compact { border-color: var(--aos-line-strong); color: var(--aos-muted); background: #fff; }
+
+.pmh-demand-capture-compact > div:first-child small {
+  flex: 0 0 auto;
+}
+
+.pmh-demand-capture-compact > div:first-child h3 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -.02em;
+}
+
+.pmh-demand-capture-compact > div:first-child p {
+  flex: 1 1 320px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.pmh-demand-capture-compact textarea {
+  min-height: 76px;
+  max-height: 180px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.pmh-demand-capture-compact footer {
+  grid-column: auto;
+  gap: 8px;
+  margin-top: 0;
+}
+
+.pmh-demand-capture-compact footer span {
+  font-size: 11px;
+}
+
+.pmh-demand-capture-compact footer button {
+  min-height: 38px;
+  padding-inline: 13px;
+  border-radius: 10px;
+}
+
+.pmh-demand-capture-compact .pmh-demand-manual-compact {
+  border-color: var(--aos-line-strong) !important;
+  color: var(--aos-muted) !important;
+  background: #fff !important;
+}
+
 .pmh-demand-capture-compact .pmh-demand-manual-compact:hover,
-.pmh-demand-capture-compact .pmh-demand-manual-compact:focus-visible { border-color: var(--aos-accent); color: var(--aos-accent); }
+.pmh-demand-capture-compact .pmh-demand-manual-compact:focus-visible {
+  border-color: var(--aos-accent) !important;
+  color: var(--aos-accent) !important;
+}
 
 @media (max-width: 720px) {
-  .pmh-demand-capture.pmh-demand-capture-compact { padding: 13px; }
-  .pmh-demand-capture-compact > div:first-child { display: grid; gap: 3px; }
-  .pmh-demand-capture-compact > div:first-child p { display: none; }
-  .pmh-demand-capture-compact footer { flex-wrap: wrap; }
-  .pmh-demand-capture-compact footer span { flex: 1 0 100%; margin-right: 0; }
-  .pmh-demand-capture-compact footer button { flex: 1 1 160px; }
+  .pmh-demand-capture.pmh-demand-capture-compact {
+    padding: 13px;
+  }
+
+  .pmh-demand-capture-compact > div:first-child {
+    display: grid;
+    gap: 3px;
+  }
+
+  .pmh-demand-capture-compact > div:first-child p {
+    display: none;
+  }
+
+  .pmh-demand-capture-compact footer {
+    flex-wrap: wrap;
+  }
+
+  .pmh-demand-capture-compact footer span {
+    flex: 1 0 100%;
+    margin-right: 0;
+  }
+
+  .pmh-demand-capture-compact footer button {
+    flex: 1 1 160px;
+  }
 }
