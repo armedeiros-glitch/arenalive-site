@@ -63,14 +63,16 @@ html.aos-mobile .aos-thinking-trigger:not(.floating) {
 
 html.aos-mobile .pmh-top-actions .aos-thinking-trigger .aos-thinking-orb,
 html.aos-mobile .aos-thinking-trigger:not(.floating) .aos-thinking-orb {
+  display: grid !important;
+  place-items: center !important;
   width: 28px !important;
   height: 28px !important;
   border-radius: 9px !important;
   font-size: 15px !important;
 }
 
-html.aos-mobile .pmh-top-actions .aos-thinking-trigger > span:last-child,
-html.aos-mobile .aos-thinking-trigger:not(.floating) > span:last-child {
+html.aos-mobile .pmh-top-actions .aos-thinking-trigger > span:not(.aos-thinking-orb):last-child,
+html.aos-mobile .aos-thinking-trigger:not(.floating) > span:not(.aos-thinking-orb):last-child {
   display: none !important;
 }
 
