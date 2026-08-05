@@ -3,6 +3,7 @@
   const SCRIPT_SEQUENCE = [
     '/planet-hub/assets/unified-hub-v1.js?v=20260805-1',
     '/planet-hub/assets/financeiro-v1.js?v=20260805-4',
+    '/planet-hub/assets/planet-expansion-v1.js?v=20260805-1',
   ];
 
   const loadScript = (src) => new Promise((resolve, reject) => {
@@ -20,6 +21,7 @@
     if (value.includes('inaug')) return 'inauguracoes';
     if (value.includes('calend') || value.includes('campanha')) return 'calendario';
     if (value.includes('conte')) return 'conteudos';
+    if (value.includes('expans')) return 'expansao';
     return 'inicio';
   };
 
