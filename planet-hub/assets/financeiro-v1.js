@@ -39,6 +39,7 @@
     if (doc.length === 14) return doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
     return doc;
   };
+  const manualActionId = (paymentId) => `manual-${paymentId}`;
 
   const apiJson = async (url, options = {}) => {
     const response = await fetch(url, {
@@ -243,13 +244,14 @@
       return;
     }
 
+    const paymentId = String(existing?.id || `payment-${crypto.randomUUID()}`);
     const payment = {
-      id: `payment-${crypto.randomUUID()}`,
-      inaugurationId: context.inaugurationId || '',
-      actionId: context.actionId || '',
-      unit: context.unit || '',
-      openingDate: context.openingDate || '',
-      actionName: context.actionName || '',
+      id: paymentId,
+      inaugurationId: context.inaugurationId || existing?.inaugurationId || '',
+      actionId: context.actionId || existing?.actionId || manualActionId(paymentId),
+      unit: context.unit || existing?.unit || '',
+      openingDate: context.openingDate || existing?.openingDate || '',
+      actionName: context.actionName || existing?.actionName || '',
       supplierId: '',
       amount: context.amount || 0,
       dueDate: '',
@@ -260,16 +262,24 @@
       approvedBy: '',
       createdAt: new Date().toISOString(),
       ...(existing || {}),
+      id: paymentId,
+      actionId: context.actionId || existing?.actionId || manualActionId(paymentId),
     };
 
-    const modal = showModal(`<section class="pmh-finance-dialog"><header><div><h2>${existing?.id ? 'Editar' : 'Gerar'} pagamento</h2><p>${esc(payment.unit || 'Implantação')} · ${esc(payment.actionName || 'Novo registro')}</p></div><button data-finance-close>×</button></header><form class="pmh-finance-form"><label>Unidade<input name="unit" value="${esc(payment.unit)}" required></label><label>Ação<input name="actionName" value="${esc(payment.actionName)}" placeholder="Ex.: influenciador, decoração, material" required></label><label>Fornecedor<select name="supplierId" required><option value="">Selecione</option>${state.suppliers.map((supplier) => `<option value="${esc(supplier.id)}" ${supplier.id === payment.supplierId ? 'selected' : ''}>${esc(supplier.legalName)}</option>`).join('')}</select></label><label>Valor<input name="amount" type="number" min="0.01" step="0.01" value="${Number(payment.amount) || ''}" required></label><label>Vencimento<input name="dueDate" type="date" value="${esc(payment.dueDate)}"></label><label>Status<select name="status">${statusOptions(payment.status)}</select></label><label>Nº da NF / recibo<input name="documentNumber" value="${esc(payment.documentNumber)}"></label><label>Referência do documento<input name="documentReference" value="${esc(payment.documentReference)}"></label><label>Aprovado por<input name="approvedBy" value="${esc(payment.approvedBy)}"></label><label class="wide">Observações<textarea name="notes">${esc(payment.notes)}</textarea></label><p class="pmh-finance-note wide">O pagamento ficará vinculado à implantação e ao fornecedor.</p><footer><button type="button" data-finance-close>Cancelar</button><button class="primary" type="submit">Salvar pagamento</button></footer></form></section>`, renderPanel);
+    const modal = showModal(`<section class="pmh-finance-dialog"><header><div><h2>${existing?.id ? 'Editar' : 'Gerar'} pagamento</h2><p>${esc(payment.unit || 'Implantação')} · ${esc(payment.actionName || 'Novo registro')}</p></div><button data-finance-close>×</button></header><form class="pmh-finance-form"><input type="hidden" name="actionId" value="${esc(payment.actionId)}"><label>Unidade<input name="unit" value="${esc(payment.unit)}" required></label><label>Ação<input name="actionName" value="${esc(payment.actionName)}" placeholder="Ex.: influenciador, decoração, material" required></label><label>Fornecedor<select name="supplierId" required><option value="">Selecione</option>${state.suppliers.map((supplier) => `<option value="${esc(supplier.id)}" ${supplier.id === payment.supplierId ? 'selected' : ''}>${esc(supplier.legalName)}</option>`).join('')}</select></label><label>Valor<input name="amount" type="number" min="0.01" step="0.01" value="${Number(payment.amount) || ''}" required></label><label>Vencimento<input name="dueDate" type="date" value="${esc(payment.dueDate)}"></label><label>Status<select name="status">${statusOptions(payment.status)}</select></label><label>Nº da NF / recibo<input name="documentNumber" value="${esc(payment.documentNumber)}"></label><label>Referência do documento<input name="documentReference" value="${esc(payment.documentReference)}"></label><label>Aprovado por<input name="approvedBy" value="${esc(payment.approvedBy)}"></label><label class="wide">Observações<textarea name="notes">${esc(payment.notes)}</textarea></label><p class="pmh-finance-note wide">O pagamento ficará vinculado à implantação e ao fornecedor.</p><p class="pmh-alert wide" data-finance-payment-error hidden></p><footer><button type="button" data-finance-close>Cancelar</button><button class="primary" type="submit">Salvar pagamento</button></footer></form></section>`, renderPanel);
 
     modal.querySelector('form').addEventListener('submit', async (event) => {
       event.preventDefault();
-      const data = Object.fromEntries(new FormData(event.currentTarget));
+      const form = event.currentTarget;
+      const submitButton = form.querySelector('button[type="submit"]');
+      const errorBox = form.querySelector('[data-finance-payment-error]');
+      const originalButtonText = submitButton?.textContent || 'Salvar pagamento';
+      const previousPayments = state.payments.map((item) => ({ ...item }));
+      const data = Object.fromEntries(new FormData(form));
       const updated = {
         ...payment,
         ...data,
+        actionId: String(data.actionId || payment.actionId || manualActionId(payment.id)),
         amount: Number(data.amount),
         updatedAt: new Date().toISOString(),
       };
@@ -278,9 +288,32 @@
       const index = state.payments.findIndex((item) => item.id === updated.id);
       if (index >= 0) state.payments[index] = updated;
       else state.payments.push(updated);
-      closeModal(false);
-      await saveFinance();
-      renderPanel();
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Salvando…';
+      }
+      if (errorBox) {
+        errorBox.hidden = true;
+        errorBox.textContent = '';
+      }
+
+      try {
+        await saveFinance();
+        closeModal(false);
+        renderPanel();
+      } catch (error) {
+        state.payments = previousPayments;
+        state.error = '';
+        if (errorBox) {
+          errorBox.textContent = error instanceof Error ? error.message : 'Não foi possível salvar o pagamento.';
+          errorBox.hidden = false;
+        }
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = originalButtonText;
+        }
+      }
     });
   };
 
