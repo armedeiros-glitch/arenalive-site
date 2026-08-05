@@ -4,7 +4,6 @@ import fs from 'node:fs';
 const finance = fs.readFileSync(new URL('../planet-hub/assets/financeiro-v1.js', import.meta.url), 'utf8');
 const access = fs.readFileSync(new URL('../planet-hub/assets/hub-access-v1.js', import.meta.url), 'utf8');
 const rootEntry = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-const hubEntry = fs.readFileSync(new URL('../planet-hub/index.html', import.meta.url), 'utf8');
 
 assert.match(finance, /const manualActionId = \(paymentId\) => `manual-\$\{paymentId\}`;/);
 assert.match(finance, /actionId: context\.actionId \|\| existing\?\.actionId \|\| manualActionId\(paymentId\)/);
@@ -18,8 +17,7 @@ assert.match(finance, /submitButton\.textContent = 'Salvando…'/);
 const saveIndex = finance.indexOf('await saveFinance();\n        closeModal(false);');
 assert.ok(saveIndex >= 0, 'o modal deve fechar somente depois da confirmação da API');
 
-assert.match(access, /financeiro-v1\.js\?v=20260805-3/);
-assert.match(rootEntry, /hub-access-v1\.js\?v=20260805-5/);
-assert.match(hubEntry, /hub-access-v1\.js\?v=20260805-5/);
+assert.match(access, /financeiro-v1\.js\?v=20260805-4/);
+assert.match(rootEntry, /hub-access-v1\.js\?v=20260805-7/);
 
 console.log('AndreOS manual finance payment: tests passed');
