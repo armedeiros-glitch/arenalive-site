@@ -1,11 +1,16 @@
 const MODEL = '@cf/zai-org/glm-4.7-flash';
+const SULTS_TICKET_ENDPOINT = 'https://api.sults.com.br/api/v1/chamado/ticket';
+const SULTS_PORTAL_BASE = 'https://planetchocolate.sults.com.br/chamados/interacoes';
+
 const headers = {
   'Content-Type': 'application/json; charset=UTF-8',
   'Cache-Control': 'no-store',
+  'X-Content-Type-Options': 'nosniff',
 };
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers });
 const clean = (value, max = 1200) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
+const cleanDate = (value) => clean(value, 40);
 
 const sanitizeItem = (item = {}) => ({
   id: clean(item.id, 140),
@@ -28,6 +33,32 @@ const sanitizeItem = (item = {}) => ({
   } : null,
 });
 
+const sanitizeTicketReference = (reference = {}) => ({
+  id: Number(reference.id) || null,
+  title: clean(reference.title, 280),
+  status: clean(reference.status, 160),
+  requester: clean(reference.requester, 180),
+  responsible: clean(reference.responsible, 180),
+  unit: clean(reference.unit, 180),
+  department: clean(reference.department, 180),
+  subject: clean(reference.subject, 180),
+  opened_at: cleanDate(reference.opened_at),
+  planned_resolution_at: cleanDate(reference.planned_resolution_at),
+  stipulated_resolution_at: cleanDate(reference.stipulated_resolution_at),
+  last_change_at: cleanDate(reference.last_change_at),
+  sults_url: clean(reference.sults_url, 360),
+  interactions: Array.isArray(reference.interactions)
+    ? reference.interactions.slice(0, 8).map((entry) => ({
+      created_at: cleanDate(entry?.created_at),
+      author: clean(entry?.author, 180),
+      internal: Boolean(entry?.internal),
+      text: clean(entry?.text, 1200),
+    })).filter((entry) => entry.text)
+    : [],
+  warning: clean(reference.warning, 400),
+  source: clean(reference.source, 80) || 'sults-live',
+});
+
 const sanitizeContext = (context = {}) => ({
   page_id: clean(context.page_id, 120),
   module_id: clean(context.module_id, 120),
@@ -39,6 +70,12 @@ const sanitizeContext = (context = {}) => ({
   route: clean(context.route, 240),
   screen_title: clean(context.screen_title, 180),
   selected_item: context.selected_item ? sanitizeItem(context.selected_item) : null,
+  ticket_reference: context.ticket_reference ? sanitizeTicketReference(context.ticket_reference) : null,
+  ticket_lookup: context.ticket_lookup ? {
+    requested_id: Number(context.ticket_lookup.requested_id) || null,
+    status: clean(context.ticket_lookup.status, 40),
+    error: clean(context.ticket_lookup.error, 500),
+  } : null,
   radar: context.radar ? {
     active_items: Math.max(0, Math.min(10000, Number(context.radar.active_items) || 0)),
     source_errors: Array.isArray(context.radar.source_errors)
@@ -52,11 +89,171 @@ const sanitizeHistory = (history) => (Array.isArray(history) ? history : [])
   .slice(-8)
   .map((entry) => ({
     role: entry?.role === 'assistant' ? 'assistant' : 'user',
-    content: clean(entry?.content, 1400),
+    content: clean(entry?.content, 1600),
   }))
   .filter((entry) => entry.content);
 
-const extractText = (result) => {
+const parsePayload = async (response) => {
+  const raw = await response.text();
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return { raw };
+  }
+};
+
+const fetchSults = async (url, token) => {
+  const response = await fetch(url, {
+    headers: {
+      Authorization: token,
+      'Content-Type': 'application/json;charset=UTF-8',
+      Accept: 'application/json',
+    },
+  });
+  const payload = await parsePayload(response);
+  return { response, payload };
+};
+
+const nameOf = (value) => clean(value?.nome ?? value?.name, 180);
+const labelOf = (value) => clean(value?.nome ?? value?.name ?? value?.assunto, 180);
+
+const textFromHtml = (value) => String(value || '')
+  .replace(/<br\s*\/?\s*>/gi, '\n')
+  .replace(/<\/p\s*>/gi, '\n')
+  .replace(/<[^>]+>/g, ' ')
+  .replace(/&nbsp;|&#160;/gi, ' ')
+  .replace(/&amp;/gi, '&')
+  .replace(/&quot;|&#34;/gi, '"')
+  .replace(/&#39;|&apos;/gi, "'")
+  .replace(/&lt;/gi, '<')
+  .replace(/&gt;/gi, '>')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const usefulTimelineEntry = (entry) => {
+  const text = textFromHtml(entry?.interacao?.mensagemHtml ?? entry?.interaction?.messageHtml);
+  if (text.length < 5) return false;
+  return !/^(ok|certo|obrigad[oa]|valeu|perfeito|bom dia|boa tarde|boa noite)[.! ]*$/i.test(text);
+};
+
+const ticketIdFromText = (value) => {
+  const text = String(value || '');
+  const named = text.match(/\b(?:chamado|ticket)\s*(?:n[º°o.]?\s*)?#?\s*(\d{2,})\b/i);
+  if (named) return Number(named[1]);
+  const hash = text.match(/(?:^|\s)#\s*(\d{2,})\b/);
+  return hash ? Number(hash[1]) : null;
+};
+
+const ticketIdFromContext = (context) => {
+  const item = context?.selected_item;
+  const ticketLike = /chamado|ticket|sults/i.test([
+    context?.page_id,
+    context?.page_label,
+    item?.type,
+    item?.origin,
+  ].filter(Boolean).join(' '));
+  if (!ticketLike) return null;
+  const raw = item?.source_id || item?.id;
+  const match = String(raw || '').match(/(\d{2,})/);
+  return match ? Number(match[1]) : null;
+};
+
+const resolveTicketId = (prompt, history, context) => {
+  const direct = ticketIdFromText(prompt);
+  if (direct) return direct;
+
+  for (const entry of [...history].reverse()) {
+    if (entry.role !== 'user') continue;
+    const historical = ticketIdFromText(entry.content);
+    if (historical) return historical;
+  }
+
+  return ticketIdFromContext(context);
+};
+
+const loadTicketReference = async (env, id) => {
+  if (!env.SULTS_API_TOKEN) throw new Error('SULTS_API_TOKEN não configurado.');
+
+  const ticketUrl = new URL(SULTS_TICKET_ENDPOINT);
+  ticketUrl.searchParams.set('start', '0');
+  ticketUrl.searchParams.set('limit', '1');
+  ticketUrl.searchParams.set('id', String(id));
+  const timelineUrl = `${SULTS_TICKET_ENDPOINT}/${id}/timeline`;
+
+  const [ticketResult, timelineResult] = await Promise.all([
+    fetchSults(ticketUrl.toString(), env.SULTS_API_TOKEN),
+    fetchSults(timelineUrl, env.SULTS_API_TOKEN),
+  ]);
+
+  if (!ticketResult.response.ok) {
+    throw new Error(`O SULTS recusou a consulta do chamado ${id} (HTTP ${ticketResult.response.status}).`);
+  }
+
+  const rawTicket = Array.isArray(ticketResult.payload?.data)
+    ? ticketResult.payload.data.find((item) => Number(item?.id) === id) || ticketResult.payload.data[0]
+    : null;
+  if (!rawTicket) throw new Error(`Chamado ${id} não encontrado no SULTS.`);
+
+  const rawTimeline = timelineResult.response.ok && Array.isArray(timelineResult.payload?.data)
+    ? timelineResult.payload.data
+    : [];
+
+  const interactions = rawTimeline
+    .filter(usefulTimelineEntry)
+    .sort((left, right) => Date.parse(right?.criado || 0) - Date.parse(left?.criado || 0))
+    .slice(0, 8)
+    .map((entry) => ({
+      created_at: entry?.criado ?? null,
+      author: nameOf(entry?.pessoa) || 'Pessoa não identificada',
+      internal: Boolean(entry?.interacao?.interno),
+      text: textFromHtml(entry?.interacao?.mensagemHtml),
+    }));
+
+  return sanitizeTicketReference({
+    id: rawTicket.id,
+    title: rawTicket.titulo ?? 'Chamado sem título',
+    status: labelOf(rawTicket.situacao) || String(rawTicket.situacao ?? ''),
+    requester: nameOf(rawTicket.solicitante),
+    responsible: nameOf(rawTicket.responsavel),
+    unit: labelOf(rawTicket.unidade),
+    department: labelOf(rawTicket.departamento),
+    subject: labelOf(rawTicket.assunto),
+    opened_at: rawTicket.aberto,
+    planned_resolution_at: rawTicket.resolverPlanejado,
+    stipulated_resolution_at: rawTicket.resolverEstipulado,
+    last_change_at: rawTicket.ultimaAlteracao,
+    sults_url: `${SULTS_PORTAL_BASE}/${id}`,
+    interactions,
+    warning: timelineResult.response.ok ? '' : 'A timeline não pôde ser consultada.',
+    source: 'sults-live',
+  });
+};
+
+const enrichContext = async (env, prompt, history, context) => {
+  const ticketId = resolveTicketId(prompt, history, context);
+  if (!ticketId) return context;
+  if (Number(context?.ticket_reference?.id) === ticketId) return context;
+
+  try {
+    return {
+      ...context,
+      ticket_reference: await loadTicketReference(env, ticketId),
+      ticket_lookup: { requested_id: ticketId, status: 'resolved', error: '' },
+    };
+  } catch (error) {
+    return {
+      ...context,
+      ticket_reference: null,
+      ticket_lookup: {
+        requested_id: ticketId,
+        status: 'unavailable',
+        error: error instanceof Error ? error.message : String(error),
+      },
+    };
+  }
+};
+
+const rawModelText = (result) => {
   const value = result?.response
     ?? result?.result?.response
     ?? result?.choices?.[0]?.message?.content
@@ -68,9 +265,40 @@ const extractText = (result) => {
     return value.map((part) => typeof part === 'string' ? part : part?.text || part?.content || '').join('\n').trim();
   }
   if (value && typeof value === 'object') {
-    return clean(value.text || value.content || JSON.stringify(value), 6000);
+    return String(value.text || value.content || JSON.stringify(value)).trim();
   }
   return '';
+};
+
+const cleanModelAnswer = (result) => {
+  let text = rawModelText(result);
+  if (!text) return '';
+
+  if ((text.match(/\n/g) || []).length < 2 && /\\n/.test(text)) {
+    text = text.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+  }
+
+  text = text.replace(/^```(?:markdown|text|md)?\s*/i, '').replace(/```\s*$/i, '').trim();
+
+  const preferredMarker = /\*{0,2}\s*(?:refinement(?:\s*\([^)]*\))?|final answer|resposta final)\s*:?[\s*]*/gi;
+  let preferredEnd = -1;
+  for (const match of text.matchAll(preferredMarker)) preferredEnd = match.index + match[0].length;
+  if (preferredEnd >= 0) text = text.slice(preferredEnd);
+  else {
+    const draftMarker = /\*{0,2}\s*draft\s*\d*\s*:?[\s*]*/gi;
+    let draftEnd = -1;
+    for (const match of text.matchAll(draftMarker)) draftEnd = match.index + match[0].length;
+    if (draftEnd >= 0) text = text.slice(draftEnd);
+  }
+
+  text = text
+    .replace(/^\s*response\s+internal\s+monologue\/trial\)?\s*:?[\s*]*/i, '')
+    .replace(/^\s*(?:analysis|reasoning|chain of thought)\s*:?[\s*]*/i, '')
+    .replace(/^\*{1,2}|\*{1,2}$/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  return text;
 };
 
 export async function onRequestPost({ env, request }) {
@@ -86,11 +314,12 @@ export async function onRequestPost({ env, request }) {
   const prompt = clean(payload?.prompt, 4000);
   if (!prompt) return json({ error: 'Escreva uma pergunta antes de enviar.' }, 400);
 
-  const context = sanitizeContext(payload?.context || {});
   const history = sanitizeHistory(payload?.history);
-  const contextText = JSON.stringify(context, null, 2).slice(0, 12000);
+  const baseContext = sanitizeContext(payload?.context || {});
+  const context = sanitizeContext(await enrichContext(env, prompt, history, baseContext));
+  const contextText = JSON.stringify(context, null, 2).slice(0, 18000);
 
-  const system = `Você é o cérebro contextual do André OS. Responda em português brasileiro, com clareza e foco operacional. Você não é um chat genérico: deve pensar a partir da página atual, do item selecionado e dos dados fornecidos. Nunca invente tarefa, prazo, responsável, status, dependência, documento ou interação. Quando faltar informação, diga exatamente o que falta. Diferencie execução de cobrança: um item bloqueado não deve ser tratado como trabalho executável. Quando a pergunta pedir direção, entregue uma recomendação principal e o próximo movimento concreto. Seja direto, mas explique o raciocínio útil sem revelar cadeia de pensamento privada. Não registre, conclua, altere nem crie tarefas. Apenas analise e responda.`;
+  const system = `Você é o cérebro contextual do André OS. Responda em português brasileiro, com clareza e foco operacional. Você não é um chat genérico: deve pensar a partir da página atual, do item selecionado e dos dados fornecidos. Quando existir ticket_reference, ele contém os dados reais do chamado citado e deve ser sua fonte principal. Nunca invente tarefa, prazo, responsável, status, dependência, documento ou interação. Quando faltar informação, diga exatamente o que falta. Diferencie execução de cobrança: um item bloqueado não deve ser tratado como trabalho executável. Quando a pergunta pedir direção, entregue uma recomendação principal e o próximo movimento concreto. Não registre, conclua, altere nem crie tarefas. Retorne somente a resposta final para o usuário. É proibido exibir rascunhos, Draft, Refinement, Internal Monologue, raciocínio privado, cadeia de pensamento ou comentários sobre como você produziu a resposta.`;
 
   const messages = [
     { role: 'system', content: system },
@@ -102,10 +331,10 @@ export async function onRequestPost({ env, request }) {
   try {
     const result = await env.AI.run(MODEL, {
       messages,
-      temperature: 0.2,
-      max_completion_tokens: 1000,
+      temperature: 0.15,
+      max_completion_tokens: 900,
     });
-    const answer = extractText(result);
+    const answer = cleanModelAnswer(result);
     if (!answer) throw new Error('A IA não retornou uma resposta utilizável.');
 
     return json({
@@ -113,6 +342,8 @@ export async function onRequestPost({ env, request }) {
       model: MODEL,
       page_id: context.page_id,
       request_id: clean(payload?.request_id, 160),
+      resolved_ticket_id: context.ticket_reference?.id || context.ticket_lookup?.requested_id || null,
+      ticket_reference: context.ticket_reference || null,
     });
   } catch (error) {
     return json({
