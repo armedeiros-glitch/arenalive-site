@@ -7,9 +7,11 @@
   const MAX_HISTORY_MESSAGES = 10;
   let installed = false;
   let observerTimer = 0;
+  let activeConversationContext = null;
 
   const assistant = () => window.ThinkingAssistant;
-  const contextKey = (context = assistant()?.getContext?.() || {}) => [
+  const currentContext = () => activeConversationContext || assistant()?.getContext?.() || {};
+  const contextKey = (context = currentContext()) => [
     context.page_id || 'dashboard',
     context.selected_item?.id || context.selected_item?.source_id || 'page',
   ].join(':');
@@ -74,6 +76,7 @@
       conversation.className = 'aos-thinking-conversation';
       conversation.dataset.thinkingConversation = '1';
       conversation.setAttribute('aria-live', 'polite');
+      conversation.setAttribute('aria-label', 'Conversa com o André OS');
       form.insertAdjacentElement('beforebegin', conversation);
     }
 
@@ -86,9 +89,10 @@
     return conversation;
   };
 
-  const messageElement = (entry) => {
+  const messageElement = (entry, isLatest = false) => {
     const article = document.createElement('article');
     article.className = `aos-thinking-message ${entry.role === 'assistant' ? 'assistant' : 'user'}`;
+    if (isLatest && entry.role === 'assistant') article.classList.add('latest');
     const label = document.createElement('small');
     label.textContent = entry.role === 'assistant' ? 'André OS' : 'Você';
     const text = document.createElement('div');
@@ -97,12 +101,13 @@
     return article;
   };
 
-  const renderHistory = (context = assistant()?.getContext?.()) => {
+  const renderHistory = (context = currentContext()) => {
     const conversation = ensureConversation();
     if (!conversation || !context) return;
 
     const history = readHistory(context);
     conversation.replaceChildren();
+    conversation.dataset.contextKey = contextKey(context);
 
     if (!history.length) {
       const empty = document.createElement('div');
@@ -112,8 +117,46 @@
       return;
     }
 
-    history.forEach((entry) => conversation.appendChild(messageElement(entry)));
+    history.forEach((entry, index) => {
+      const isLatest = index === history.length - 1;
+      conversation.appendChild(messageElement(entry, isLatest));
+    });
     requestAnimationFrame(() => { conversation.scrollTop = conversation.scrollHeight; });
+  };
+
+  const showPending = () => {
+    const conversation = ensureConversation();
+    if (!conversation) return;
+    conversation.querySelector('[data-thinking-pending]')?.remove();
+    const pending = document.createElement('article');
+    pending.className = 'aos-thinking-message assistant pending';
+    pending.dataset.thinkingPending = '1';
+    pending.innerHTML = '<small>André OS</small><div>Organizando o contexto e pensando…</div>';
+    conversation.appendChild(pending);
+    requestAnimationFrame(() => {
+      conversation.scrollTop = conversation.scrollHeight;
+      pending.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  };
+
+  const revealLatestResponse = (context = currentContext()) => {
+    const conversation = ensureConversation();
+    if (!conversation) return;
+    renderHistory(context);
+    requestAnimationFrame(() => {
+      const latest = conversation.querySelector('.aos-thinking-message.assistant.latest');
+      if (!latest) return;
+      conversation.scrollTop = conversation.scrollHeight;
+      latest.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  };
+
+  const setStatus = (message, tone = '') => {
+    const status = document.querySelector('[data-thinking-status]');
+    if (!status) return;
+    status.textContent = message;
+    status.dataset.tone = tone;
+    status.hidden = !message;
   };
 
   const setBusy = (busy) => {
@@ -133,11 +176,13 @@
 
   const transport = async (payload) => {
     const context = payload.context || assistant()?.getContext?.() || {};
+    activeConversationContext = context;
     const previousHistory = readHistory(context);
     const userEntry = { role: 'user', content: String(payload.prompt || '').trim() };
     const visibleHistory = [...previousHistory, userEntry].slice(-MAX_HISTORY_MESSAGES);
     writeHistory(context, visibleHistory);
     renderHistory(context);
+    showPending();
     setBusy(true);
 
     try {
@@ -158,9 +203,12 @@
       const completedHistory = [...visibleHistory, { role: 'assistant', content: answer }]
         .slice(-MAX_HISTORY_MESSAGES);
       writeHistory(context, completedHistory);
-      renderHistory(context);
+      revealLatestResponse(context);
       clearInput();
       return result;
+    } catch (error) {
+      renderHistory(context);
+      throw error;
     } finally {
       setBusy(false);
     }
@@ -196,12 +244,25 @@
   }, true);
 
   window.addEventListener('andre-os:thinking-open', (event) => {
+    activeConversationContext = event.detail?.context || assistant()?.getContext?.() || null;
     ensureConversation();
-    renderHistory(event.detail?.context || assistant()?.getContext?.());
+    renderHistory(activeConversationContext);
+  });
+  window.addEventListener('andre-os:thinking-response', (event) => {
+    const context = event.detail?.payload?.context || activeConversationContext || assistant()?.getContext?.();
+    activeConversationContext = context || activeConversationContext;
+    setStatus('Resposta pronta. Ela está destacada acima.', 'success');
+    revealLatestResponse(context);
+  });
+  window.addEventListener('andre-os:thinking-close', () => {
+    activeConversationContext = null;
   });
   window.addEventListener('andre-os:context-changed', scheduleSync);
   window.addEventListener('pmh:radar-data', scheduleSync);
-  window.addEventListener('hashchange', scheduleSync);
+  window.addEventListener('hashchange', () => {
+    activeConversationContext = null;
+    scheduleSync();
+  });
   window.addEventListener('pmh:access-ready', scheduleSync);
 
   const observer = new MutationObserver(scheduleSync);
