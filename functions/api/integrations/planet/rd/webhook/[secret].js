@@ -33,8 +33,9 @@ const describeMatch = (context) => {
 
 const forwardWithSecret = (context) => {
   const secret = routeSecret(context.params?.secret);
-  const url = new URL(context.request.url);
-  const headers = new Headers(context.request.headers);
+  const originalRequest = context.request;
+  const url = new URL(originalRequest.url);
+  const headers = new Headers(originalRequest.headers);
 
   url.pathname = '/api/integrations/planet/rd/events';
   url.search = '';
@@ -46,14 +47,11 @@ const forwardWithSecret = (context) => {
 
   return {
     ...context,
-    request: new Request(url.toString(), {
-      method: context.request.method,
+    request: {
+      url: url.toString(),
       headers,
-      body: ['GET', 'HEAD'].includes(context.request.method)
-        ? undefined
-        : context.request.body,
-      redirect: context.request.redirect,
-    }),
+      json: () => originalRequest.json(),
+    },
   };
 };
 
