@@ -21,7 +21,7 @@ assert.match(source, /data-demand-edit/);
 assert.match(source, /data-content-edit/);
 assert.match(source, /data-edit-campaign/);
 assert.match(source, /data-inauguration-workspace/);
-assert.match(source, /data-active-filter=\\"all\\"/);
+assert.match(source, /data-active-filter="all"/);
 assert.match(source, /data-content-clear/);
 assert.doesNotMatch(source, /highlightByTitle|targetTitle|textContent\)\.includes\(targetTitle\)/);
 
