@@ -4,13 +4,15 @@
   const API_URL = '/api/hub/pensar-comigo';
   const HISTORY_PREFIX = 'andre-os:thinking-history:v1:';
   const FLOATING_TRIGGER_SELECTOR = '[data-thinking-floating-trigger]';
-  const MAX_HISTORY_MESSAGES = 10;
+  const MAX_HISTORY_MESSAGES = 12;
+
   let installed = false;
   let observerTimer = 0;
-  let activeConversationContext = null;
+  let activeContext = null;
 
   const assistant = () => window.ThinkingAssistant;
-  const currentContext = () => activeConversationContext || assistant()?.getContext?.() || {};
+  const currentContext = () => activeContext || assistant()?.getContext?.() || {};
+
   const contextKey = (context = currentContext()) => [
     context.page_id || 'dashboard',
     context.selected_item?.id || context.selected_item?.source_id || 'page',
@@ -20,8 +22,8 @@
 
   const readHistory = (context) => {
     try {
-      const parsed = JSON.parse(sessionStorage.getItem(historyStorageKey(context)) || '[]');
-      return Array.isArray(parsed) ? parsed.slice(-MAX_HISTORY_MESSAGES) : [];
+      const value = JSON.parse(sessionStorage.getItem(historyStorageKey(context)) || '[]');
+      return Array.isArray(value) ? value.slice(-MAX_HISTORY_MESSAGES) : [];
     } catch {
       return [];
     }
@@ -31,7 +33,7 @@
     try {
       sessionStorage.setItem(historyStorageKey(context), JSON.stringify(history.slice(-MAX_HISTORY_MESSAGES)));
     } catch {
-      // O assistente continua funcionando sem persistência de sessão.
+      // A conversa continua funcionando sem persistência de sessão.
     }
   };
 
@@ -63,48 +65,74 @@
     return trigger;
   };
 
-  const ensureConversation = () => {
+  const ensureChat = () => {
     ensureFloatingTrigger();
 
     const root = document.querySelector('[data-thinking-assistant-root]');
+    const main = root?.querySelector('.aos-thinking-main');
     const form = root?.querySelector('[data-thinking-form]');
-    if (!root || !form) return null;
+    if (!root || !main || !form) return null;
+
+    root.querySelector('.aos-thinking-intro')?.remove();
+
+    let shell = root.querySelector('[data-thinking-chat-shell]');
+    if (!shell) {
+      shell = document.createElement('section');
+      shell.className = 'aos-thinking-chat-shell';
+      shell.dataset.thinkingChatShell = '1';
+      main.appendChild(shell);
+    }
 
     let conversation = root.querySelector('[data-thinking-conversation]');
     if (!conversation) {
-      conversation = document.createElement('section');
+      conversation = document.createElement('div');
       conversation.className = 'aos-thinking-conversation';
       conversation.dataset.thinkingConversation = '1';
       conversation.setAttribute('aria-live', 'polite');
       conversation.setAttribute('aria-label', 'Conversa com o André OS');
-      form.insertAdjacentElement('beforebegin', conversation);
+    }
+
+    if (conversation.parentElement !== shell) shell.prepend(conversation);
+    if (form.parentElement !== shell) shell.appendChild(form);
+
+    form.classList.add('aos-thinking-chat-composer');
+    form.querySelector('label')?.classList.add('aos-thinking-chat-label');
+
+    const textarea = form.querySelector('textarea');
+    if (textarea) {
+      textarea.rows = 2;
+      textarea.placeholder = 'Escreva sua pergunta…';
     }
 
     const footerText = form.querySelector('footer > span');
-    if (footerText) footerText.textContent = 'A IA só é consultada quando você enviar. Nenhuma ação é executada automaticamente.';
+    if (footerText) footerText.textContent = 'A IA só responde quando você enviar.';
 
     const submitButton = form.querySelector('button[type="submit"]');
-    if (submitButton) submitButton.innerHTML = 'Pensar agora <i>→</i>';
+    if (submitButton) submitButton.innerHTML = 'Enviar <i>→</i>';
 
-    return conversation;
+    return { root, main, shell, conversation, form };
   };
 
-  const messageElement = (entry, isLatest = false) => {
+  const messageElement = (entry, latest = false) => {
     const article = document.createElement('article');
     article.className = `aos-thinking-message ${entry.role === 'assistant' ? 'assistant' : 'user'}`;
-    if (isLatest && entry.role === 'assistant') article.classList.add('latest');
+    if (latest && entry.role === 'assistant') article.classList.add('latest');
+
     const label = document.createElement('small');
     label.textContent = entry.role === 'assistant' ? 'André OS' : 'Você';
+
     const text = document.createElement('div');
     text.textContent = String(entry.content || '');
+
     article.append(label, text);
     return article;
   };
 
   const renderHistory = (context = currentContext()) => {
-    const conversation = ensureConversation();
-    if (!conversation || !context) return;
+    const mounted = ensureChat();
+    if (!mounted) return;
 
+    const { conversation } = mounted;
     const history = readHistory(context);
     conversation.replaceChildren();
     conversation.dataset.contextKey = contextKey(context);
@@ -112,59 +140,39 @@
     if (!history.length) {
       const empty = document.createElement('div');
       empty.className = 'aos-thinking-empty';
-      empty.textContent = 'O contexto desta tela está pronto. Escreva o que você quer entender, decidir ou destravar.';
+      empty.innerHTML = '<strong>Conversa pronta.</strong><span>Pergunte sobre esta página ou sobre o item aberto.</span>';
       conversation.appendChild(empty);
       return;
     }
 
     history.forEach((entry, index) => {
-      const isLatest = index === history.length - 1;
-      conversation.appendChild(messageElement(entry, isLatest));
+      conversation.appendChild(messageElement(entry, index === history.length - 1));
     });
-    requestAnimationFrame(() => { conversation.scrollTop = conversation.scrollHeight; });
+
+    requestAnimationFrame(() => {
+      conversation.scrollTop = conversation.scrollHeight;
+    });
   };
 
   const showPending = () => {
-    const conversation = ensureConversation();
-    if (!conversation) return;
-    conversation.querySelector('[data-thinking-pending]')?.remove();
+    const mounted = ensureChat();
+    if (!mounted) return;
+
     const pending = document.createElement('article');
     pending.className = 'aos-thinking-message assistant pending';
     pending.dataset.thinkingPending = '1';
-    pending.innerHTML = '<small>André OS</small><div>Organizando o contexto e pensando…</div>';
-    conversation.appendChild(pending);
-    requestAnimationFrame(() => {
-      conversation.scrollTop = conversation.scrollHeight;
-      pending.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-  };
-
-  const revealLatestResponse = (context = currentContext()) => {
-    const conversation = ensureConversation();
-    if (!conversation) return;
-    renderHistory(context);
-    requestAnimationFrame(() => {
-      const latest = conversation.querySelector('.aos-thinking-message.assistant.latest');
-      if (!latest) return;
-      conversation.scrollTop = conversation.scrollHeight;
-      latest.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-  };
-
-  const setStatus = (message, tone = '') => {
-    const status = document.querySelector('[data-thinking-status]');
-    if (!status) return;
-    status.textContent = message;
-    status.dataset.tone = tone;
-    status.hidden = !message;
+    pending.innerHTML = '<small>André OS</small><div>Pensando…</div>';
+    mounted.conversation.appendChild(pending);
+    mounted.conversation.scrollTop = mounted.conversation.scrollHeight;
   };
 
   const setBusy = (busy) => {
-    const form = document.querySelector('[data-thinking-form]');
-    if (!form) return;
-    form.dataset.thinkingBusy = busy ? '1' : '0';
-    form.querySelector('textarea')?.toggleAttribute('disabled', busy);
-    form.querySelector('button[type="submit"]')?.toggleAttribute('disabled', busy);
+    const mounted = ensureChat();
+    if (!mounted) return;
+
+    mounted.form.dataset.thinkingBusy = busy ? '1' : '0';
+    mounted.form.querySelector('textarea')?.toggleAttribute('disabled', busy);
+    mounted.form.querySelector('button[type="submit"]')?.toggleAttribute('disabled', busy);
   };
 
   const clearInput = () => {
@@ -174,15 +182,25 @@
     input.dispatchEvent(new Event('input', { bubbles: true }));
   };
 
+  const clearStatus = () => {
+    const status = document.querySelector('[data-thinking-status]');
+    if (!status) return;
+    status.hidden = true;
+    status.textContent = '';
+  };
+
   const transport = async (payload) => {
     const context = payload.context || assistant()?.getContext?.() || {};
-    activeConversationContext = context;
+    activeContext = context;
+
     const previousHistory = readHistory(context);
     const userEntry = { role: 'user', content: String(payload.prompt || '').trim() };
     const visibleHistory = [...previousHistory, userEntry].slice(-MAX_HISTORY_MESSAGES);
+
     writeHistory(context, visibleHistory);
     renderHistory(context);
     showPending();
+    clearStatus();
     setBusy(true);
 
     try {
@@ -194,6 +212,7 @@
           history: previousHistory.slice(-8),
         }),
       });
+
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || `Falha HTTP ${response.status}`);
 
@@ -202,12 +221,20 @@
 
       const completedHistory = [...visibleHistory, { role: 'assistant', content: answer }]
         .slice(-MAX_HISTORY_MESSAGES);
+
       writeHistory(context, completedHistory);
-      revealLatestResponse(context);
+      renderHistory(context);
       clearInput();
+      clearStatus();
       return result;
     } catch (error) {
+      const failedHistory = [...visibleHistory, {
+        role: 'assistant',
+        content: error instanceof Error ? error.message : 'Não foi possível responder agora.',
+      }].slice(-MAX_HISTORY_MESSAGES);
+      writeHistory(context, failedHistory);
       renderHistory(context);
+      clearStatus();
       throw error;
     } finally {
       setBusy(false);
@@ -216,6 +243,7 @@
 
   const install = () => {
     if (!assistant()) return false;
+
     if (!installed) {
       assistant().setTransport(transport);
       assistant().registerContextProvider('ai_connection', () => ({
@@ -225,8 +253,9 @@
       }), 100);
       installed = true;
     }
+
     ensureFloatingTrigger();
-    ensureConversation();
+    ensureChat();
     renderHistory();
     return true;
   };
@@ -243,24 +272,34 @@
     assistant()?.open?.();
   }, true);
 
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    const input = event.target.closest?.('[data-thinking-input]');
+    if (!input) return;
+    event.preventDefault();
+    input.closest('form')?.requestSubmit();
+  });
+
   window.addEventListener('andre-os:thinking-open', (event) => {
-    activeConversationContext = event.detail?.context || assistant()?.getContext?.() || null;
-    ensureConversation();
-    renderHistory(activeConversationContext);
+    activeContext = event.detail?.context || assistant()?.getContext?.() || null;
+    ensureChat();
+    renderHistory(activeContext);
+    clearStatus();
   });
-  window.addEventListener('andre-os:thinking-response', (event) => {
-    const context = event.detail?.payload?.context || activeConversationContext || assistant()?.getContext?.();
-    activeConversationContext = context || activeConversationContext;
-    setStatus('Resposta pronta. Ela está destacada acima.', 'success');
-    revealLatestResponse(context);
+
+  window.addEventListener('andre-os:thinking-response', () => {
+    renderHistory(activeContext || assistant()?.getContext?.());
+    clearStatus();
   });
+
   window.addEventListener('andre-os:thinking-close', () => {
-    activeConversationContext = null;
+    activeContext = null;
   });
+
   window.addEventListener('andre-os:context-changed', scheduleSync);
   window.addEventListener('pmh:radar-data', scheduleSync);
   window.addEventListener('hashchange', () => {
-    activeConversationContext = null;
+    activeContext = null;
     scheduleSync();
   });
   window.addEventListener('pmh:access-ready', scheduleSync);
