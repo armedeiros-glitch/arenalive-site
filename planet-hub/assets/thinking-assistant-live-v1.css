@@ -126,7 +126,7 @@ body.aos-thinking-open .aos-thinking-floating-trigger {
   border-radius: 16px;
   font-size: 13px;
   line-height: 1.55;
-  white-space: pre-wrap;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 
@@ -135,6 +135,57 @@ body.aos-thinking-open .aos-thinking-floating-trigger {
   font-weight: 900;
   letter-spacing: .08em;
   text-transform: uppercase;
+}
+
+.aos-thinking-message-body {
+  min-width: 0;
+  white-space: normal;
+}
+
+.aos-thinking-message.user .aos-thinking-message-body {
+  white-space: pre-wrap;
+}
+
+.aos-thinking-message-body p,
+.aos-thinking-message-body h3,
+.aos-thinking-message-body h4,
+.aos-thinking-message-body ul,
+.aos-thinking-message-body ol {
+  margin: 0;
+}
+
+.aos-thinking-message-body p + p,
+.aos-thinking-message-body p + ul,
+.aos-thinking-message-body p + ol,
+.aos-thinking-message-body ul + p,
+.aos-thinking-message-body ol + p,
+.aos-thinking-message-body h3 + p,
+.aos-thinking-message-body h4 + p {
+  margin-top: 8px;
+}
+
+.aos-thinking-message-body h3,
+.aos-thinking-message-body h4 {
+  color: var(--aos-ink, #12131b);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.aos-thinking-message-body ul,
+.aos-thinking-message-body ol {
+  padding-left: 20px;
+}
+
+.aos-thinking-message-body li + li {
+  margin-top: 4px;
+}
+
+.aos-thinking-message-body code {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: #f0eef8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .92em;
 }
 
 .aos-thinking-message.user {

@@ -37,6 +37,29 @@
     }
   };
 
+  const cleanVisibleAnswer = (value) => {
+    let text = String(value || '').trim();
+    if (!text) return '';
+
+    if ((text.match(/\n/g) || []).length < 2 && /\\n/.test(text)) {
+      text = text.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+    }
+
+    text = text.replace(/^```(?:markdown|text|md)?\s*/i, '').replace(/```\s*$/i, '').trim();
+
+    const preferredMarker = /\*{0,2}\s*(?:refinement(?:\s*\([^)]*\))?|final answer|resposta final)\s*:?[\s*]*/gi;
+    let preferredEnd = -1;
+    for (const match of text.matchAll(preferredMarker)) preferredEnd = match.index + match[0].length;
+    if (preferredEnd >= 0) text = text.slice(preferredEnd);
+
+    return text
+      .replace(/^\s*response\s+internal\s+monologue\/trial\)?\s*:?[\s*]*/i, '')
+      .replace(/^\s*(?:draft\s*\d*|analysis|reasoning|chain of thought)\s*:?[\s*]*/i, '')
+      .replace(/^\*{1,2}|\*{1,2}$/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  };
+
   const ensureFloatingTrigger = () => {
     if (!document.body || !assistant()) return null;
 
@@ -113,6 +136,75 @@
     return { root, main, shell, conversation, form };
   };
 
+  const appendInline = (target, value) => {
+    const text = String(value || '');
+    const pattern = /(\*\*([^*]+)\*\*|`([^`]+)`)/g;
+    let cursor = 0;
+
+    for (const match of text.matchAll(pattern)) {
+      if (match.index > cursor) target.appendChild(document.createTextNode(text.slice(cursor, match.index)));
+      const element = document.createElement(match[3] != null ? 'code' : 'strong');
+      element.textContent = match[3] != null ? match[3] : match[2];
+      target.appendChild(element);
+      cursor = match.index + match[0].length;
+    }
+
+    if (cursor < text.length) target.appendChild(document.createTextNode(text.slice(cursor)));
+  };
+
+  const richTextElement = (value) => {
+    const body = document.createElement('div');
+    body.className = 'aos-thinking-message-body';
+    const lines = cleanVisibleAnswer(value).replace(/\r\n/g, '\n').split('\n');
+    let list = null;
+    let listType = '';
+
+    const closeList = () => {
+      list = null;
+      listType = '';
+    };
+
+    lines.forEach((rawLine) => {
+      const line = rawLine.trim();
+      if (!line) {
+        closeList();
+        return;
+      }
+
+      const heading = line.match(/^(#{1,3})\s+(.+)$/);
+      if (heading) {
+        closeList();
+        const title = document.createElement(heading[1].length === 1 ? 'h3' : 'h4');
+        appendInline(title, heading[2]);
+        body.appendChild(title);
+        return;
+      }
+
+      const bullet = line.match(/^[-*]\s+(.+)$/);
+      const numbered = line.match(/^\d+[.)]\s+(.+)$/);
+      if (bullet || numbered) {
+        const nextType = numbered ? 'ol' : 'ul';
+        if (!list || listType !== nextType) {
+          list = document.createElement(nextType);
+          listType = nextType;
+          body.appendChild(list);
+        }
+        const item = document.createElement('li');
+        appendInline(item, (bullet || numbered)[1]);
+        list.appendChild(item);
+        return;
+      }
+
+      closeList();
+      const paragraph = document.createElement('p');
+      appendInline(paragraph, line);
+      body.appendChild(paragraph);
+    });
+
+    if (!body.childNodes.length) body.textContent = cleanVisibleAnswer(value);
+    return body;
+  };
+
   const messageElement = (entry, latest = false) => {
     const article = document.createElement('article');
     article.className = `aos-thinking-message ${entry.role === 'assistant' ? 'assistant' : 'user'}`;
@@ -121,8 +213,14 @@
     const label = document.createElement('small');
     label.textContent = entry.role === 'assistant' ? 'André OS' : 'Você';
 
-    const text = document.createElement('div');
-    text.textContent = String(entry.content || '');
+    const text = entry.role === 'assistant'
+      ? richTextElement(entry.content)
+      : document.createElement('div');
+
+    if (entry.role !== 'assistant') {
+      text.className = 'aos-thinking-message-body';
+      text.textContent = String(entry.content || '');
+    }
 
     article.append(label, text);
     return article;
@@ -140,7 +238,7 @@
     if (!history.length) {
       const empty = document.createElement('div');
       empty.className = 'aos-thinking-empty';
-      empty.innerHTML = '<strong>Conversa pronta.</strong><span>Pergunte sobre esta página ou sobre o item aberto.</span>';
+      empty.innerHTML = '<strong>Conversa pronta.</strong><span>Pergunte sobre esta página ou cite um chamado pelo número.</span>';
       conversation.appendChild(empty);
       return;
     }
@@ -161,7 +259,7 @@
     const pending = document.createElement('article');
     pending.className = 'aos-thinking-message assistant pending';
     pending.dataset.thinkingPending = '1';
-    pending.innerHTML = '<small>André OS</small><div>Pensando…</div>';
+    pending.innerHTML = '<small>André OS</small><div class="aos-thinking-message-body">Buscando o contexto e pensando…</div>';
     mounted.conversation.appendChild(pending);
     mounted.conversation.scrollTop = mounted.conversation.scrollHeight;
   };
@@ -189,8 +287,14 @@
     status.textContent = '';
   };
 
+  const mergedContext = (incoming = {}) => {
+    const samePage = activeContext?.page_id && activeContext.page_id === incoming.page_id;
+    if (!samePage || !activeContext?.ticket_reference) return incoming;
+    return { ...incoming, ticket_reference: activeContext.ticket_reference };
+  };
+
   const transport = async (payload) => {
-    const context = payload.context || assistant()?.getContext?.() || {};
+    const context = mergedContext(payload.context || assistant()?.getContext?.() || {});
     activeContext = context;
 
     const previousHistory = readHistory(context);
@@ -209,6 +313,7 @@
         headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...payload,
+          context,
           history: previousHistory.slice(-8),
         }),
       });
@@ -216,8 +321,20 @@
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || `Falha HTTP ${response.status}`);
 
-      const answer = String(result.answer || '').trim();
+      const answer = cleanVisibleAnswer(result.answer);
       if (!answer) throw new Error('A IA não retornou uma resposta utilizável.');
+
+      if (result.ticket_reference) {
+        activeContext = {
+          ...context,
+          ticket_reference: result.ticket_reference,
+          ticket_lookup: {
+            requested_id: result.resolved_ticket_id,
+            status: 'resolved',
+            error: '',
+          },
+        };
+      }
 
       const completedHistory = [...visibleHistory, { role: 'assistant', content: answer }]
         .slice(-MAX_HISTORY_MESSAGES);
@@ -250,6 +367,7 @@
         connected: true,
         mode: 'manual_only',
         endpoint: API_URL,
+        resolves_ticket_mentions: true,
       }), 100);
       installed = true;
     }
@@ -281,7 +399,8 @@
   });
 
   window.addEventListener('andre-os:thinking-open', (event) => {
-    activeContext = event.detail?.context || assistant()?.getContext?.() || null;
+    const incoming = event.detail?.context || assistant()?.getContext?.() || null;
+    activeContext = mergedContext(incoming || {});
     ensureChat();
     renderHistory(activeContext);
     clearStatus();
