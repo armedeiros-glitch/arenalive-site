@@ -1,3 +1,5 @@
+import { selectPlanetKnowledge } from '../../_shared/knowledge/planet-brain.js';
+
 const MODEL = '@cf/zai-org/glm-4.7-flash';
 const SULTS_TICKET_ENDPOINT = 'https://api.sults.com.br/api/v1/chamado/ticket';
 const SULTS_PORTAL_BASE = 'https://planetchocolate.sults.com.br/chamados/interacoes';
@@ -110,8 +112,7 @@ const fetchSults = async (url, token) => {
       Accept: 'application/json',
     },
   });
-  const payload = await parsePayload(response);
-  return { response, payload };
+  return { response, payload: await parsePayload(response) };
 };
 
 const nameOf = (value) => clean(value?.nome ?? value?.name, 180);
@@ -153,21 +154,18 @@ const ticketIdFromContext = (context) => {
     item?.origin,
   ].filter(Boolean).join(' '));
   if (!ticketLike) return null;
-  const raw = item?.source_id || item?.id;
-  const match = String(raw || '').match(/(\d{2,})/);
+  const match = String(item?.source_id || item?.id || '').match(/(\d{2,})/);
   return match ? Number(match[1]) : null;
 };
 
 const resolveTicketId = (prompt, history, context) => {
   const direct = ticketIdFromText(prompt);
   if (direct) return direct;
-
   for (const entry of [...history].reverse()) {
     if (entry.role !== 'user') continue;
     const historical = ticketIdFromText(entry.content);
     if (historical) return historical;
   }
-
   return ticketIdFromContext(context);
 };
 
@@ -259,25 +257,20 @@ const rawModelText = (result) => {
     ?? result?.choices?.[0]?.message?.content
     ?? result?.output_text
     ?? result;
-
   if (typeof value === 'string') return value.trim();
   if (Array.isArray(value)) {
     return value.map((part) => typeof part === 'string' ? part : part?.text || part?.content || '').join('\n').trim();
   }
-  if (value && typeof value === 'object') {
-    return String(value.text || value.content || JSON.stringify(value)).trim();
-  }
+  if (value && typeof value === 'object') return String(value.text || value.content || JSON.stringify(value)).trim();
   return '';
 };
 
 const cleanModelAnswer = (result) => {
   let text = rawModelText(result);
   if (!text) return '';
-
   if ((text.match(/\n/g) || []).length < 2 && /\\n/.test(text)) {
     text = text.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
   }
-
   text = text.replace(/^```(?:markdown|text|md)?\s*/i, '').replace(/```\s*$/i, '').trim();
 
   const preferredMarker = /\*{0,2}\s*(?:refinement(?:\s*\([^)]*\))?|final answer|resposta final)\s*:?[\s*]*/gi;
@@ -291,14 +284,12 @@ const cleanModelAnswer = (result) => {
     if (draftEnd >= 0) text = text.slice(draftEnd);
   }
 
-  text = text
+  return text
     .replace(/^\s*response\s+internal\s+monologue\/trial\)?\s*:?[\s*]*/i, '')
     .replace(/^\s*(?:analysis|reasoning|chain of thought)\s*:?[\s*]*/i, '')
     .replace(/^\*{1,2}|\*{1,2}$/g, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
-
-  return text;
 };
 
 export async function onRequestPost({ env, request }) {
@@ -317,12 +308,15 @@ export async function onRequestPost({ env, request }) {
   const history = sanitizeHistory(payload?.history);
   const baseContext = sanitizeContext(payload?.context || {});
   const context = sanitizeContext(await enrichContext(env, prompt, history, baseContext));
+  const planetBrain = selectPlanetKnowledge({ prompt, history, context, maxSections: 4 });
   const contextText = JSON.stringify(context, null, 2).slice(0, 18000);
+  const brainText = JSON.stringify(planetBrain, null, 2).slice(0, 12000);
 
-  const system = `Você é o cérebro contextual do André OS. Responda em português brasileiro, com clareza e foco operacional. Você não é um chat genérico: deve pensar a partir da página atual, do item selecionado e dos dados fornecidos. Quando existir ticket_reference, ele contém os dados reais do chamado citado e deve ser sua fonte principal. Nunca invente tarefa, prazo, responsável, status, dependência, documento ou interação. Quando faltar informação, diga exatamente o que falta. Diferencie execução de cobrança: um item bloqueado não deve ser tratado como trabalho executável. Quando a pergunta pedir direção, entregue uma recomendação principal e o próximo movimento concreto. Não registre, conclua, altere nem crie tarefas. Retorne somente a resposta final para o usuário. É proibido exibir rascunhos, Draft, Refinement, Internal Monologue, raciocínio privado, cadeia de pensamento ou comentários sobre como você produziu a resposta.`;
+  const system = `Você é o cérebro contextual do André OS para a operação da Planet Chocolate. Responda em português brasileiro, com clareza e foco operacional. Você não é um chat genérico. Use esta ordem de confiança: 1) dados atuais do SULTS, Radar, página e item aberto; 2) contexto confirmado pelo usuário; 3) Planet Brain como referência permanente. Quando existir ticket_reference, ele contém dados reais do chamado citado e deve ser sua fonte principal. Nunca transforme conhecimento histórico do Brain em fato atual sem confirmação. Nunca invente tarefa, prazo, responsável, status, dependência, documento ou interação. Quando faltar informação, diga exatamente o que falta. Diferencie execução de cobrança: um item bloqueado não deve ser tratado como trabalho executável. Quando a pergunta pedir direção, entregue uma recomendação principal e o próximo movimento concreto. Não registre, conclua, altere nem crie tarefas. Retorne somente a resposta final para o usuário. É proibido exibir rascunhos, Draft, Refinement, Internal Monologue, raciocínio privado, cadeia de pensamento ou comentários sobre como você produziu a resposta.`;
 
   const messages = [
     { role: 'system', content: system },
+    { role: 'system', content: `Planet Brain selecionado para esta pergunta:\n${brainText}` },
     { role: 'system', content: `Contexto atual do André OS:\n${contextText}` },
     ...history,
     { role: 'user', content: prompt },
@@ -344,6 +338,11 @@ export async function onRequestPost({ env, request }) {
       request_id: clean(payload?.request_id, 160),
       resolved_ticket_id: context.ticket_reference?.id || context.ticket_lookup?.requested_id || null,
       ticket_reference: context.ticket_reference || null,
+      knowledge: {
+        brain: planetBrain.brain,
+        version: planetBrain.version,
+        selected_sections: planetBrain.selected_sections,
+      },
     });
   } catch (error) {
     return json({
