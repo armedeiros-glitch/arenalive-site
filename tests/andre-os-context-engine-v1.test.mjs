@@ -141,6 +141,8 @@ assert.ok(AndreOS.events.latest(AndreOS.context.events.focusChanged));
 assert.ok(AndreOS.events.latest(AndreOS.events.names.assistant.contextUpdated));
 
 let registeredProvider = null;
+let internalTransport = null;
+let deliveredPayload = null;
 let refreshCount = 0;
 windowTarget.ThinkingAssistant = {
   version: '1.0.0',
@@ -148,15 +150,38 @@ windowTarget.ThinkingAssistant = {
     registeredProvider = { name, provider, priority };
     return () => {};
   },
+  getContext() {
+    return { page_id: 'legacy', context_path: ['Legacy'] };
+  },
+  buildPayload(prompt, overrides = {}) {
+    return {
+      request_id: 'request-built',
+      prompt,
+      context: overrides.context || this.getContext(),
+    };
+  },
+  setTransport(handler) {
+    internalTransport = handler;
+  },
   refresh() { refreshCount += 1; },
 };
+
 vm.runInContext(adapterSource, context, { filename: adapterPath.pathname });
+const wrappedAssistant = windowTarget.ThinkingAssistant;
 assert.equal(registeredProvider.name, 'andreOSContext');
 assert.equal(registeredProvider.priority, 1000);
 assert.equal(registeredProvider.provider().engineVersion, '1.0.0');
+assert.equal(wrappedAssistant.getContext().schema_version, 2);
 
-const requestPayload = {
+wrappedAssistant.setTransport(async (payload) => {
+  deliveredPayload = payload;
+  return { ok: true };
+});
+assert.equal(typeof internalTransport, 'function');
+
+await internalTransport({
   request_id: 'request-1',
+  prompt: 'Qual é o próximo passo?',
   context: {
     captured_at: '2026-08-05T04:10:00.000Z',
     selected_item: {
@@ -167,15 +192,14 @@ const requestPayload = {
       next_action: 'Responder o chamado.',
     },
   },
-};
-windowTarget.dispatchEvent(new CustomEvent('andre-os:thinking-request', {
-  detail: { payload: requestPayload },
-}));
-assert.equal(requestPayload.context.schema_version, 2);
-assert.equal(requestPayload.context.runtime_context.engineVersion, '1.0.0');
-assert.equal(requestPayload.context.selected_item.id, 'ticket-actionable');
-assert.equal(requestPayload.context.decision_context.next_action, 'Responder o chamado.');
+});
+
+assert.equal(deliveredPayload.context.schema_version, 2);
+assert.equal(deliveredPayload.context.runtime_context.engineVersion, '1.0.0');
+assert.equal(deliveredPayload.context.selected_item.id, 'ticket-actionable');
+assert.equal(deliveredPayload.context.decision_context.next_action, 'Responder o chamado.');
 assert.ok(AndreOS.events.history({ filter: 'assistant.thinkingStarted' }).length >= 1);
+assert.ok(AndreOS.events.history({ filter: 'assistant.responseFinished' }).length >= 1);
 assert.ok(refreshCount >= 0);
 
 console.log('AndreOS Context Engine v1: tests passed');
