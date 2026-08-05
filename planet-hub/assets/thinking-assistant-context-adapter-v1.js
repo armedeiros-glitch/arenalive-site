@@ -2,8 +2,8 @@
   'use strict';
 
   const root = window.AndreOS;
-  const assistant = window.ThinkingAssistant;
-  if (!root?.context || !root?.events || !assistant) return;
+  const originalAssistant = window.ThinkingAssistant;
+  if (!root?.context || !root?.events || !originalAssistant) return;
 
   const clone = (value) => {
     if (value === undefined) return undefined;
@@ -53,7 +53,7 @@
     return {
       schema_version: 2,
       assistant: 'ThinkingAssistant',
-      assistant_version: assistant.version,
+      assistant_version: originalAssistant.version,
       captured_at: context.capturedAt,
       page_id: context.navigation?.pageId || 'andre_os.inicio',
       module_id: context.navigation?.moduleId || context.operation?.moduleId || 'andre_os',
@@ -100,32 +100,73 @@
     return true;
   };
 
-  assistant.registerContextProvider('andreOSContext', () => root.context.get(), 1000);
-  root.context.subscribe(() => assistant.refresh(), { immediate: true });
+  const mapPayload = (payload, reason) => {
+    publishSelectedItem(payload?.context);
+    const context = root.context.update(reason);
+    const mappedContext = toAssistantContext(context);
+    return {
+      ...clone(payload || {}),
+      context: mappedContext || clone(payload?.context || {}),
+    };
+  };
+
+  const originalSetTransport = originalAssistant.setTransport.bind(originalAssistant);
+  const wrappedAssistant = Object.freeze({
+    ...originalAssistant,
+    getContext() {
+      const context = root.context.get() || root.context.update('thinking-assistant.getContext');
+      return toAssistantContext(context) || originalAssistant.getContext();
+    },
+    buildPayload(prompt, overrides = {}) {
+      return mapPayload(
+        originalAssistant.buildPayload(prompt, overrides),
+        'thinking-assistant.buildPayload',
+      );
+    },
+    setTransport(handler) {
+      if (handler == null) return originalSetTransport(handler);
+      if (typeof handler !== 'function') return originalSetTransport(handler);
+
+      return originalSetTransport(async (payload) => {
+        const mappedPayload = mapPayload(payload, 'thinking-assistant.transport');
+        const contextRevision = mappedPayload.context?.runtime_context?.revision || 0;
+        root.events.emit(root.events.names.assistant.thinkingStarted, {
+          requestId: mappedPayload.request_id || '',
+          contextRevision,
+        }, { source: 'thinking-assistant' });
+
+        try {
+          const response = await handler(mappedPayload);
+          root.events.emit(root.events.names.assistant.responseFinished, {
+            requestId: mappedPayload.request_id || '',
+            contextRevision,
+            status: 'success',
+          }, { source: 'thinking-assistant' });
+          return response;
+        } catch (cause) {
+          root.events.emit(root.events.names.assistant.responseFinished, {
+            requestId: mappedPayload.request_id || '',
+            contextRevision,
+            status: 'error',
+            message: cause instanceof Error ? cause.message : String(cause),
+          }, { source: 'thinking-assistant' });
+          throw cause;
+        }
+      });
+    },
+  });
+
+  originalAssistant.registerContextProvider('andreOSContext', () => root.context.get(), 1000);
+  window.ThinkingAssistant = wrappedAssistant;
+  root.context.subscribe(() => wrappedAssistant.refresh(), { immediate: true });
 
   window.addEventListener('andre-os:thinking-open', (event) => {
     publishSelectedItem(event.detail?.context);
   });
 
   window.addEventListener('andre-os:thinking-request', (event) => {
-    const payload = event.detail?.payload;
-    if (!payload) return;
-    publishSelectedItem(payload.context);
-    const context = root.context.update('thinking-assistant.request');
-    const mapped = toAssistantContext(context);
-    if (mapped) payload.context = mapped;
-    root.events.emit(root.events.names.assistant.thinkingStarted, {
-      requestId: payload.request_id || '',
-      contextRevision: context?.revision || 0,
-    }, { source: 'thinking-assistant' });
+    publishSelectedItem(event.detail?.payload?.context);
   }, true);
-
-  window.addEventListener('andre-os:thinking-response', (event) => {
-    root.events.emit(root.events.names.assistant.responseFinished, {
-      requestId: event.detail?.payload?.request_id || '',
-      contextRevision: root.context.get('revision') || 0,
-    }, { source: 'thinking-assistant' });
-  });
 
   window.addEventListener('hashchange', () => {
     root.events.emit(root.events.names.focus.cleared, {
