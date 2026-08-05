@@ -23,12 +23,50 @@
     return 'inicio';
   };
 
+  const runtimeEvents = () => window.AndreOS?.events || null;
+
   const replayRenderedView = () => {
     const content = document.querySelector('[data-content]');
     if (!content) return;
-    window.dispatchEvent(new CustomEvent('pmh:view-rendered', {
-      detail: { view: currentView(), content, replayed: true },
-    }));
+
+    const view = currentView();
+    const events = runtimeEvents();
+    if (!events) {
+      window.dispatchEvent(new CustomEvent('pmh:view-rendered', {
+        detail: { view, content, viewId: `${view}:bootstrap`, replayed: true },
+      }));
+      return;
+    }
+
+    const eventName = events.names.navigation.viewChanged;
+    const latest = events.latest(eventName);
+    const sameView = latest?.detail?.view === view;
+    const viewId = sameView && latest?.detail?.viewId
+      ? latest.detail.viewId
+      : `${view}:bootstrap`;
+    const detail = {
+      ...(sameView ? latest.detail : {}),
+      view,
+      content,
+      viewId,
+      replayed: true,
+    };
+
+    if (latest && sameView) {
+      events.replay(eventName, {
+        detail,
+        internal: false,
+        legacy: true,
+        dedupeKey: viewId,
+      });
+      return;
+    }
+
+    events.emit(eventName, detail, {
+      retain: true,
+      replayed: true,
+      dedupeKey: viewId,
+    });
   };
 
   const scheduleViewReplay = () => {
@@ -40,11 +78,23 @@
     }
   };
 
+  const announceAuthenticated = (access) => {
+    const events = runtimeEvents();
+    if (events) {
+      events.emit(events.names.system.authenticated, access, {
+        retain: true,
+        dedupeKey: 'current-session',
+      });
+      return;
+    }
+    window.dispatchEvent(new CustomEvent('pmh:access-ready', { detail: access }));
+  };
+
   const startHub = async (access) => {
     window.PMH_ACCESS = access;
     document.documentElement.classList.remove('pmh-access-pending');
     for (const src of SCRIPT_SEQUENCE) await loadScript(src);
-    window.dispatchEvent(new CustomEvent('pmh:access-ready', { detail: access }));
+    announceAuthenticated(access);
     scheduleViewReplay();
   };
 
