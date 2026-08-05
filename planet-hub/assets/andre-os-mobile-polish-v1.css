@@ -27,6 +27,7 @@ html.aos-mobile .pmh-top-actions {
 /* No celular, o Pensar comigo vive somente no cabeçalho. */
 html.aos-mobile .aos-thinking-floating-trigger {
   display: none !important;
+  pointer-events: none !important;
 }
 
 html.aos-mobile .pmh-top-actions .aos-thinking-trigger,
