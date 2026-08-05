@@ -1,0 +1,273 @@
+/* Inauguration workspace v2 */
+.pmh-inauguration-workspace {
+  display: grid;
+  gap: 13px;
+  margin-top: 16px;
+  padding-top: 15px;
+  border-top: 1px solid #ececf2;
+}
+
+.pmh-inauguration-workspace-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pmh-inauguration-workspace-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: var(--aos-accent);
+}
+
+.pmh-inauguration-workspace-title > i {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--aos-accent-soft);
+  font-style: normal;
+  font-size: 16px;
+}
+
+.pmh-inauguration-workspace-title strong,
+.pmh-inauguration-workspace-title small {
+  display: block;
+}
+
+.pmh-inauguration-workspace-title strong {
+  color: var(--aos-ink);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.pmh-inauguration-workspace-title small {
+  margin-top: 2px;
+  color: var(--aos-muted-2);
+  font-size: 11px;
+}
+
+.pmh-inauguration-finance-access.aos-thinking-floating-trigger {
+  position: static !important;
+  inset: auto !important;
+  z-index: auto !important;
+  flex: 0 0 auto;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  border-radius: 15px !important;
+}
+
+.pmh-inauguration-finance-access .aos-thinking-orb {
+  width: 31px !important;
+  height: 31px !important;
+  border-radius: 10px !important;
+  font-size: 16px !important;
+}
+
+.pmh-finance-budget-bridge {
+  display: none !important;
+}
+
+.pmh-inauguration-finance-panel {
+  width: min(980px, 100%);
+  max-height: calc(100vh - 44px);
+  overflow: auto;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 24px;
+  background: #f8f7fc;
+  box-shadow: 0 34px 90px rgba(9,8,18,.35);
+}
+
+.pmh-inauguration-finance-panel > header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--aos-line);
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(16px);
+}
+
+.pmh-inauguration-finance-panel > header small {
+  color: var(--aos-accent);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .07em;
+}
+
+.pmh-inauguration-finance-panel > header h2 {
+  margin: 5px 0 0;
+  color: var(--aos-ink);
+  font-size: 25px;
+  line-height: 1.2;
+}
+
+.pmh-inauguration-finance-panel > header p {
+  margin: 6px 0 0;
+  color: var(--aos-muted);
+  font-size: 13px;
+}
+
+.pmh-inauguration-finance-panel > header button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--aos-line);
+  border-radius: 12px;
+  background: #f7f6fa;
+  font-size: 21px;
+}
+
+.pmh-inauguration-finance-body {
+  display: grid;
+  gap: 15px;
+  padding: 20px 22px 24px;
+}
+
+.pmh-inauguration-finance-summary,
+.pmh-inauguration-payment-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pmh-inauguration-finance-summary > label,
+.pmh-inauguration-finance-summary > article,
+.pmh-inauguration-payment-kpis > article {
+  min-height: 96px;
+  padding: 15px;
+  border: 1px solid var(--aos-line);
+  border-radius: 15px;
+  background: #fff;
+}
+
+.pmh-inauguration-finance-summary small,
+.pmh-inauguration-finance-summary strong,
+.pmh-inauguration-payment-kpis small,
+.pmh-inauguration-payment-kpis strong {
+  display: block;
+}
+
+.pmh-inauguration-finance-summary small,
+.pmh-inauguration-payment-kpis small {
+  color: var(--aos-muted-2);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.pmh-inauguration-finance-summary strong,
+.pmh-inauguration-payment-kpis strong {
+  margin-top: 8px;
+  color: var(--aos-ink);
+  font-size: 20px;
+}
+
+.pmh-inauguration-finance-summary input {
+  width: 100%;
+  margin-top: 7px;
+  border: 0;
+  border-bottom: 1px solid var(--aos-line-strong);
+  background: transparent;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.pmh-inauguration-finance-summary .negative strong {
+  color: #c84038;
+}
+
+.pmh-inauguration-finance-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pmh-inauguration-finance-toolbar > div {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pmh-inauguration-finance-toolbar button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--aos-line-strong);
+  border-radius: 11px;
+  color: var(--aos-text);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pmh-inauguration-finance-toolbar .primary {
+  border-color: var(--aos-accent);
+  color: #fff;
+  background: var(--aos-accent);
+}
+
+.pmh-inauguration-finance-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(250px, .55fr);
+  gap: 15px;
+  align-items: start;
+}
+
+.pmh-inauguration-finance-panel .pmh-finance-panel {
+  margin: 0;
+}
+
+.pmh-inauguration-finance-panel .pmh-payment-row {
+  grid-template-columns: minmax(0,1.2fr) minmax(0,.7fr) 135px minmax(120px,.6fr) auto;
+}
+
+@media (max-width: 820px) {
+  .pmh-inauguration-workspace-bar {
+    align-items: center;
+  }
+
+  .pmh-inauguration-finance-access.aos-thinking-floating-trigger {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+  }
+
+  .pmh-inauguration-finance-panel {
+    width: 100%;
+    max-height: calc(100vh - 20px);
+    border-radius: 20px;
+  }
+
+  .pmh-inauguration-finance-summary,
+  .pmh-inauguration-payment-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pmh-inauguration-finance-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pmh-inauguration-finance-toolbar > div,
+  .pmh-inauguration-finance-toolbar button {
+    width: 100%;
+  }
+
+  .pmh-inauguration-finance-grid,
+  .pmh-inauguration-finance-panel .pmh-payment-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pmh-inauguration-finance-panel .pmh-payment-row {
+    align-items: stretch;
+  }
+}
