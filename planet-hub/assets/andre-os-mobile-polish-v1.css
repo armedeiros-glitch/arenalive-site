@@ -139,7 +139,7 @@ html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact [data-demand-orga
   white-space: normal !important;
 }
 
-/* Mantém os cinco destinos do dock em uma única linha entre 390px e 430px. */
+/* O dock preserva cinco destinos: quatro áreas principais e o menu Mais. */
 html.aos-mobile .aos-mobile-dock {
   padding-inline: 4px !important;
 }
@@ -168,6 +168,12 @@ html.aos-mobile .aos-mobile-dock nav button i {
   font-size: 17px !important;
 }
 
+html.aos-mobile .aos-mobile-dock .aos-mobile-nav-excluded,
+html.aos-mobile .aos-mobile-dock [data-finance-open],
+html.aos-mobile .aos-mobile-dock [hidden] {
+  display: none !important;
+}
+
 html.aos-mobile .aos-mobile-dock .aos-mobile-nav-label {
   width: 100% !important;
   min-width: 0 !important;
@@ -183,6 +189,133 @@ html.aos-mobile .aos-mobile-dock nav button b {
   height: 17px !important;
   padding-inline: 4px !important;
   font-size: 8px !important;
+}
+
+html.aos-mobile .aos-mobile-more-button i {
+  font-size: 13px !important;
+  letter-spacing: 1px !important;
+}
+
+html.aos-mobile body.aos-mobile-more-open {
+  overflow: hidden !important;
+}
+
+html.aos-mobile .aos-mobile-more-sheet[hidden] {
+  display: none !important;
+}
+
+html.aos-mobile .aos-mobile-more-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: grid;
+  align-items: end;
+}
+
+html.aos-mobile .aos-mobile-more-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: rgba(23, 20, 31, .42);
+  backdrop-filter: blur(5px);
+}
+
+html.aos-mobile .aos-mobile-more-panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14px;
+  margin: 0 10px calc(78px + env(safe-area-inset-bottom));
+  padding: 10px 14px 16px;
+  border: 1px solid rgba(117, 88, 232, .16);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .98);
+  box-shadow: 0 24px 70px rgba(31, 28, 52, .24);
+  transform: translateY(12px);
+  opacity: 0;
+  transition: transform .18s ease, opacity .18s ease;
+}
+
+html.aos-mobile .aos-mobile-more-sheet.open .aos-mobile-more-panel {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+html.aos-mobile .aos-mobile-more-handle {
+  justify-self: center;
+  width: 38px;
+  height: 4px;
+  border-radius: 999px;
+  background: #ddd7e9;
+}
+
+html.aos-mobile .aos-mobile-more-panel header {
+  display: grid;
+  gap: 2px;
+}
+
+html.aos-mobile .aos-mobile-more-panel header small {
+  color: #7558e8;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+html.aos-mobile .aos-mobile-more-panel header strong {
+  color: #211d2b;
+  font-size: 18px;
+}
+
+html.aos-mobile .aos-mobile-more-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+html.aos-mobile .aos-mobile-more-options > button {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 68px;
+  padding: 11px;
+  border: 1px solid #ebe6f2;
+  border-radius: 15px;
+  background: #faf9fd;
+  color: #211d2b;
+  text-align: left;
+}
+
+html.aos-mobile .aos-mobile-more-options > button i {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #eee9ff;
+  color: #6e50ea;
+  font-size: 18px;
+}
+
+html.aos-mobile .aos-mobile-more-options > button span,
+html.aos-mobile .aos-mobile-more-options > button strong,
+html.aos-mobile .aos-mobile-more-options > button small {
+  display: block;
+}
+
+html.aos-mobile .aos-mobile-more-options > button strong {
+  font-size: 12px;
+}
+
+html.aos-mobile .aos-mobile-more-options > button small {
+  margin-top: 2px;
+  color: #766f80;
+  font-size: 9px;
+  line-height: 1.25;
 }
 
 /* Botões do Radar mais leves e menos altos. */

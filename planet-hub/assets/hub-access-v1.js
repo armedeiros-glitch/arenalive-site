@@ -3,7 +3,7 @@
   const SCRIPT_SEQUENCE = [
     '/planet-hub/assets/unified-hub-v1.js?v=20260805-1',
     '/planet-hub/assets/financeiro-v1.js?v=20260805-4',
-    '/planet-hub/assets/planet-expansion-v1.js?v=20260805-2',
+    '/planet-hub/assets/planet-expansion-v1.js?v=20260805-3',
     '/planet-hub/assets/planet-notifications-v1.js?v=20260805-1',
   ];
 
