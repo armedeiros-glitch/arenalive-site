@@ -112,7 +112,20 @@ const finalizeLeakedAnswer = async (env, rawAnswer, originalPrompt) => {
 };
 
 const deterministicThinkingResponse = (payload, originalPayload) => {
-  const answer = buildThinkingFallback(originalPayload);
+  const original = originalPayload && typeof originalPayload === 'object' ? originalPayload : {};
+  const enrichedTicket = payload?.ticket_reference
+    || original?.ticket_reference
+    || original?.context?.ticket_reference
+    || null;
+  const fallbackPayload = {
+    ...original,
+    ticket_reference: enrichedTicket,
+    context: {
+      ...(original?.context || {}),
+      ticket_reference: enrichedTicket,
+    },
+  };
+  const answer = buildThinkingFallback(fallbackPayload);
   if (!answer) return null;
 
   const safePayload = payload && typeof payload === 'object' ? { ...payload } : {};
@@ -124,8 +137,8 @@ const deterministicThinkingResponse = (payload, originalPayload) => {
     ...safePayload,
     answer,
     model: safePayload.model || 'andre-os-context-fallback',
-    page_id: safePayload.page_id || String(originalPayload?.context?.page_id || ''),
-    request_id: safePayload.request_id || String(originalPayload?.request_id || ''),
+    page_id: safePayload.page_id || String(original?.context?.page_id || ''),
+    request_id: safePayload.request_id || String(original?.request_id || ''),
     output_guard: 'deterministic-fallback',
     degraded: true,
   });
