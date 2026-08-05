@@ -237,28 +237,22 @@
     return 'inicio';
   };
 
-  const setView = (view) => {
-    state.view = view;
-    location.hash = view === 'inicio' ? 'inicio' : view;
-    render();
-  };
-
   const shell = document.createElement('div');
   shell.id = 'pmh-app';
   shell.innerHTML = `
     <aside class="pmh-sidebar">
-      <div class="pmh-brand"><span>P</span><div><strong>Planet</strong><small>Marketing Hub</small></div></div>
-      <nav>
+      <div class="pmh-brand"><span aria-hidden="true">A</span><div><strong>André OS</strong><small>Marketing Command</small></div></div>
+      <nav aria-label="Navegação principal">
         <button data-view="inicio"><i>⌂</i>Início</button>
         <button data-view="chamados"><i>▥</i>Chamados <b data-badge="tickets">0</b></button>
         <button data-view="inauguracoes"><i>⚑</i>Inaugurações <b data-badge="inaugurations">0</b></button>
         <button data-view="calendario"><i>▦</i>Calendário</button>
         <button data-view="conteudos"><i>▤</i>Conteúdos</button>
       </nav>
-      <footer><small>Dados do SULTS e do Marketing Hub</small><span data-storage-status></span></footer>
+      <footer><small>Operação Planet Chocolate · dados do SULTS e André OS</small><span data-storage-status></span></footer>
     </aside>
     <main class="pmh-main">
-      <header class="pmh-topbar"><div><small>PLANET CHOCOLATE</small><h1 data-title></h1></div><div class="pmh-top-actions"><label data-search-wrap><span>⌕</span><input type="search" placeholder="Buscar chamado, unidade ou responsável"></label><button data-refresh title="Atualizar">↻</button></div></header>
+      <header class="pmh-topbar"><div><small>OPERAÇÃO · PLANET CHOCOLATE</small><h1 data-title></h1></div><div class="pmh-top-actions"><label data-search-wrap><span>⌕</span><input type="search" placeholder="Buscar chamado, unidade ou responsável"></label><button data-refresh title="Atualizar">↻</button></div></header>
       <section class="pmh-content" data-content></section>
     </main>`;
   document.body.replaceChildren(shell);
@@ -279,11 +273,10 @@
       const days = daysUntil(item.openingDate);
       return days != null && days >= 0 && days <= 45;
     });
-    const recent = [...active].sort((a, b) => new Date(b.lastChangeAt || b.openedAt || 0) - new Date(a.lastChangeAt || a.openedAt || 0)).slice(0, 5);
-    const attention = [...overdue, ...active.filter((item) => !item.responsible)].filter((item, index, array) => array.findIndex((other) => other.sultsTicketId === item.sultsTicketId) === index).slice(0, 5);
     title.textContent = 'Painel de Marketing';
-    return `
-      <section class="pmh-hero"><div><small>VISÃO GERAL</small><h2>O que precisa de atenção agora</h2><p>Um painel único para chamados, inaugurações e calendário.</p></div><button data-view="chamados">Ver chamados</button></section>
+    return `<section class="pmh-decision-cockpit" data-decision-cockpit aria-live="polite"><div class="pmh-loading">Carregando o cockpit de decisão…</div></section>
+      <section class="pmh-internal-demands" data-internal-demands><div class="pmh-demand-loading">Carregando demandas internas…</div></section>
+      <section data-active-workstream><div class="pmh-active-empty">Carregando o radar…</div></section>
       <section class="pmh-metrics">
         ${metric('Chamados abertos', active.length, 'Sincronizados com o SULTS', 'blue', 'chamados')}
         ${metric('Chamados atrasados', overdue.length, overdue.length ? 'Precisam de ação hoje' : 'Nenhum prazo vencido', 'red', 'chamados')}
@@ -295,10 +288,6 @@
         <button data-view="inauguracoes"><i>⚑</i><strong>Inaugurações</strong><span>Checklist e ações</span></button>
         <button data-view="calendario"><i>▦</i><strong>Calendário</strong><span>Campanhas de 2026</span></button>
         <button data-view="conteudos"><i>▤</i><strong>Conteúdos</strong><span>Biblioteca da rede</span></button>
-      </section>
-      <section class="pmh-home-grid">
-        <article class="pmh-panel"><header><div><small>RECENTES</small><h3>Chamados em movimento</h3></div></header>${recent.length ? `<div class="pmh-list">${recent.map((item) => `<button data-view="chamados"><span></span><div><strong>${esc(item.title)}</strong><small>${esc(item.unit || item.department || 'Sem unidade')}</small></div><time>${fmtDate(item.lastChangeAt || item.openedAt)}</time></button>`).join('')}</div>` : empty('Nenhum chamado ativo.')}</article>
-        <article class="pmh-panel"><header><div><small>ATENÇÃO</small><h3>O que pode travar a operação</h3></div></header>${attention.length ? `<div class="pmh-list attention">${attention.map((item) => `<button data-view="chamados"><span></span><div><strong>${esc(item.title)}</strong><small>${isOverdue(item) ? 'Prazo vencido' : 'Sem responsável'}</small></div><time>${fmtDate(dueDate(item))}</time></button>`).join('')}</div>` : empty('Nada crítico agora.')}</article>
       </section>`;
   };
 
@@ -313,7 +302,7 @@
     filtered.forEach((ticket) => groups.get(ticketLane(ticket))?.push(ticket));
     return `<section class="pmh-section-head"><div><small>SULTS</small><h2>Fluxo de chamados</h2><p>${filtered.length} chamados encontrados.</p></div></section><div class="pmh-kanban">${lanes.map(([key, label]) => {
       const items = groups.get(key) || [];
-      return `<section class="pmh-lane"><header><h3>${esc(label)}</h3><b>${items.length}</b></header><div>${items.length ? items.slice(0, 30).map((ticket) => `<article class="pmh-ticket ${isOverdue(ticket) ? 'late' : ''}"><small>#${esc(ticket.sultsTicketId || ticket.id || '')}</small><h4>${esc(ticket.title || 'Chamado sem título')}</h4><p>${esc(ticket.unit || 'Unidade não informada')}</p><dl><div><dt>Responsável</dt><dd>${esc(ticket.responsible || 'Não definido')}</dd></div><div><dt>Prazo</dt><dd>${fmtDate(dueDate(ticket))}</dd></div></dl></article>`).join('') : empty('Nenhum chamado.')}</div></section>`;
+      return `<section class="pmh-lane"><header><h3>${esc(label)}</h3><b>${items.length}</b></header><div>${items.length ? items.slice(0, 30).map((ticket) => `<article class="pmh-ticket ${isOverdue(ticket) ? 'late' : ''}" data-ticket-id="${esc(ticket.sultsTicketId || ticket.id || '')}"><small>#${esc(ticket.sultsTicketId || ticket.id || '')}</small><h4>${esc(ticket.title || 'Chamado sem título')}</h4><p>${esc(ticket.unit || 'Unidade não informada')}</p><dl><div><dt>Responsável</dt><dd>${esc(ticket.responsible || 'Não definido')}</dd></div><div><dt>Prazo</dt><dd>${fmtDate(dueDate(ticket))}</dd></div></dl></article>`).join('') : empty('Nenhum chamado.')}</div></section>`;
     }).join('')}</div>`;
   };
 
@@ -374,20 +363,35 @@
     return `<section class="pmh-section-head"><div><small>BIBLIOTECA DO MARKETING</small><h2>Materiais organizados por frente</h2><p>Estrutura inicial do acervo. Os próximos arquivos entram aqui sem reabrir o sistema antigo.</p></div></section><div class="pmh-library"><article><i>▦</i><small>PLANEJAMENTO</small><h3>Calendário oficial 2026</h3><p>Campanhas principais, apoio, datas comemorativas e institucionais.</p><button data-view="calendario">Abrir calendário</button></article><article><i>⚑</i><small>INAUGURAÇÕES</small><h3>Kit de implantação</h3><p>Checklist de 15 etapas e seis ações inaugurais com controle financeiro.</p><button data-view="inauguracoes">Abrir inaugurações</button></article><article><i>▥</i><small>OPERAÇÃO</small><h3>Chamados do SULTS</h3><p>Demandas, responsáveis, prazos e classificação do fluxo.</p><button data-view="chamados">Abrir chamados</button></article><article class="pending"><i>＋</i><small>PRÓXIMA FRENTE</small><h3>Arquivos e peças da rede</h3><p>O acervo de PDFs, apresentações e artes será conectado nesta área.</p><span>Em consolidação</span></article></div>`;
   };
 
+  const announceView = () => window.dispatchEvent(new CustomEvent('pmh:view-rendered', {
+    detail: { view: state.view, content },
+  }));
+
   const render = () => {
     shell.querySelectorAll('[data-view]').forEach((button) => button.classList.toggle('active', button.dataset.view === state.view));
     shell.querySelector('[data-badge="tickets"]').textContent = state.tickets.filter((item) => !isFinished(item)).length;
     shell.querySelector('[data-badge="inaugurations"]').textContent = state.inaugurations.length;
     shell.querySelector('[data-storage-status]').innerHTML = `<i class="${state.shared ? 'shared' : 'local'}"></i>${state.shared ? 'Dados compartilhados' : 'Modo local'}`;
     searchWrap.hidden = state.view !== 'chamados';
-    if (state.loading) { title.textContent = 'Planet Marketing Hub'; content.innerHTML = '<div class="pmh-loading">Carregando o painel…</div>'; return; }
-    let html = state.view === 'chamados' ? renderTickets() : state.view === 'inauguracoes' ? renderInaugurations() : state.view === 'calendario' ? renderCalendar() : state.view === 'conteudos' ? renderContents() : renderHome();
+    if (state.loading) {
+      title.textContent = 'André OS';
+      content.innerHTML = '<div class="pmh-loading">Carregando o painel…</div>';
+      announceView();
+      return;
+    }
+    const html = state.view === 'chamados' ? renderTickets() : state.view === 'inauguracoes' ? renderInaugurations() : state.view === 'calendario' ? renderCalendar() : state.view === 'conteudos' ? renderContents() : renderHome();
     content.innerHTML = `${state.error ? `<div class="pmh-alert">${esc(state.error)}</div>` : ''}${html}`;
+    announceView();
+  };
+
+  const setView = (view) => {
+    state.view = view;
+    location.hash = view === 'inicio' ? 'inicio' : view;
+    render();
   };
 
   const openModal = (projectId = '') => {
-    const existing = document.querySelector('.pmh-modal');
-    if (existing) existing.remove();
+    document.querySelector('.pmh-modal')?.remove();
     const project = state.projects.find((item) => String(item.sultsProjectId || item.id || '') === String(projectId));
     const modal = document.createElement('div');
     modal.className = 'pmh-modal';
