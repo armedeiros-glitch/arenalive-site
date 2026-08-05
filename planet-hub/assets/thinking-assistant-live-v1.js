@@ -3,6 +3,7 @@
 
   const API_URL = '/api/hub/pensar-comigo';
   const HISTORY_PREFIX = 'andre-os:thinking-history:v1:';
+  const FLOATING_TRIGGER_SELECTOR = '[data-thinking-floating-trigger]';
   const MAX_HISTORY_MESSAGES = 10;
   let installed = false;
   let observerTimer = 0;
@@ -32,7 +33,37 @@
     }
   };
 
+  const ensureFloatingTrigger = () => {
+    if (!document.body || !assistant()) return null;
+
+    let trigger = document.querySelector(FLOATING_TRIGGER_SELECTOR);
+    if (!trigger) {
+      trigger = document.createElement('button');
+      trigger.type = 'button';
+      trigger.className = 'aos-thinking-floating-trigger';
+      trigger.dataset.thinkingFloatingTrigger = '1';
+      trigger.setAttribute('aria-label', 'Pensar comigo');
+      trigger.innerHTML = '<span class="aos-thinking-orb" aria-hidden="true">🧠</span>';
+      document.body.appendChild(trigger);
+    } else if (trigger.parentElement !== document.body) {
+      document.body.appendChild(trigger);
+    }
+
+    const context = assistant()?.getContext?.() || {};
+    const path = Array.isArray(context.context_path) ? context.context_path.join(' › ') : '';
+    trigger.title = path ? `Pensar no contexto: ${path}` : 'Pensar comigo';
+
+    document.querySelectorAll('[data-thinking-assistant-trigger]').forEach((legacyTrigger) => {
+      legacyTrigger.setAttribute('aria-hidden', 'true');
+      legacyTrigger.setAttribute('tabindex', '-1');
+    });
+
+    return trigger;
+  };
+
   const ensureConversation = () => {
+    ensureFloatingTrigger();
+
     const root = document.querySelector('[data-thinking-assistant-root]');
     const form = root?.querySelector('[data-thinking-form]');
     if (!root || !form) return null;
@@ -51,12 +82,6 @@
 
     const submitButton = form.querySelector('button[type="submit"]');
     if (submitButton) submitButton.innerHTML = 'Pensar agora <i>→</i>';
-
-    const trigger = document.querySelector('[data-thinking-assistant-trigger]');
-    if (trigger) {
-      trigger.setAttribute('aria-label', 'Pensar comigo');
-      trigger.classList.add('floating');
-    }
 
     return conversation;
   };
@@ -152,6 +177,7 @@
       }), 100);
       installed = true;
     }
+    ensureFloatingTrigger();
     ensureConversation();
     renderHistory();
     return true;
@@ -159,8 +185,15 @@
 
   const scheduleSync = () => {
     clearTimeout(observerTimer);
-    observerTimer = setTimeout(() => install(), 60);
+    observerTimer = setTimeout(() => install(), 70);
   };
+
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest?.(FLOATING_TRIGGER_SELECTOR)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    assistant()?.open?.();
+  }, true);
 
   window.addEventListener('andre-os:thinking-open', (event) => {
     ensureConversation();
