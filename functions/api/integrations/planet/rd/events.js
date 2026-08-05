@@ -1,6 +1,9 @@
-const STORAGE_KEY = 'planet-hub:planet-expansion-leads:v1';
-const MAX_ITEMS = 2000;
+const LEADS_KEY = 'planet-hub:planet-expansion-leads:v1';
+const NOTIFICATIONS_KEY = 'planet-hub:planet-notifications:v1';
+const MAX_LEADS = 2000;
+const MAX_NOTIFICATIONS = 1000;
 const MAX_BODY_BYTES = 128_000;
+const MOVEMENT_GROUP_WINDOW_MS = 15 * 60 * 1000;
 
 const headers = {
   'Content-Type': 'application/json; charset=UTF-8',
@@ -12,9 +15,6 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), { status
 const cleanText = (value, max = 300) => String(value ?? '').trim().slice(0, max);
 const cleanPhone = (value) => cleanText(value, 40).replace(/[^\d+]/g, '');
 const nowIso = () => new Date().toISOString();
-const escapeHtml = (value) => cleanText(value, 1600).replace(/[&<>"']/g, (char) => ({
-  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
-}[char]));
 
 const fieldValue = (fields, names) => {
   const wanted = names.map((name) => String(name).toLowerCase());
@@ -32,7 +32,9 @@ const extractPayload = (payload = {}) => {
       ? lead.contact_custom_fields
       : [];
   const conversion = root.conversion || root.data?.conversion || lead.last_conversion || {};
-  const funnel = lead.funnel || {};
+  const funnel = lead.funnel || root.funnel || {};
+  const owner = lead.owner || lead.user || funnel.owner || root.owner || {};
+  const stage = funnel.current_stage || funnel.stage || lead.stage || root.stage || {};
 
   return {
     source: 'rd_station',
@@ -45,9 +47,21 @@ const extractPayload = (payload = {}) => {
     company: cleanText(lead.company?.name || lead.company || lead.empresa || fieldValue(fields, ['empresa', 'company']), 180),
     origin: cleanText(funnel.origin || conversion.source || conversion.traffic_source || root.source || lead.source || fieldValue(fields, ['origem', 'source']), 180),
     conversion: cleanText(root.event_identifier || root.conversion_identifier || conversion.name || conversion.identifier || lead.conversion_identifier || fieldValue(fields, ['conversao', 'conversion']), 220),
-    createdAt: cleanText(root.event_timestamp || root.created_at || lead.created_at, 40) || nowIso(),
+    assignedTo: cleanText(owner.name || owner.email || lead.owner_name || lead.user_name || fieldValue(fields, ['responsavel', 'responsável', 'owner']), 160),
+    rdStage: cleanText(stage.name || stage.label || lead.lead_stage || lead.funnel_stage || root.lead_stage, 160),
+    eventAt: cleanText(root.event_timestamp || root.created_at || lead.updated_at || lead.created_at, 40) || nowIso(),
   };
 };
+
+const normalizeHistory = (items) => (Array.isArray(items) ? items : [])
+  .map((item) => ({
+    id: cleanText(item?.id, 120) || `history-${crypto.randomUUID()}`,
+    type: cleanText(item?.type, 40) || 'updated',
+    title: cleanText(item?.title, 180),
+    changes: Array.isArray(item?.changes) ? item.changes.map((value) => cleanText(value, 80)).filter(Boolean).slice(0, 20) : [],
+    createdAt: cleanText(item?.createdAt, 40) || nowIso(),
+  }))
+  .slice(0, 100);
 
 const normalizeLead = (item = {}) => {
   const createdAt = cleanText(item.createdAt, 40) || nowIso();
@@ -72,26 +86,53 @@ const normalizeLead = (item = {}) => {
     origin: cleanText(item.origin, 180),
     conversion: cleanText(item.conversion, 220),
     assignedTo: cleanText(item.assignedTo, 160),
+    rdStage: cleanText(item.rdStage, 160),
     notes: cleanText(item.notes, 1600),
-    whatsappMessage,
-    whatsappUrl: phone ? `https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage)}` : '',
+    whatsappMessage: cleanText(item.whatsappMessage, 1200) || whatsappMessage,
+    whatsappUrl: cleanText(item.whatsappUrl, 1400) || (phone ? `https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage)}` : ''),
     viewedAt: cleanText(item.viewedAt, 40),
     lastActionAt: cleanText(item.lastActionAt, 40),
+    history: normalizeHistory(item.history),
     createdAt,
-    updatedAt: nowIso(),
+    updatedAt: cleanText(item.updatedAt, 40) || createdAt,
   };
 };
 
-const readDocument = async (store) => {
-  const stored = await store.get(STORAGE_KEY, { type: 'json' });
-  return stored && Array.isArray(stored.data)
-    ? { revision: stored.revision || null, data: stored.data.slice(0, MAX_ITEMS) }
-    : { revision: null, data: [] };
+const normalizeNotification = (item = {}) => {
+  const createdAt = cleanText(item.createdAt, 40) || nowIso();
+  return {
+    id: cleanText(item.id, 120) || `notification-${crypto.randomUUID()}`,
+    tenantId: 'planet',
+    area: 'expansion',
+    type: ['lead.new', 'lead.updated', 'lead.alert'].includes(item.type) ? item.type : 'lead.updated',
+    priority: ['high', 'medium', 'low'].includes(item.priority) ? item.priority : 'medium',
+    title: cleanText(item.title, 180) || 'Atualização da expansão',
+    summary: cleanText(item.summary, 500),
+    leadId: cleanText(item.leadId, 120),
+    leadName: cleanText(item.leadName, 180),
+    count: Math.max(1, Math.min(99, Number(item.count) || 1)),
+    changes: Array.isArray(item.changes) ? item.changes.map((value) => cleanText(value, 80)).filter(Boolean).slice(0, 20) : [],
+    readAt: cleanText(item.readAt, 40),
+    resolvedAt: cleanText(item.resolvedAt, 40),
+    createdAt,
+    updatedAt: cleanText(item.updatedAt, 40) || createdAt,
+  };
 };
 
-const writeDocument = async (store, data) => {
-  const document = { revision: crypto.randomUUID(), updatedAt: nowIso(), data: data.slice(0, MAX_ITEMS) };
-  await store.put(STORAGE_KEY, JSON.stringify(document));
+const readDocument = async (store, key, normalizer, maxItems) => {
+  const stored = await store.get(key, { type: 'json' });
+  return stored && Array.isArray(stored.data)
+    ? { revision: stored.revision || null, updatedAt: stored.updatedAt || null, data: stored.data.slice(0, maxItems).map(normalizer) }
+    : { revision: null, updatedAt: null, data: [] };
+};
+
+const writeDocument = async (store, key, data, normalizer, maxItems) => {
+  const document = {
+    revision: crypto.randomUUID(),
+    updatedAt: nowIso(),
+    data: data.slice(0, maxItems).map(normalizer),
+  };
+  await store.put(key, JSON.stringify(document));
   return document;
 };
 
@@ -108,55 +149,91 @@ const authorized = (request, env) => {
 
 const relevantChanges = (before, after) => {
   const labels = {
-    name: 'nome', phone: 'telefone', email: 'e-mail', city: 'cidade', state: 'estado',
-    origin: 'origem', conversion: 'movimentação', assignedTo: 'responsável', status: 'status',
+    name: 'nome',
+    phone: 'telefone',
+    email: 'e-mail',
+    city: 'cidade',
+    state: 'estado',
+    origin: 'origem',
+    conversion: 'conversão',
+    assignedTo: 'responsável',
+    rdStage: 'etapa do funil',
   };
   return Object.entries(labels)
     .filter(([key]) => cleanText(before?.[key], 300) !== cleanText(after?.[key], 300))
-    .map(([, label]) => label);
+    .map(([key, label]) => ({
+      key,
+      label,
+      before: cleanText(before?.[key], 300),
+      after: cleanText(after?.[key], 300),
+    }));
 };
 
-const sendTelegram = async (env, lead, { duplicate, changes }) => {
-  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return { sent: false, reason: 'not_configured' };
+const historyEvent = (type, title, changes = []) => ({
+  id: `history-${crypto.randomUUID()}`,
+  type,
+  title,
+  changes: changes.map((item) => item.label || item).filter(Boolean),
+  createdAt: nowIso(),
+});
 
-  const location = [lead.city, lead.state].filter(Boolean).join(' / ') || 'Não informado';
-  const isMovement = duplicate && changes.length;
-  const lines = isMovement
-    ? [
-        '<b>🔄 Movimentação no RD</b>', '',
-        `👤 <b>Nome:</b> ${escapeHtml(lead.name)}`,
-        `🎯 <b>Movimentação:</b> ${escapeHtml(lead.conversion || changes.join(', '))}`,
-        `🧩 <b>Campos alterados:</b> ${escapeHtml(changes.join(', '))}`,
-      ]
-    : [
-        '<b>🔔 Novo lead Planet Chocolate</b>', '',
-        `👤 <b>Nome:</b> ${escapeHtml(lead.name)}`,
-        `📱 <b>Telefone:</b> ${escapeHtml(lead.phone || 'Não informado')}`,
-        `📧 <b>E-mail:</b> ${escapeHtml(lead.email || 'Não informado')}`,
-        `📍 <b>Localização:</b> ${escapeHtml(location)}`,
-        `🎯 <b>Conversão:</b> ${escapeHtml(lead.conversion || 'Não informada')}`,
-        `🌐 <b>Origem:</b> ${escapeHtml(lead.origin || 'Não informada')}`,
-      ];
+const notificationForNewLead = (lead) => {
+  const location = [lead.city, lead.state].filter(Boolean).join('/') || 'Local não informado';
+  const origin = lead.origin || lead.conversion || 'Origem não informada';
+  return normalizeNotification({
+    type: 'lead.new',
+    priority: 'high',
+    title: 'Novo lead de franquia',
+    summary: `${lead.name} · ${location} · ${origin}`,
+    leadId: lead.id,
+    leadName: lead.name,
+    changes: [],
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  });
+};
 
-  const telegramPayload = {
-    chat_id: env.TELEGRAM_CHAT_ID,
-    text: lines.join('\n'),
-    parse_mode: 'HTML',
-    disable_web_page_preview: true,
-  };
+const upsertMovementNotification = (items, lead, changes) => {
+  const timestamp = nowIso();
+  const labels = changes.map((item) => item.label);
+  const cutoff = Date.now() - MOVEMENT_GROUP_WINDOW_MS;
+  const index = items.findIndex((item) => (
+    item.type === 'lead.updated'
+    && item.leadId === lead.id
+    && !item.readAt
+    && !item.resolvedAt
+    && Date.parse(item.updatedAt || item.createdAt || 0) >= cutoff
+  ));
+  const highPriority = changes.some((item) => ['assignedTo', 'rdStage'].includes(item.key));
 
-  if (lead.whatsappUrl) {
-    telegramPayload.reply_markup = { inline_keyboard: [[{ text: '💬 Chamar no WhatsApp', url: lead.whatsappUrl }]] };
+  if (index >= 0) {
+    const current = normalizeNotification(items[index]);
+    const mergedLabels = [...new Set([...current.changes, ...labels])].slice(0, 20);
+    const updated = normalizeNotification({
+      ...current,
+      priority: highPriority ? 'high' : current.priority,
+      title: 'Lead movimentado no RD',
+      summary: `${lead.name} · ${mergedLabels.join(', ')}`,
+      count: current.count + 1,
+      changes: mergedLabels,
+      updatedAt: timestamp,
+    });
+    return { data: items.map((item, itemIndex) => itemIndex === index ? updated : item), notification: updated, grouped: true };
   }
 
-  const response = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(telegramPayload),
+  const notification = normalizeNotification({
+    type: 'lead.updated',
+    priority: highPriority ? 'high' : 'medium',
+    title: 'Lead movimentado no RD',
+    summary: `${lead.name} · ${labels.join(', ')}`,
+    leadId: lead.id,
+    leadName: lead.name,
+    count: 1,
+    changes: labels,
+    createdAt: timestamp,
+    updatedAt: timestamp,
   });
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok || !result.ok) throw new Error(result.description || 'Telegram recusou a notificação.');
-  return { sent: true, messageId: result.result?.message_id || null };
+  return { data: [notification, ...items], notification, grouped: false };
 };
 
 export async function onRequestPost({ env, request }) {
@@ -168,13 +245,17 @@ export async function onRequestPost({ env, request }) {
   if (contentLength > MAX_BODY_BYTES) return json({ error: 'Payload acima do limite permitido.' }, 413);
 
   let payload;
-  try { payload = await request.json(); } catch { return json({ error: 'JSON inválido.' }, 400); }
+  try {
+    payload = await request.json();
+  } catch {
+    return json({ error: 'JSON inválido.' }, 400);
+  }
 
   const incoming = normalizeLead(extractPayload(payload));
   if (!incoming.phone && !incoming.email) return json({ error: 'Lead sem telefone e e-mail.' }, 400);
 
   try {
-    const current = await readDocument(env.PLANET_HUB_DATA);
+    const current = await readDocument(env.PLANET_HUB_DATA, LEADS_KEY, normalizeLead, MAX_LEADS);
     const duplicate = current.data.find((lead) => (
       incoming.externalId && lead.externalId === incoming.externalId && lead.source === 'rd_station'
     ) || (
@@ -187,28 +268,64 @@ export async function onRequestPost({ env, request }) {
     let data;
     let changes = [];
     if (duplicate) {
-      lead = normalizeLead({ ...duplicate, ...incoming, id: duplicate.id, createdAt: duplicate.createdAt, viewedAt: duplicate.viewedAt });
+      lead = normalizeLead({
+        ...duplicate,
+        ...incoming,
+        id: duplicate.id,
+        status: duplicate.status,
+        notes: duplicate.notes,
+        viewedAt: duplicate.viewedAt,
+        lastActionAt: duplicate.lastActionAt,
+        createdAt: duplicate.createdAt,
+        history: duplicate.history,
+        updatedAt: nowIso(),
+      });
       changes = relevantChanges(duplicate, lead);
+      if (changes.length) {
+        lead.history = [historyEvent('updated', 'Movimentação recebida do RD Station', changes), ...lead.history].slice(0, 100);
+      }
       data = current.data.map((item) => item.id === duplicate.id ? lead : item);
     } else {
-      lead = normalizeLead({ ...incoming, id: `lead-${crypto.randomUUID()}`, createdAt: nowIso() });
+      const createdAt = nowIso();
+      lead = normalizeLead({
+        ...incoming,
+        id: `lead-${crypto.randomUUID()}`,
+        createdAt,
+        updatedAt: createdAt,
+        history: [historyEvent('created', 'Lead recebido do RD Station')],
+      });
       data = [lead, ...current.data];
     }
 
-    const document = await writeDocument(env.PLANET_HUB_DATA, data);
-    let telegram = { sent: false, reason: duplicate && !changes.length ? 'no_relevant_changes' : 'not_configured' };
+    const leadDocument = await writeDocument(env.PLANET_HUB_DATA, LEADS_KEY, data, normalizeLead, MAX_LEADS);
+    let notification = { created: false, grouped: false, reason: duplicate && !changes.length ? 'no_relevant_changes' : 'not_created' };
+
     if (!duplicate || changes.length) {
-      try { telegram = await sendTelegram(env, lead, { duplicate: Boolean(duplicate), changes }); }
-      catch (error) { telegram = { sent: false, reason: error instanceof Error ? error.message : String(error) }; }
+      try {
+        const currentNotifications = await readDocument(env.PLANET_HUB_DATA, NOTIFICATIONS_KEY, normalizeNotification, MAX_NOTIFICATIONS);
+        const result = duplicate
+          ? upsertMovementNotification(currentNotifications.data, lead, changes)
+          : { data: [notificationForNewLead(lead), ...currentNotifications.data], grouped: false };
+        const notificationDocument = await writeDocument(env.PLANET_HUB_DATA, NOTIFICATIONS_KEY, result.data, normalizeNotification, MAX_NOTIFICATIONS);
+        const createdNotification = result.notification || notificationDocument.data[0];
+        notification = {
+          created: true,
+          grouped: Boolean(result.grouped),
+          id: createdNotification?.id || '',
+          unread: notificationDocument.data.filter((item) => !item.readAt && !item.resolvedAt).length,
+        };
+      } catch (error) {
+        notification = { created: false, grouped: false, reason: error instanceof Error ? error.message : String(error) };
+      }
     }
 
     return json({
       ok: true,
       duplicate: Boolean(duplicate),
-      changes,
+      changes: changes.map((item) => item.label),
       leadId: lead.id,
-      revision: document.revision,
-      telegram,
+      revision: leadDocument.revision,
+      notification,
     }, duplicate ? 200 : 201);
   } catch (error) {
     return json({ error: 'Falha ao processar o webhook do RD.', details: error instanceof Error ? error.message : String(error) }, 500);
@@ -216,7 +333,7 @@ export async function onRequestPost({ env, request }) {
 }
 
 export function onRequestGet() {
-  return json({ ok: true, integration: 'planet-rd-station', method: 'POST', telegram: 'optional' });
+  return json({ ok: true, integration: 'planet-rd-station', method: 'POST', destination: 'andre-os' });
 }
 
 export function onRequestOptions() {
