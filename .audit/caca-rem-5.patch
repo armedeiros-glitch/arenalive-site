@@ -1,0 +1,57 @@
+diff -ruN '--exclude=.git' /tmp/caca-remote-current/tests/planet-rd-webhook.test.mjs /tmp/caca-full/tests/planet-rd-webhook.test.mjs
+--- /tmp/caca-remote-current/tests/planet-rd-webhook.test.mjs	2026-08-06 14:40:12.000000000 +0000
++++ /tmp/caca-full/tests/planet-rd-webhook.test.mjs	2026-08-06 14:44:48.728483843 +0000
+@@ -1,27 +1,31 @@
+ import assert from 'node:assert/strict';
+ import fs from 'node:fs';
+ 
+-const file = fs.readFileSync('functions/api/integrations/planet/rd/events.js', 'utf8');
++const route = fs.readFileSync('functions/api/integrations/planet/rd/webhook/[secret].js', 'utf8');
++const webhook = fs.readFileSync('functions/_lib/planet-rd-webhook.js', 'utf8');
++const leads = fs.readFileSync('functions/_lib/planet-leads.js', 'utf8');
++const notifications = fs.readFileSync('functions/_lib/planet-notifications.js', 'utf8');
+ 
+-assert.match(file, /RD_WEBHOOK_SECRET/);
+-assert.match(file, /Authorization|authorization/);
+-assert.match(file, /x-rd-webhook-secret/);
+-assert.match(file, /searchParams\.get\('secret'\)/);
+-assert.match(file, /source: 'rd_station'/);
+-assert.match(file, /PLANET_HUB_DATA/);
+-assert.match(file, /Lead sem telefone e e-mail/);
+-assert.match(file, /mergeExternalData/);
+-assert.match(file, /if \(value\) merged\[key\] = incoming\[key\]/);
+-assert.match(file, /relevantChanges/);
+-assert.match(file, /NOTIFICATIONS_KEY/);
+-assert.match(file, /lead\.new/);
+-assert.match(file, /lead\.updated/);
+-assert.match(file, /MOVEMENT_GROUP_WINDOW_MS/);
+-assert.match(file, /Movimentação recebida do RD Station/);
+-assert.match(file, /destination: 'andre-os'/);
+-assert.doesNotMatch(file, /TELEGRAM_BOT_TOKEN/);
+-assert.doesNotMatch(file, /TELEGRAM_CHAT_ID/);
+-assert.doesNotMatch(file, /api\.telegram\.org/);
+-assert.doesNotMatch(file, /console\.log\(JSON\.stringify\(payload\)\)/);
++assert.match(route, /planet-rd-webhook\.js/);
++assert.match(route, /X-RD-Webhook-Secret/);
++assert.match(route, /params\?\.secret/);
++assert.match(webhook, /RD_WEBHOOK_SECRET/);
++assert.match(webhook, /Authorization|authorization/);
++assert.match(webhook, /x-rd-webhook-secret/);
++assert.match(webhook, /searchParams\.get\('secret'\)/);
++assert.match(webhook, /source: 'rd_station'/);
++assert.match(webhook, /PLANET_HUB_DATA/);
++assert.match(webhook, /Lead sem telefone e e-mail/);
++assert.match(webhook, /upsertLead/);
++assert.match(webhook, /readNotificationDocument/);
++assert.match(webhook, /writeNotificationDocument/);
++assert.match(webhook, /MOVEMENT_GROUP_WINDOW_MS/);
++assert.match(webhook, /Movimentação recebida do RD Station/);
++assert.match(webhook, /destination: 'andre-os'/);
++assert.doesNotMatch(webhook, /planet-hub:planet-expansion-leads:v1|planet-hub:planet-notifications:v1/);
++assert.match(leads, /planet-hub:planet-expansion-leads:v1/);
++assert.match(notifications, /planet-hub:planet-notifications:v1/);
++assert.doesNotMatch(webhook, /TELEGRAM_BOT_TOKEN|TELEGRAM_CHAT_ID|api\.telegram\.org/);
++assert.doesNotMatch(webhook, /console\.log\(JSON\.stringify\(payload\)\)/);
+ 
+-console.log('planet-rd-webhook: ok');
++console.log('planet-rd-webhook compartilhado: ok');
