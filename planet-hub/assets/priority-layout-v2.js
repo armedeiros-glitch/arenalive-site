@@ -6,17 +6,19 @@
   let buildFrame = 0;
   let scrollFrame = 0;
 
-  const mobileViewport = () => {
-    const viewport = Number(window.innerWidth) || 9999;
-    const screenWidth = Number(window.screen?.width) || viewport;
-    return Math.min(viewport, screenWidth) <= MOBILE_MAX;
-  };
-
   const cockpit = () => document.querySelector('[data-decision-cockpit]');
+  const mode = () => (Number(window.innerWidth) || 9999) <= MOBILE_MAX ? 'mobile' : 'desktop';
   const cleanText = (element) => String(element?.textContent || '').replace(/\s+/g, ' ').trim();
   const toneFrom = (element) => [...(element?.classList || [])]
     .find((name) => name.startsWith('tone-'))
     ?.slice(5) || 'execution';
+
+  const makeElement = (tag, className = '', text = '') => {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text) element.textContent = text;
+    return element;
+  };
 
   const primaryEntry = (target) => {
     const main = target.querySelector('.pmh-decision-main');
@@ -53,15 +55,8 @@
     .filter((entry, index, entries) => entries.findIndex((candidate) => candidate.id === entry.id) === index)
     .slice(0, MAX_OTHER_ITEMS);
 
-  const makeElement = (tag, className, text = '') => {
-    const element = document.createElement(tag);
-    if (className) element.className = className;
-    if (text) element.textContent = text;
-    return element;
-  };
-
-  const buildTaskCard = (entry, variant, index = 0, total = 1) => {
-    const card = makeElement('article', `pmh-priority-card pmh-priority-${variant} tone-${entry.tone}`);
+  const buildCard = (entry, variant, index = 0, total = 1) => {
+    const card = makeElement('article', `pmh-priority-card is-${variant} tone-${entry.tone}`);
     if (variant === 'other') {
       card.dataset.prioritySlide = String(index);
       card.setAttribute('aria-label', `Outro ponto ${index + 1} de ${total}`);
@@ -73,7 +68,6 @@
       makeElement('time', `pmh-priority-due ${entry.dueTone}`.trim(), entry.due || 'Sem prazo'),
     );
 
-    const title = makeElement('h3', '', entry.title);
     const movement = makeElement('div', 'pmh-priority-movement');
     movement.append(
       makeElement('small', '', 'PRÓXIMO MOVIMENTO'),
@@ -87,11 +81,20 @@
     open.dataset.attentionOpen = entry.id;
     footer.appendChild(open);
 
-    card.append(head, title, movement, footer);
+    card.append(head, makeElement('h3', '', entry.title), movement, footer);
     return card;
   };
 
-  const updateOthersState = (section, index) => {
+  const buildFocus = (entry) => {
+    const section = makeElement('section', 'pmh-priority-focus-section');
+    section.dataset.priorityFocus = '1';
+    const heading = makeElement('header', 'pmh-priority-section-head');
+    heading.appendChild(makeElement('small', '', '🤖 O QUE PRECISA DA SUA ATENÇÃO AGORA'));
+    section.append(heading, buildCard(entry, 'focus'));
+    return section;
+  };
+
+  const updateMobileState = (section, index) => {
     if (!section) return;
     const total = Number(section.dataset.priorityTotal || 1);
     const safeIndex = Math.max(0, Math.min(total - 1, Number(index) || 0));
@@ -116,111 +119,109 @@
         const distance = Math.abs(slide.getBoundingClientRect().left - trackLeft);
         return distance < best.distance ? { index: current, distance } : best;
       }, { index: 0, distance: Number.POSITIVE_INFINITY }).index;
-      updateOthersState(track.closest('[data-priority-others]'), index);
+      updateMobileState(track.closest('[data-priority-others]'), index);
     });
   };
 
-  const buildFocusSection = (entry) => {
-    const section = makeElement('section', 'pmh-priority-focus-section');
-    section.dataset.priorityFocus = '1';
-    section.setAttribute('aria-label', 'O que precisa da sua atenção agora');
-
-    const heading = makeElement('header', 'pmh-priority-section-head');
-    heading.appendChild(makeElement('small', '', '🤖 O QUE PRECISA DA SUA ATENÇÃO AGORA'));
-    section.append(heading, buildTaskCard(entry, 'focus'));
-    return section;
-  };
-
-  const buildOthersSection = (entries) => {
+  const buildOthers = (entries, currentMode) => {
     if (!entries.length) return null;
 
     const section = makeElement('section', 'pmh-priority-others-section');
     section.dataset.priorityOthers = '1';
     section.dataset.priorityTotal = String(entries.length);
     section.dataset.priorityIndex = '0';
-    section.setAttribute('aria-label', 'Outros pontos que merecem atenção');
 
     const heading = makeElement('header', 'pmh-priority-section-head pmh-priority-others-head');
-    const copy = makeElement('div', '');
+    const copy = makeElement('div');
     copy.append(
       makeElement('small', '', 'OUTROS PONTOS QUE MERECEM ATENÇÃO'),
-      makeElement('strong', '', 'Continue arrastando para ver'),
+      makeElement('strong', '', currentMode === 'mobile' ? 'Continue arrastando para ver' : 'Visão rápida das próximas prioridades'),
     );
-    const counter = makeElement('span', 'pmh-priority-counter', `1 de ${entries.length}`);
-    counter.dataset.priorityCounter = '1';
-    heading.append(copy, counter);
+    heading.appendChild(copy);
 
-    const track = makeElement('div', 'pmh-priority-track');
-    track.dataset.priorityTrack = '1';
-    track.tabIndex = 0;
-    track.setAttribute('aria-label', 'Arraste para ver outros pontos de atenção');
-    entries.forEach((entry, index) => track.appendChild(buildTaskCard(entry, 'other', index, entries.length)));
-    track.addEventListener('scroll', () => onTrackScroll(track), { passive: true });
+    if (currentMode === 'mobile') {
+      const counter = makeElement('span', 'pmh-priority-counter', `1 de ${entries.length}`);
+      counter.dataset.priorityCounter = '1';
+      heading.appendChild(counter);
+    }
 
-    const controls = makeElement('footer', 'pmh-priority-controls');
-    const dots = makeElement('div', 'pmh-priority-dots');
-    entries.forEach((entry, index) => {
-      const dot = makeElement('button', index === 0 ? 'active' : '');
-      dot.type = 'button';
-      dot.dataset.priorityDot = String(index);
-      dot.setAttribute('aria-label', `Ver outro ponto ${index + 1}: ${entry.title}`);
-      dot.setAttribute('aria-current', index === 0 ? 'true' : 'false');
-      dots.appendChild(dot);
-    });
-    controls.append(dots, makeElement('span', 'pmh-priority-hint', entries.length > 1 ? 'Arraste para o lado' : 'Mais um ponto'));
+    const collection = makeElement('div', currentMode === 'mobile' ? 'pmh-priority-track' : 'pmh-priority-grid');
+    if (currentMode === 'mobile') {
+      collection.dataset.priorityTrack = '1';
+      collection.tabIndex = 0;
+      collection.setAttribute('aria-label', 'Arraste para ver outros pontos de atenção');
+      collection.addEventListener('scroll', () => onTrackScroll(collection), { passive: true });
+    }
+    entries.forEach((entry, index) => collection.appendChild(buildCard(entry, 'other', index, entries.length)));
 
-    section.append(heading, track, controls);
+    section.append(heading, collection);
+
+    if (currentMode === 'mobile') {
+      const controls = makeElement('footer', 'pmh-priority-controls');
+      const dots = makeElement('div', 'pmh-priority-dots');
+      entries.forEach((entry, index) => {
+        const dot = makeElement('button', index === 0 ? 'active' : '');
+        dot.type = 'button';
+        dot.dataset.priorityDot = String(index);
+        dot.setAttribute('aria-label', `Ver outro ponto ${index + 1}: ${entry.title}`);
+        dot.setAttribute('aria-current', index === 0 ? 'true' : 'false');
+        dots.appendChild(dot);
+      });
+      controls.append(
+        dots,
+        makeElement('span', 'pmh-priority-hint', entries.length > 1 ? 'Arraste para o lado' : 'Mais um ponto'),
+      );
+      section.appendChild(controls);
+    }
+
     return section;
   };
 
-  const buildMobileLayout = () => {
+  const render = () => {
     buildFrame = 0;
     const target = cockpit();
     if (!target) return;
 
-    if (!mobileViewport()) {
-      target.classList.remove('pmh-priority-ready');
-      target.querySelector('[data-priority-mobile]')?.remove();
-      return;
-    }
-
     const primary = primaryEntry(target);
     if (!primary) {
       target.classList.remove('pmh-priority-ready');
-      target.querySelector('[data-priority-mobile]')?.remove();
+      target.querySelector('[data-priority-layout]')?.remove();
       return;
     }
 
+    const currentMode = mode();
     const others = secondaryEntries(target, primary.id);
-    const signature = [primary, ...others]
-      .map((entry) => [entry.id, entry.title, entry.summary, entry.due].join('|'))
-      .join('::');
-    const current = target.querySelector('[data-priority-mobile]');
+    const signature = [
+      currentMode,
+      ...[primary, ...others].map((entry) => [entry.id, entry.title, entry.summary, entry.due].join('|')),
+    ].join('::');
+
+    const current = target.querySelector('[data-priority-layout]');
     if (current?.dataset.prioritySignature === signature) {
       target.classList.add('pmh-priority-ready');
       return;
     }
 
-    const mobile = makeElement('div', 'pmh-priority-mobile');
-    mobile.dataset.priorityMobile = '1';
-    mobile.dataset.prioritySignature = signature;
-    mobile.appendChild(buildFocusSection(primary));
-    const othersSection = buildOthersSection(others);
-    if (othersSection) mobile.appendChild(othersSection);
+    const layout = makeElement('div', `pmh-priority-layout is-${currentMode}`);
+    layout.dataset.priorityLayout = '1';
+    layout.dataset.prioritySignature = signature;
+    layout.appendChild(buildFocus(primary));
+    const othersSection = buildOthers(others, currentMode);
+    if (othersSection) layout.appendChild(othersSection);
 
     current?.remove();
-    target.prepend(mobile);
+    target.prepend(layout);
     target.classList.add('pmh-priority-ready');
   };
 
-  const scheduleBuild = () => {
+  const schedule = () => {
     const target = cockpit();
-    if (target && !target.querySelector('[data-priority-mobile]')) {
+    if (target && !target.querySelector('[data-priority-layout]')) {
       target.classList.remove('pmh-priority-ready');
     }
-    if (!buildFrame) buildFrame = requestAnimationFrame(buildMobileLayout);
-    window.setTimeout(buildMobileLayout, 90);
-    window.setTimeout(buildMobileLayout, 240);
+    if (!buildFrame) buildFrame = requestAnimationFrame(render);
+    window.setTimeout(render, 90);
+    window.setTimeout(render, 240);
   };
 
   document.addEventListener('click', (event) => {
@@ -232,14 +233,14 @@
     if (slide && track) track.scrollTo({ left: slide.offsetLeft, behavior: 'smooth' });
   });
 
-  window.addEventListener('pmh:radar-data', scheduleBuild);
-  window.addEventListener('pmh:view-rendered', scheduleBuild);
-  window.addEventListener('resize', scheduleBuild, { passive: true });
-  window.addEventListener('orientationchange', scheduleBuild, { passive: true });
+  window.addEventListener('pmh:radar-data', schedule);
+  window.addEventListener('pmh:view-rendered', schedule);
+  window.addEventListener('resize', schedule, { passive: true });
+  window.addEventListener('orientationchange', schedule, { passive: true });
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', scheduleBuild, { once: true });
+    document.addEventListener('DOMContentLoaded', schedule, { once: true });
   } else {
-    scheduleBuild();
+    schedule();
   }
 })();
