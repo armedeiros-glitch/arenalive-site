@@ -1,6 +1,17 @@
-const LEADS_KEY = 'planet-hub:planet-expansion-leads:v1';
+import {
+  cleanLeadPhone,
+  cleanLeadText,
+  createPlanetLeadHistoryEvent,
+  findPlanetLeadDuplicate,
+  mergePlanetLeadExternalData,
+  normalizePlanetLead,
+  planetLeadNowIso,
+  planetLeadRelevantChanges,
+  readPlanetLeadsDocument,
+  writePlanetLeadsDocument,
+} from './planet-leads.js';
+
 const NOTIFICATIONS_KEY = 'planet-hub:planet-notifications:v1';
-const MAX_LEADS = 2000;
 const MAX_NOTIFICATIONS = 1000;
 const MAX_BODY_BYTES = 128_000;
 const MOVEMENT_GROUP_WINDOW_MS = 15 * 60 * 1000;
@@ -12,9 +23,6 @@ const headers = {
 };
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers });
-const cleanText = (value, max = 300) => String(value ?? '').trim().slice(0, max);
-const cleanPhone = (value) => cleanText(value, 40).replace(/[^\d+]/g, '');
-const nowIso = () => new Date().toISOString();
 
 const fieldValue = (fields, names) => {
   const wanted = names.map((name) => String(name).toLowerCase());
@@ -38,117 +46,98 @@ const extractPayload = (payload = {}) => {
 
   return {
     source: 'rd_station',
-    externalId: cleanText(lead.uuid || lead.id || lead.contact_id || root.uuid || lead.email, 180),
-    name: cleanText(lead.name || lead.nome || lead.full_name, 180),
-    phone: cleanPhone(lead.phone || lead.mobile_phone || lead.personal_phone || lead.telefone || lead.celular || lead.whatsapp || fieldValue(fields, ['telefone', 'phone', 'celular', 'whatsapp'])),
-    email: cleanText(lead.email, 220).toLowerCase(),
-    city: cleanText(lead.city || lead.cidade || fieldValue(fields, ['cidade', 'city']), 140),
-    state: cleanText(lead.state || lead.estado || lead.uf || fieldValue(fields, ['estado', 'state', 'uf']), 80),
-    company: cleanText(lead.company?.name || lead.company || lead.empresa || fieldValue(fields, ['empresa', 'company']), 180),
-    origin: cleanText(funnel.origin || conversion.source || conversion.traffic_source || root.source || lead.source || fieldValue(fields, ['origem', 'source']), 180),
-    conversion: cleanText(root.event_identifier || root.conversion_identifier || conversion.name || conversion.identifier || lead.conversion_identifier || fieldValue(fields, ['conversao', 'conversion']), 220),
-    assignedTo: cleanText(owner.name || owner.email || lead.owner_name || lead.user_name || fieldValue(fields, ['responsavel', 'responsável', 'owner']), 160),
-    rdStage: cleanText(stage.name || stage.label || lead.lead_stage || lead.funnel_stage || root.lead_stage, 160),
-    eventAt: cleanText(root.event_timestamp || root.created_at || lead.updated_at || lead.created_at, 40),
-  };
-};
-
-const normalizeHistory = (items) => (Array.isArray(items) ? items : [])
-  .map((item) => ({
-    id: cleanText(item?.id, 120) || `history-${crypto.randomUUID()}`,
-    type: cleanText(item?.type, 40) || 'updated',
-    title: cleanText(item?.title, 180),
-    changes: Array.isArray(item?.changes)
-      ? item.changes.map((value) => cleanText(value, 80)).filter(Boolean).slice(0, 20)
-      : [],
-    createdAt: cleanText(item?.createdAt, 40) || nowIso(),
-  }))
-  .slice(0, 100);
-
-const normalizeLead = (item = {}) => {
-  const createdAt = cleanText(item.createdAt, 40) || nowIso();
-  const phone = cleanPhone(item.phone);
-  const name = cleanText(item.name, 180) || 'Lead sem nome';
-  const firstName = name === 'Lead sem nome' ? '' : name.split(/\s+/)[0] || '';
-  const suggestedMessage = firstName
-    ? `Olá, ${firstName}! Tudo bem?\n\nSou da equipe Planet Chocolate. Recebemos seu interesse em conhecer nossa franquia.`
-    : 'Olá! Tudo bem?\n\nSou da equipe Planet Chocolate. Recebemos seu interesse em conhecer nossa franquia.';
-
-  return {
-    id: cleanText(item.id, 120) || `lead-${crypto.randomUUID()}`,
-    tenantId: 'planet',
-    source: 'rd_station',
-    externalId: cleanText(item.externalId, 180),
-    status: cleanText(item.status, 40) || 'new',
-    name,
-    phone,
-    email: cleanText(item.email, 220).toLowerCase(),
-    city: cleanText(item.city, 140),
-    state: cleanText(item.state, 80),
-    company: cleanText(item.company, 180),
-    origin: cleanText(item.origin, 180),
-    conversion: cleanText(item.conversion, 220),
-    assignedTo: cleanText(item.assignedTo, 160),
-    rdStage: cleanText(item.rdStage, 160),
-    notes: cleanText(item.notes, 1600),
-    whatsappMessage: cleanText(item.whatsappMessage, 1200) || suggestedMessage,
-    whatsappUrl: phone
-      ? `https://wa.me/${phone}?text=${encodeURIComponent(cleanText(item.whatsappMessage, 1200) || suggestedMessage)}`
-      : '',
-    viewedAt: cleanText(item.viewedAt, 40),
-    lastActionAt: cleanText(item.lastActionAt, 40),
-    history: normalizeHistory(item.history),
-    createdAt,
-    updatedAt: cleanText(item.updatedAt, 40) || createdAt,
+    externalId: cleanLeadText(lead.uuid || lead.id || lead.contact_id || root.uuid || lead.email, 180),
+    name: cleanLeadText(lead.name || lead.nome || lead.full_name, 180),
+    phone: cleanLeadPhone(
+      lead.phone
+      || lead.mobile_phone
+      || lead.personal_phone
+      || lead.telefone
+      || lead.celular
+      || lead.whatsapp
+      || fieldValue(fields, ['telefone', 'phone', 'celular', 'whatsapp']),
+    ),
+    email: cleanLeadText(lead.email, 220).toLowerCase(),
+    city: cleanLeadText(lead.city || lead.cidade || fieldValue(fields, ['cidade', 'city']), 140),
+    state: cleanLeadText(lead.state || lead.estado || lead.uf || fieldValue(fields, ['estado', 'state', 'uf']), 80),
+    company: cleanLeadText(lead.company?.name || lead.company || lead.empresa || fieldValue(fields, ['empresa', 'company']), 180),
+    origin: cleanLeadText(
+      funnel.origin
+      || conversion.source
+      || conversion.traffic_source
+      || root.source
+      || lead.source
+      || fieldValue(fields, ['origem', 'source']),
+      180,
+    ),
+    conversion: cleanLeadText(
+      root.event_identifier
+      || root.conversion_identifier
+      || conversion.name
+      || conversion.identifier
+      || lead.conversion_identifier
+      || fieldValue(fields, ['conversao', 'conversion']),
+      220,
+    ),
+    assignedTo: cleanLeadText(
+      owner.name
+      || owner.email
+      || lead.owner_name
+      || lead.user_name
+      || fieldValue(fields, ['responsavel', 'responsável', 'owner']),
+      160,
+    ),
+    rdStage: cleanLeadText(stage.name || stage.label || lead.lead_stage || lead.funnel_stage || root.lead_stage, 160),
+    eventAt: cleanLeadText(root.event_timestamp || root.created_at || lead.updated_at || lead.created_at, 40),
   };
 };
 
 const normalizeNotification = (item = {}) => {
-  const createdAt = cleanText(item.createdAt, 40) || nowIso();
+  const createdAt = cleanLeadText(item.createdAt, 40) || planetLeadNowIso();
   return {
-    id: cleanText(item.id, 120) || `notification-${crypto.randomUUID()}`,
+    id: cleanLeadText(item.id, 120) || `notification-${crypto.randomUUID()}`,
     tenantId: 'planet',
     area: 'expansion',
     type: ['lead.new', 'lead.updated', 'lead.alert'].includes(item.type) ? item.type : 'lead.updated',
     priority: ['high', 'medium', 'low'].includes(item.priority) ? item.priority : 'medium',
-    title: cleanText(item.title, 180) || 'Atualização da expansão',
-    summary: cleanText(item.summary, 500),
-    leadId: cleanText(item.leadId, 120),
-    leadName: cleanText(item.leadName, 180),
+    title: cleanLeadText(item.title, 180) || 'Atualização da expansão',
+    summary: cleanLeadText(item.summary, 500),
+    leadId: cleanLeadText(item.leadId, 120),
+    leadName: cleanLeadText(item.leadName, 180),
     count: Math.max(1, Math.min(99, Number(item.count) || 1)),
     changes: Array.isArray(item.changes)
-      ? item.changes.map((value) => cleanText(value, 80)).filter(Boolean).slice(0, 20)
+      ? item.changes.map((value) => cleanLeadText(value, 80)).filter(Boolean).slice(0, 20)
       : [],
-    readAt: cleanText(item.readAt, 40),
-    resolvedAt: cleanText(item.resolvedAt, 40),
+    readAt: cleanLeadText(item.readAt, 40),
+    resolvedAt: cleanLeadText(item.resolvedAt, 40),
     createdAt,
-    updatedAt: cleanText(item.updatedAt, 40) || createdAt,
+    updatedAt: cleanLeadText(item.updatedAt, 40) || createdAt,
   };
 };
 
-const readDocument = async (store, key, normalizer, maxItems) => {
-  const stored = await store.get(key, { type: 'json' });
+const readNotificationsDocument = async (store) => {
+  const stored = await store.get(NOTIFICATIONS_KEY, { type: 'json' });
   return stored && Array.isArray(stored.data)
     ? {
         revision: stored.revision || null,
         updatedAt: stored.updatedAt || null,
-        data: stored.data.slice(0, maxItems).map(normalizer),
+        data: stored.data.slice(0, MAX_NOTIFICATIONS).map(normalizeNotification),
       }
     : { revision: null, updatedAt: null, data: [] };
 };
 
-const writeDocument = async (store, key, data, normalizer, maxItems) => {
+const writeNotificationsDocument = async (store, data) => {
   const document = {
     revision: crypto.randomUUID(),
-    updatedAt: nowIso(),
-    data: data.slice(0, maxItems).map(normalizer),
+    updatedAt: planetLeadNowIso(),
+    data: data.slice(0, MAX_NOTIFICATIONS).map(normalizeNotification),
   };
-  await store.put(key, JSON.stringify(document));
+  await store.put(NOTIFICATIONS_KEY, JSON.stringify(document));
   return document;
 };
 
 const authorized = (request, env) => {
-  const expected = cleanText(env.RD_WEBHOOK_SECRET, 500);
+  const expected = cleanLeadText(env.RD_WEBHOOK_SECRET, 500);
   if (!expected) return false;
   const url = new URL(request.url);
   const authorization = request.headers.get('authorization') || '';
@@ -157,49 +146,6 @@ const authorized = (request, env) => {
   const query = url.searchParams.get('secret') || '';
   return bearer === expected || direct === expected || query === expected;
 };
-
-const mergeExternalData = (existing, incoming) => {
-  const merged = { ...existing };
-  const externalFields = [
-    'externalId', 'name', 'phone', 'email', 'city', 'state', 'company',
-    'origin', 'conversion', 'assignedTo', 'rdStage',
-  ];
-  externalFields.forEach((key) => {
-    const value = key === 'phone' ? cleanPhone(incoming[key]) : cleanText(incoming[key], 500);
-    if (value) merged[key] = incoming[key];
-  });
-  return merged;
-};
-
-const relevantChanges = (before, after) => {
-  const labels = {
-    name: 'nome',
-    phone: 'telefone',
-    email: 'e-mail',
-    city: 'cidade',
-    state: 'estado',
-    origin: 'origem',
-    conversion: 'conversão',
-    assignedTo: 'responsável',
-    rdStage: 'etapa do funil',
-  };
-  return Object.entries(labels)
-    .filter(([key]) => cleanText(before?.[key], 300) !== cleanText(after?.[key], 300))
-    .map(([key, label]) => ({
-      key,
-      label,
-      before: cleanText(before?.[key], 300),
-      after: cleanText(after?.[key], 300),
-    }));
-};
-
-const historyEvent = (type, title, changes = []) => ({
-  id: `history-${crypto.randomUUID()}`,
-  type,
-  title,
-  changes: changes.map((item) => item.label || item).filter(Boolean),
-  createdAt: nowIso(),
-});
 
 const notificationForNewLead = (lead) => {
   const location = [lead.city, lead.state].filter(Boolean).join('/') || 'Local não informado';
@@ -211,13 +157,13 @@ const notificationForNewLead = (lead) => {
     summary: `${lead.name} · ${location} · ${origin}`,
     leadId: lead.id,
     leadName: lead.name,
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
+    createdAt: planetLeadNowIso(),
+    updatedAt: planetLeadNowIso(),
   });
 };
 
 const upsertMovementNotification = (items, lead, changes) => {
-  const timestamp = nowIso();
+  const timestamp = planetLeadNowIso();
   const labels = changes.map((item) => item.label);
   const cutoff = Date.now() - MOVEMENT_GROUP_WINDOW_MS;
   const index = items.findIndex((item) => (
@@ -269,7 +215,9 @@ export async function onRequestPost({ env, request }) {
   if (!env.PLANET_HUB_DATA) return json({ error: 'PLANET_HUB_DATA não configurado.' }, 503);
 
   const contentLength = Number(request.headers.get('content-length') || 0);
-  if (contentLength > MAX_BODY_BYTES) return json({ error: 'Payload acima do limite permitido.' }, 413);
+  if (contentLength > MAX_BODY_BYTES) {
+    return json({ error: 'Payload acima do limite permitido.' }, 413);
+  }
 
   let payload;
   try {
@@ -279,62 +227,58 @@ export async function onRequestPost({ env, request }) {
   }
 
   const extracted = extractPayload(payload);
-  if (!extracted.phone && !extracted.email) return json({ error: 'Lead sem telefone e e-mail.' }, 400);
+  if (!extracted.phone && !extracted.email) {
+    return json({ error: 'Lead sem telefone e e-mail.' }, 400);
+  }
 
   try {
-    const current = await readDocument(env.PLANET_HUB_DATA, LEADS_KEY, normalizeLead, MAX_LEADS);
-    const duplicate = current.data.find((lead) => (
-      extracted.externalId && lead.externalId === extracted.externalId && lead.source === 'rd_station'
-    ) || (
-      extracted.phone && lead.phone === extracted.phone && lead.status !== 'discarded'
-    ) || (
-      extracted.email && lead.email === extracted.email && lead.status !== 'discarded'
-    ));
+    const leadOptions = {
+      normalizerOptions: { forceSource: 'rd_station', suggestWhatsappMessage: true },
+    };
+    const current = await readPlanetLeadsDocument(env.PLANET_HUB_DATA, leadOptions);
+    const normalizedIncoming = normalizePlanetLead(extracted, leadOptions.normalizerOptions);
+    const duplicate = findPlanetLeadDuplicate(current.data, normalizedIncoming, { source: 'rd_station' });
 
     let lead;
     let data;
     let changes = [];
+
     if (duplicate) {
-      const merged = mergeExternalData(duplicate, extracted);
-      lead = normalizeLead({
+      const merged = mergePlanetLeadExternalData(duplicate, extracted);
+      lead = normalizePlanetLead({
         ...merged,
         id: duplicate.id,
         status: duplicate.status,
         notes: duplicate.notes,
         whatsappMessage: duplicate.whatsappMessage,
+        whatsappUrl: duplicate.whatsappUrl,
         viewedAt: duplicate.viewedAt,
         lastActionAt: duplicate.lastActionAt,
         createdAt: duplicate.createdAt,
         history: duplicate.history,
-        updatedAt: nowIso(),
-      });
-      changes = relevantChanges(duplicate, lead);
+        updatedAt: planetLeadNowIso(),
+      }, leadOptions.normalizerOptions);
+      changes = planetLeadRelevantChanges(duplicate, lead);
       if (changes.length) {
         lead.history = [
-          historyEvent('updated', 'Movimentação recebida do RD Station', changes),
+          createPlanetLeadHistoryEvent('updated', 'Movimentação recebida do RD Station', changes),
           ...lead.history,
         ].slice(0, 100);
       }
       data = current.data.map((item) => item.id === duplicate.id ? lead : item);
     } else {
-      const createdAt = extracted.eventAt || nowIso();
-      lead = normalizeLead({
+      const createdAt = extracted.eventAt || planetLeadNowIso();
+      lead = normalizePlanetLead({
         ...extracted,
         id: `lead-${crypto.randomUUID()}`,
         createdAt,
-        updatedAt: nowIso(),
-        history: [historyEvent('created', 'Lead recebido do RD Station')],
-      });
+        updatedAt: planetLeadNowIso(),
+        history: [createPlanetLeadHistoryEvent('created', 'Lead recebido do RD Station')],
+      }, leadOptions.normalizerOptions);
       data = [lead, ...current.data];
     }
 
-    const leadDocument = await writeDocument(
-      env.PLANET_HUB_DATA,
-      LEADS_KEY,
-      data,
-      normalizeLead,
-      MAX_LEADS,
-    );
+    const leadDocument = await writePlanetLeadsDocument(env.PLANET_HUB_DATA, data, leadOptions);
 
     let notification = {
       created: false,
@@ -344,24 +288,16 @@ export async function onRequestPost({ env, request }) {
 
     if (!duplicate || changes.length) {
       try {
-        const currentNotifications = await readDocument(
-          env.PLANET_HUB_DATA,
-          NOTIFICATIONS_KEY,
-          normalizeNotification,
-          MAX_NOTIFICATIONS,
-        );
+        const currentNotifications = await readNotificationsDocument(env.PLANET_HUB_DATA);
         const result = duplicate
           ? upsertMovementNotification(currentNotifications.data, lead, changes)
           : {
               data: [notificationForNewLead(lead), ...currentNotifications.data],
               grouped: false,
             };
-        const notificationDocument = await writeDocument(
+        const notificationDocument = await writeNotificationsDocument(
           env.PLANET_HUB_DATA,
-          NOTIFICATIONS_KEY,
           result.data,
-          normalizeNotification,
-          MAX_NOTIFICATIONS,
         );
         const createdNotification = result.notification || notificationDocument.data[0];
         notification = {
