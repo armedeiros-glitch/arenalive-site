@@ -27,6 +27,16 @@ Remover adaptações temporizadas e contratos visuais de emergência antes de co
 - candidatos, score, revisão, deduplicação e promoção;
 - notificações e funil oficial de Leads.
 
+## Validação manual antes do merge
+
+- abrir e fechar cada gaveta no desktop;
+- repetir a navegação no mobile;
+- abrir Hoje, Demandas e Radar sem conteúdo duplicado;
+- alternar Leads e Caça Leads várias vezes;
+- confirmar que somente a seção ativa ocupa o workspace;
+- recarregar a página em `#demandas`, `#radar` e `#expansao`;
+- confirmar que nenhuma aparência aprovada mudou.
+
 ## Próxima etapa
 
 Conectar um coletor agendado ao domínio existente de candidatos. O coletor deve apenas criar e enriquecer candidatos. Aprovação e promoção para Leads continuam humanas e explícitas.
