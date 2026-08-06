@@ -52,6 +52,17 @@
     return button;
   };
 
+  const ensureViewItem = (target, view, config) => {
+    let button = directViewButton(target, view);
+    if (!button) {
+      button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.view = view;
+      target.appendChild(button);
+    }
+    return decorateItem(button, config);
+  };
+
   const ensureToggle = (target, drawer) => {
     let button = target.querySelector(`:scope > [data-navigation-drawer-toggle="${drawer.id}"]`);
     if (!button) {
@@ -67,8 +78,16 @@
   };
 
   const ensureExpansionItems = (target) => {
-    const leads = target.querySelector(':scope > [data-expansion-nav]:not([data-expansion-section-destination="caca-lead"])');
-    if (!leads) return { leads: null, hunter: null };
+    let leads = target.querySelector(':scope > [data-expansion-section-destination="leads"]')
+      || target.querySelector(':scope > [data-expansion-nav]:not([data-expansion-section-destination="caca-lead"])');
+
+    if (!leads) {
+      leads = document.createElement('button');
+      leads.type = 'button';
+      leads.dataset.expansionNav = 'primary';
+      leads.innerHTML = '<b data-expansion-badge hidden>0</b>';
+      target.appendChild(leads);
+    }
 
     leads.dataset.expansionSectionDestination = 'leads';
     decorateItem(leads, { label: 'Leads recebidos', icon: '◎', order: 31, group: 'expansao' });
@@ -79,7 +98,7 @@
       hunter.type = 'button';
       hunter.dataset.expansionNav = 'secondary';
       hunter.dataset.expansionSectionDestination = 'caca-lead';
-      leads.insertAdjacentElement('afterend', hunter);
+      target.appendChild(hunter);
     }
     decorateItem(hunter, { label: 'Caça Leads', icon: '⌖', order: 32, group: 'expansao' });
     return { leads, hunter };
@@ -151,7 +170,7 @@
     target.classList.add('aos-nav-drawers');
     document.documentElement.classList.add(READY_CLASS);
 
-    Object.entries(ITEMS).forEach(([view, config]) => decorateItem(directViewButton(target, view), config));
+    Object.entries(ITEMS).forEach(([view, config]) => ensureViewItem(target, view, config));
     DRAWERS.forEach((drawer) => ensureToggle(target, drawer));
     ensureExpansionItems(target);
     syncDrawerState({ forceActive });
@@ -159,8 +178,13 @@
     return true;
   };
 
+  let mountFrame = 0;
   const scheduleMount = ({ forceActive = false } = {}) => {
-    requestAnimationFrame(() => mount({ forceActive }));
+    if (mountFrame) cancelAnimationFrame(mountFrame);
+    mountFrame = requestAnimationFrame(() => {
+      mountFrame = 0;
+      mount({ forceActive });
+    });
   };
 
   document.addEventListener('click', (event) => {
@@ -175,17 +199,16 @@
   window.addEventListener('click', (event) => {
     const destination = event.target.closest?.('[data-expansion-section-destination]');
     if (!destination) return;
-    sessionStorage.setItem(SECTION_KEY, destination.dataset.expansionSectionDestination === 'caca-lead' ? 'caca-lead' : 'leads');
+    sessionStorage.setItem(
+      SECTION_KEY,
+      destination.dataset.expansionSectionDestination === 'caca-lead' ? 'caca-lead' : 'leads',
+    );
   }, true);
 
   window.addEventListener('pmh:view-rendered', () => scheduleMount({ forceActive: true }));
   window.addEventListener('andre-os:home-page-rendered', () => scheduleMount({ forceActive: true }));
   window.addEventListener('planet:expansion-section-rendered', () => scheduleMount({ forceActive: true }));
-  window.addEventListener('pmh:access-ready', () => {
-    scheduleMount({ forceActive: true });
-    window.setTimeout(() => mount({ forceActive: true }), 250);
-    window.setTimeout(() => mount({ forceActive: true }), 900);
-  });
+  window.addEventListener('pmh:access-ready', () => scheduleMount({ forceActive: true }));
   window.addEventListener('hashchange', () => scheduleMount({ forceActive: true }));
 
   if (document.readyState === 'loading') {
