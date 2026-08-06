@@ -3,7 +3,6 @@
 
   const FIXED_CLASS = 'aos-fixed-workspace-page';
   const HOME_PAGE_ATTR = 'homePage';
-  const STYLE_HREF = '/planet-hub/assets/andre-os-home-pages-v1.css?v=20260806-1';
 
   const PAGES = {
     hoje: {
@@ -52,15 +51,6 @@
   const nav = () => document.querySelector('.pmh-sidebar nav');
   const searchWrap = () => document.querySelector('[data-search-wrap]');
 
-  const ensureStyles = () => {
-    if (document.querySelector(`link[href="${STYLE_HREF}"]`)) return;
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = STYLE_HREF;
-    link.dataset.andreOsHomePagesStyles = '1';
-    document.head.appendChild(link);
-  };
-
   const pageFromHash = () => {
     const value = String(location.hash || '#inicio').replace(/^#/, '').toLowerCase();
     if (value.includes('demanda')) return 'demandas';
@@ -69,31 +59,13 @@
     return '';
   };
 
-  const ensureDestination = ({ view, label, icon }) => {
-    const target = nav();
-    if (!target) return null;
-    let button = target.querySelector(`:scope > [data-view="${view}"]`);
-    if (!button) {
-      button = document.createElement('button');
-      button.type = 'button';
-      button.dataset.view = view;
-      button.innerHTML = `<i aria-hidden="true">${icon}</i>${label}`;
-      target.appendChild(button);
-    }
-    return button;
-  };
-
-  const ensureDestinations = () => {
-    ensureDestination({ view: 'demandas', label: 'Demandas', icon: '✎' });
-    ensureDestination({ view: 'radar', label: 'Radar', icon: '◎' });
-  };
-
   const syncNavigation = (page) => {
     const definition = PAGES[page];
-    if (!definition) return;
+    const target = nav();
+    if (!definition || !target) return;
     document.querySelectorAll('.pmh-sidebar nav [data-view], .pmh-sidebar nav [data-expansion-nav]')
       .forEach((button) => button.classList.remove('active'));
-    nav()?.querySelector(`:scope > [data-view="${definition.view}"]`)?.classList.add('active');
+    target.querySelector(`:scope > [data-view="${definition.view}"]`)?.classList.add('active');
   };
 
   const announceMount = (page, target) => {
@@ -102,7 +74,7 @@
     }));
     window.dispatchEvent(new CustomEvent('pmh:view-rendered', {
       detail: {
-        view: 'inicio',
+        view: page === 'hoje' ? 'inicio' : page,
         page,
         content: target,
         segmented: true,
@@ -113,8 +85,6 @@
 
   const applyPage = () => {
     frame = 0;
-    ensureStyles();
-    ensureDestinations();
 
     const page = pageFromHash();
     const target = content();
@@ -139,7 +109,7 @@
   };
 
   const schedule = () => {
-    if (frame) return;
+    if (frame) cancelAnimationFrame(frame);
     frame = requestAnimationFrame(applyPage);
   };
 
@@ -157,7 +127,6 @@
   window.addEventListener('pmh:access-ready', schedule);
   window.addEventListener('hashchange', schedule);
 
-  ensureStyles();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', schedule, { once: true });
   } else {
