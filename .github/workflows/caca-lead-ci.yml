@@ -46,12 +46,18 @@ jobs:
         run: |
           set -euo pipefail
           ! grep -Eq 'setInterval|MutationObserver|insertAdjacentElement|data-hunter-hidden|mountTimers' planet-hub/assets/planet-lead-hunter-v1.js
+          ! grep -Eq 'setTimeout|MutationObserver|insertAdjacentElement|cloneNode' planet-hub/assets/andre-os-navigation-drawers-v1.js
+          ! grep -Eq "createElement\('link'\)|ensureDestinations?" planet-hub/assets/andre-os-home-pages-v1.js
           ! grep -q '!important' planet-hub/assets/planet-lead-hunter-v1.css
+          ! grep -q '!important' planet-hub/assets/planet-expansion-exclusive-sections-v1.css
           test "$(grep -RIl "planet-hub:planet-expansion-leads:v1" functions | wc -l)" -eq 1
           test "$(grep -RIl "planet-hub:planet-expansion-candidates:v1" functions | wc -l)" -eq 1
           test "$(grep -RIl "planet-hub:planet-notifications:v1" functions | wc -l)" -eq 1
           test "$(grep -o "planet-lead-hunter-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
+          test "$(grep -o "andre-os-navigation-drawers-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
+          test "$(grep -o "andre-os-home-pages-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "planet-lead-hunter-v1.css" index.html | wc -l)" -eq 1
+          test "$(grep -o "andre-os-home-pages-v1.css" index.html | wc -l)" -eq 1
 
       - name: Executar testes da área auditada
         shell: bash
@@ -68,6 +74,10 @@ jobs:
             tests/planet-lead-hunter-dedup-v1.test.mjs
             tests/planet-lead-hunter-import-v1.test.mjs
             tests/planet-lead-hunter-promotion-v1.test.mjs
+            tests/andre-os-navigation-drawers-v1.test.mjs
+            tests/andre-os-home-pages-v1.test.mjs
+            tests/planet-expansion-exclusive-sections-v1.test.mjs
+            tests/andre-os-mobile-gavetas-v1.test.mjs
           )
           for test_file in "${tests[@]}"; do
             echo "Executando $test_file"
