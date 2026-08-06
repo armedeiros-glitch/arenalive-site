@@ -1,0 +1,339 @@
+/* André OS · gavetas e páginas mobile v1
+   Camada final exclusiva para telas até 820px. Não altera o desktop. */
+
+html.aos-mobile {
+  --aos-mobile-page-gap: 12px;
+  --aos-mobile-card-radius: 18px;
+  --aos-mobile-surface: #1d1a25;
+  --aos-mobile-surface-raised: #24202f;
+  --aos-mobile-line: rgba(255, 255, 255, .085);
+  --aos-mobile-text: #f7f5fb;
+  --aos-mobile-muted: #a8a3b4;
+}
+
+html.aos-mobile .pmh-main,
+html.aos-mobile .pmh-content,
+html.aos-mobile [data-content],
+html.aos-mobile .aos-home-page,
+html.aos-mobile .pmh-expansion-shell,
+html.aos-mobile .pmh-expansion-panel,
+html.aos-mobile [data-lead-hunter-root] {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+html.aos-mobile .pmh-content {
+  padding: 12px 12px calc(28px + env(safe-area-inset-bottom, 0px)) !important;
+  overflow-x: hidden !important;
+}
+
+/* Navegação por gavetas */
+html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers {
+  gap: 5px !important;
+  padding: 13px 0 18px !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-toggle {
+  min-height: 46px !important;
+  margin-top: 7px !important;
+  padding: 0 12px !important;
+  border: 1px solid rgba(255, 255, 255, .055) !important;
+  border-radius: 13px !important;
+  color: #aaa5b6 !important;
+  background: rgba(255, 255, 255, .025) !important;
+  font-size: 10px !important;
+  letter-spacing: .095em !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-toggle.open,
+html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-toggle.has-active-destination {
+  color: #f0edf7 !important;
+  border-color: rgba(139, 119, 255, .18) !important;
+  background: linear-gradient(180deg, rgba(124, 99, 255, .14), rgba(124, 99, 255, .07)) !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-toggle > b {
+  color: #8f89a0 !important;
+  background: transparent !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-item[data-navigation-drawer-item]:not([data-navigation-drawer-item="home"]) {
+  min-height: 45px !important;
+  margin-left: 14px !important;
+  padding-left: 18px !important;
+  border-radius: 12px !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-item[data-navigation-drawer-item]:not([data-navigation-drawer-item="home"])::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .085);
+}
+
+html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-item.active::after {
+  width: 3px !important;
+  background: #9b8bff !important;
+  box-shadow: 0 0 14px rgba(155, 139, 255, .52);
+}
+
+/* Página Hoje */
+html.aos-mobile [data-content][data-home-page] {
+  min-height: 0 !important;
+}
+
+html.aos-mobile .aos-home-page {
+  display: grid !important;
+  gap: var(--aos-mobile-page-gap) !important;
+}
+
+html.aos-mobile .aos-home-page-today {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html.aos-mobile .aos-home-page-today .pmh-decision-cockpit {
+  margin: 0 !important;
+}
+
+html.aos-mobile .aos-home-page-shortcuts {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 9px !important;
+}
+
+html.aos-mobile .aos-home-page-shortcuts button {
+  display: grid !important;
+  grid-template-columns: 38px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 78px !important;
+  padding: 12px !important;
+  border: 1px solid var(--aos-mobile-line) !important;
+  border-radius: 17px !important;
+  color: var(--aos-mobile-text) !important;
+  background: linear-gradient(145deg, var(--aos-mobile-surface-raised), var(--aos-mobile-surface)) !important;
+  box-shadow: 0 12px 26px rgba(7, 5, 13, .2) !important;
+}
+
+html.aos-mobile .aos-home-page-shortcuts i {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 12px !important;
+  color: #c4baff !important;
+  background: rgba(126, 101, 255, .16) !important;
+}
+
+html.aos-mobile .aos-home-page-shortcuts strong {
+  color: var(--aos-mobile-text) !important;
+  font-size: 12.5px !important;
+  line-height: 1.15 !important;
+}
+
+html.aos-mobile .aos-home-page-shortcuts small {
+  display: none !important;
+}
+
+/* Cabeçalhos de Demandas e Radar */
+html.aos-mobile .aos-home-page-header {
+  padding: 16px !important;
+  border: 1px solid var(--aos-mobile-line) !important;
+  border-radius: var(--aos-mobile-card-radius) !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(124, 99, 255, .14), transparent 45%),
+    linear-gradient(145deg, var(--aos-mobile-surface-raised), var(--aos-mobile-surface)) !important;
+  box-shadow: 0 14px 30px rgba(7, 5, 13, .19) !important;
+}
+
+html.aos-mobile .aos-home-page-header small {
+  color: #9e8eff !important;
+  font-size: 9px !important;
+}
+
+html.aos-mobile .aos-home-page-header h2 {
+  color: var(--aos-mobile-text) !important;
+  font-size: 25px !important;
+}
+
+html.aos-mobile .aos-home-page-header p {
+  color: var(--aos-mobile-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 1.45 !important;
+}
+
+html.aos-mobile .pmh-internal-demands,
+html.aos-mobile .aos-radar-workspace,
+html.aos-mobile [data-active-workstream] {
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+html.aos-mobile .pmh-internal-demands textarea,
+html.aos-mobile .pmh-internal-demands input,
+html.aos-mobile .pmh-internal-demands select,
+html.aos-mobile .aos-radar-workspace input,
+html.aos-mobile .aos-radar-workspace select {
+  max-width: 100% !important;
+  font-size: 16px !important;
+}
+
+/* Expansão */
+html.aos-mobile .pmh-expansion-shell {
+  display: grid !important;
+  gap: 12px !important;
+}
+
+html.aos-mobile .pmh-expansion-shell > [hidden] {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-expansion-tabs {
+  position: sticky !important;
+  top: 70px !important;
+  z-index: 24 !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 5px !important;
+  width: 100% !important;
+  padding: 5px !important;
+  border: 1px solid var(--aos-mobile-line) !important;
+  border-radius: 15px !important;
+  background: rgba(25, 22, 33, .94) !important;
+  box-shadow: 0 10px 24px rgba(7, 5, 13, .22) !important;
+  backdrop-filter: blur(18px);
+}
+
+html.aos-mobile .pmh-expansion-tabs button {
+  min-height: 42px !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 11px !important;
+  color: #aaa5b6 !important;
+  background: transparent !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+}
+
+html.aos-mobile .pmh-expansion-tabs button.active {
+  color: #fff !important;
+  background: linear-gradient(145deg, #806cff, #6650e8) !important;
+  box-shadow: 0 8px 18px rgba(101, 78, 232, .3) !important;
+}
+
+html.aos-mobile .pmh-expansion-panel,
+html.aos-mobile [data-lead-hunter-root] {
+  display: grid !important;
+  gap: 12px !important;
+}
+
+html.aos-mobile .pmh-expansion-head {
+  padding: 16px !important;
+  border-radius: 18px !important;
+}
+
+html.aos-mobile .pmh-expansion-head h2 {
+  font-size: 24px !important;
+}
+
+html.aos-mobile .pmh-expansion-head-actions {
+  width: 100% !important;
+  align-items: stretch !important;
+}
+
+html.aos-mobile .pmh-expansion-refresh {
+  width: 100% !important;
+  min-height: 44px !important;
+}
+
+html.aos-mobile .pmh-expansion-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+}
+
+html.aos-mobile .pmh-expansion-metrics article {
+  min-width: 0 !important;
+  padding: 12px 9px !important;
+  border-radius: 14px !important;
+}
+
+html.aos-mobile .pmh-expansion-metrics small {
+  min-height: 23px;
+  font-size: 8px !important;
+  line-height: 1.2 !important;
+}
+
+html.aos-mobile .pmh-expansion-metrics strong {
+  font-size: 22px !important;
+}
+
+html.aos-mobile .pmh-expansion-list {
+  gap: 9px !important;
+}
+
+html.aos-mobile .pmh-expansion-lead {
+  border-radius: 16px !important;
+}
+
+html.aos-mobile .pmh-expansion-lead-main {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 8px !important;
+  padding: 15px !important;
+}
+
+html.aos-mobile .pmh-expansion-status {
+  justify-self: start !important;
+}
+
+html.aos-mobile .pmh-expansion-lead-details {
+  grid-template-columns: minmax(0, 1fr) !important;
+  padding: 14px !important;
+}
+
+html.aos-mobile .pmh-expansion-contact,
+html.aos-mobile .pmh-expansion-actions {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html.aos-mobile .pmh-expansion-actions {
+  display: grid !important;
+}
+
+html.aos-mobile .pmh-expansion-actions button,
+html.aos-mobile .pmh-expansion-actions a {
+  width: 100% !important;
+  min-height: 44px !important;
+}
+
+/* Proteções contra layout espremido */
+html.aos-mobile .pmh-panel,
+html.aos-mobile article,
+html.aos-mobile section,
+html.aos-mobile form,
+html.aos-mobile fieldset {
+  min-width: 0;
+}
+
+html.aos-mobile img,
+html.aos-mobile video,
+html.aos-mobile canvas,
+html.aos-mobile svg {
+  max-width: 100%;
+}
+
+@media (max-width: 380px) {
+  html.aos-mobile .aos-home-page-shortcuts {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html.aos-mobile .pmh-expansion-metrics {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html.aos-mobile .pmh-expansion-metrics small {
+    min-height: 0;
+  }
+}
