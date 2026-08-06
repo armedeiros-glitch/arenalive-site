@@ -3,7 +3,8 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [access, pages, styles, drawers] = await Promise.all([
+const [indexHtml, access, pages, styles, drawers] = await Promise.all([
+  read('index.html'),
   read('planet-hub/assets/hub-access-v1.js'),
   read('planet-hub/assets/andre-os-home-pages-v1.js'),
   read('planet-hub/assets/andre-os-home-pages-v1.css'),
@@ -17,6 +18,8 @@ assert.ok(drawerIndex >= 0, 'O módulo de gavetas precisa continuar carregado.')
 assert.ok(pagesIndex > drawerIndex, 'As páginas da Home devem carregar depois da navegação por gavetas.');
 assert.ok(notificationsIndex > pagesIndex, 'As páginas devem estar montadas antes do replay final de notificações.');
 
+assert.match(indexHtml, /andre-os-home-pages-v1\.css\?v=20260806-2/);
+assert.match(access, /andre-os-home-pages-v1\.js\?v=20260806-2/);
 assert.match(pages, /hoje:\s*\{/);
 assert.match(pages, /demandas:\s*\{/);
 assert.match(pages, /radar:\s*\{/);
@@ -25,11 +28,13 @@ assert.match(pages, /data-internal-demands/);
 assert.match(pages, /data-active-workstream/);
 assert.match(pages, /segmented:\s*true/);
 assert.match(pages, /andre-os:home-page-rendered/);
-assert.match(pages, /andre-os-home-pages-v1\.css\?v=20260806-1/);
 assert.doesNotMatch(pages, /MutationObserver/);
+assert.doesNotMatch(pages, /createElement\('link'\)|appendChild\(link\)/);
+assert.doesNotMatch(pages, /ensureDestination|ensureDestinations/);
 
 assert.match(drawers, /demandas:\s*\{\s*label:\s*'Demandas'/);
 assert.match(drawers, /radar:\s*\{\s*label:\s*'Radar'/);
+assert.match(drawers, /ensureViewItem/);
 assert.match(drawers, /hash\.includes\('demanda'\)/);
 assert.match(drawers, /hash\.includes\('radar'\)/);
 
