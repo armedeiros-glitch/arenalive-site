@@ -14,7 +14,6 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 
 const run = (env, trigger) => runLeadHunt({
   store: env.PLANET_HUB_DATA,
-  apiKey: env.GOOGLE_PLACES_API_KEY,
   env,
   options: { trigger },
 });
@@ -39,8 +38,10 @@ export default {
       const status = await getLeadHuntStatus({ store: env.PLANET_HUB_DATA, env });
       return json({
         ok: true,
+        provider: status.provider,
         providerConfigured: status.providerConfigured,
         storageConfigured: Boolean(env.PLANET_HUB_DATA),
+        attribution: status.attribution,
         lastRun: status.lastRun,
       });
     }
