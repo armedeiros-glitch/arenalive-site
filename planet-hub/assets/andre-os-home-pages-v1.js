@@ -3,6 +3,7 @@
 
   const FIXED_CLASS = 'aos-fixed-workspace-page';
   const HOME_PAGE_ATTR = 'homePage';
+  const STYLE_HREF = '/planet-hub/assets/andre-os-home-pages-v1.css?v=20260806-1';
 
   const PAGES = {
     hoje: {
@@ -50,6 +51,15 @@
   const title = () => document.querySelector('[data-title]');
   const nav = () => document.querySelector('.pmh-sidebar nav');
   const searchWrap = () => document.querySelector('[data-search-wrap]');
+
+  const ensureStyles = () => {
+    if (document.querySelector(`link[href="${STYLE_HREF}"]`)) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = STYLE_HREF;
+    link.dataset.andreOsHomePagesStyles = '1';
+    document.head.appendChild(link);
+  };
 
   const pageFromHash = () => {
     const value = String(location.hash || '#inicio').replace(/^#/, '').toLowerCase();
@@ -103,6 +113,7 @@
 
   const applyPage = () => {
     frame = 0;
+    ensureStyles();
     ensureDestinations();
 
     const page = pageFromHash();
@@ -146,6 +157,7 @@
   window.addEventListener('pmh:access-ready', schedule);
   window.addEventListener('hashchange', schedule);
 
+  ensureStyles();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', schedule, { once: true });
   } else {
