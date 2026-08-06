@@ -1,0 +1,194 @@
+/* André OS · Radar desktop no tema escuro
+   Somente cores e contraste. Não altera layout ou comportamento. */
+
+@media (prefers-color-scheme: dark) and (min-width: 721px) {
+  html:not(.aos-mobile) [data-active-workstream] {
+    border-color: #393340 !important;
+    background: #17151c !important;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .24) !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-head {
+    border-bottom-color: #393340 !important;
+    background:
+      radial-gradient(circle at 88% 0%, rgba(145, 123, 255, .12), transparent 34%),
+      linear-gradient(145deg, #1c1923, #17151c) !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-head h2,
+  html:not(.aos-mobile) .pmh-active-main strong,
+  html:not(.aos-mobile) .pmh-active-person strong {
+    color: #f4f1f8 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-head p,
+  html:not(.aos-mobile) .pmh-active-main small,
+  html:not(.aos-mobile) .pmh-active-person small,
+  html:not(.aos-mobile) .pmh-active-status {
+    color: #aaa4b2 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-head > b {
+    color: #c0b5ff !important;
+    background: #2b2544 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-filters {
+    border-bottom-color: #393340 !important;
+    background: #1d1a23 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-filters button {
+    border-color: #494153 !important;
+    color: #b9b3c3 !important;
+    background: #17151c !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-filters button:hover {
+    border-color: #665a7a !important;
+    color: #f4f1f8 !important;
+    background: #25212c !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-filters button.active {
+    border-color: #917bff !important;
+    color: #fff !important;
+    background: #8068f2 !important;
+    box-shadow: 0 8px 20px rgba(94, 72, 218, .24) !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-list {
+    gap: 0 !important;
+    background: #393340 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-entry,
+  html:not(.aos-mobile) .pmh-active-row {
+    color: #f4f1f8 !important;
+    background: #17151c !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-entry:nth-child(even),
+  html:not(.aos-mobile) .pmh-active-entry:nth-child(even) .pmh-active-row {
+    background: #1b1821 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-row:hover {
+    background: #25212c !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-entry:nth-child(even) .pmh-active-row:hover {
+    background: #282330 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-origin {
+    border: 1px solid rgba(255, 255, 255, .06) !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-origin.tone-sults {
+    --origin-color: #8ab9ff;
+    --origin-bg: #1d3150;
+  }
+
+  html:not(.aos-mobile) .pmh-active-origin.tone-inauguration {
+    --origin-color: #f2bd7a;
+    --origin-bg: #432f1e;
+  }
+
+  html:not(.aos-mobile) .pmh-active-origin.tone-direction {
+    --origin-color: #ffaaa2;
+    --origin-bg: #46272b;
+  }
+
+  html:not(.aos-mobile) .pmh-active-origin.tone-meeting {
+    --origin-color: #c0b5ff;
+    --origin-bg: #2b2544;
+  }
+
+  html:not(.aos-mobile) .pmh-active-origin.tone-whatsapp,
+  html:not(.aos-mobile) .pmh-active-origin.tone-content {
+    --origin-color: #86e1bd;
+    --origin-bg: #19372f;
+  }
+
+  html:not(.aos-mobile) .pmh-active-origin.tone-campaign {
+    --origin-color: #ef9ac1;
+    --origin-bg: #442638;
+  }
+
+  html:not(.aos-mobile) .pmh-active-origin.tone-internal,
+  html:not(.aos-mobile) .pmh-active-origin.tone-other {
+    --origin-color: #c3bdca;
+    --origin-bg: #302c38;
+  }
+
+  html:not(.aos-mobile) .pmh-active-row time {
+    color: #d6d0de !important;
+    background: #2a2630 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-row time.late {
+    color: #ffaaa2 !important;
+    background: #46272b !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-row time.today {
+    color: #ffd697 !important;
+    background: #49351e !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-row time.soon {
+    color: #a9c7ff !important;
+    background: #202d49 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-row time.later {
+    color: #c5baff !important;
+    background: #2b2544 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-context,
+  html:not(.aos-mobile) .pmh-active-demand-actions button {
+    border-color: #494153 !important;
+    color: #c2bccb !important;
+    background: #211e29 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-context:hover,
+  html:not(.aos-mobile) .pmh-active-demand-actions button:hover {
+    border-color: #6d6080 !important;
+    color: #fff !important;
+    background: #2b2633 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-context.suggested {
+    border-color: #6b5330 !important;
+    color: #f2cf91 !important;
+    background: #3c301f !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-demand-actions {
+    border-top-color: #393340 !important;
+    background: #1d1a23 !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-demand-actions [data-demand-complete] {
+    color: #86e1bd !important;
+    background: #19372f !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-demand-actions [data-demand-delete] {
+    color: #ffaaa2 !important;
+    background: #46272b !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-empty {
+    color: #aaa4b2 !important;
+    background: #17151c !important;
+  }
+
+  html:not(.aos-mobile) .pmh-active-warning {
+    color: #f2cf91 !important;
+    background: #3c301f !important;
+  }
+}
