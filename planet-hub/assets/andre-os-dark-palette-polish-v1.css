@@ -1,0 +1,116 @@
+/* André OS · refinamento da paleta escura
+   Somente cores e superfícies. Não altera layout ou comportamento. */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --aos-page: #0d0c11;
+    --aos-surface: #17151c;
+    --aos-surface-soft: #201c27;
+    --aos-line: #393340;
+    --aos-line-strong: #4a4254;
+    --aos-text: #f4f1f8;
+    --aos-muted: #aaa4b2;
+    --aos-muted-2: #7f7988;
+    --aos-accent: #917bff;
+    --aos-accent-strong: #7a62f4;
+    --aos-accent-soft: #2b2544;
+  }
+
+  html.aos-mobile .aos-mobile-menu-toggle {
+    border-color: #42394e !important;
+    color: #b4a6ff !important;
+    background: #201c27 !important;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .28) !important;
+  }
+
+  html.aos-mobile .aos-mobile-menu-toggle:active {
+    background: #282131 !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture {
+    border-color: #393340 !important;
+    background:
+      radial-gradient(circle at 92% 10%, rgba(145, 123, 255, .13), transparent 34%),
+      linear-gradient(145deg, #1b1822 0%, #15131a 100%) !important;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, .22) !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture textarea {
+    border-color: #41394b !important;
+    color: #f4f1f8 !important;
+    background: #0f0e13 !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture textarea::placeholder {
+    color: #777180 !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture small,
+  html.aos-mobile .pmh-demand-capture h3 {
+    color: #a998ff !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture footer [data-demand-organize] {
+    border-color: #917bff !important;
+    color: #fff !important;
+    background: linear-gradient(145deg, #9b87ff, #8068f2) !important;
+    box-shadow: 0 10px 24px rgba(94, 72, 218, .25) !important;
+  }
+
+  html.aos-mobile .pmh-priority-focus {
+    border-color: rgba(180, 166, 255, .16) !important;
+    background:
+      radial-gradient(circle at 102% -18%, rgba(145, 123, 255, .20), transparent 46%),
+      linear-gradient(145deg, #211820 0%, #342229 100%) !important;
+  }
+
+  html.aos-mobile .pmh-priority-focus.tone-risk,
+  html.aos-mobile .pmh-priority-focus.tone-follow-up {
+    background:
+      radial-gradient(circle at 102% -18%, rgba(180, 112, 92, .18), transparent 46%),
+      linear-gradient(145deg, #24191f 0%, #392329 100%) !important;
+  }
+
+  html.aos-mobile .pmh-priority-other {
+    border-color: rgba(180, 166, 255, .18) !important;
+    background:
+      radial-gradient(circle at 102% -18%, rgba(145, 123, 255, .22), transparent 48%),
+      linear-gradient(145deg, #2e2936 0%, #403748 100%) !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .18) !important;
+  }
+
+  html.aos-mobile .pmh-priority-other.tone-risk,
+  html.aos-mobile .pmh-priority-other.tone-follow-up {
+    background:
+      radial-gradient(circle at 102% -18%, rgba(189, 125, 104, .18), transparent 48%),
+      linear-gradient(145deg, #352a30 0%, #49383f 100%) !important;
+  }
+
+  html.aos-mobile .pmh-priority-other.tone-approval {
+    background:
+      radial-gradient(circle at 102% -18%, rgba(104, 198, 158, .16), transparent 48%),
+      linear-gradient(145deg, #283530 0%, #384940 100%) !important;
+  }
+
+  html.aos-mobile .pmh-priority-card .pmh-priority-movement {
+    border-color: rgba(180, 166, 255, .15) !important;
+    background: rgba(19, 16, 24, .30) !important;
+  }
+
+  html.aos-mobile .pmh-priority-kind,
+  html.aos-mobile .pmh-priority-movement small,
+  html.aos-mobile .pmh-priority-section-head small {
+    color: #b4a6ff !important;
+  }
+
+  html.aos-mobile .pmh-priority-open {
+    background: linear-gradient(145deg, #9a87ff, #8068f2) !important;
+    box-shadow: 0 9px 22px rgba(94, 72, 218, .28) !important;
+  }
+
+  html.aos-mobile .pmh-priority-counter {
+    border-color: #42394e !important;
+    color: #c5becd !important;
+    background: #201c27 !important;
+  }
+}
