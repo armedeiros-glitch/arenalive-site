@@ -15,6 +15,7 @@ assert.ok(css.includes('.aos-mobile-backdrop'), 'drawer backdrop styles must exi
 assert.ok(css.includes('translate3d(-102%, 0, 0)'), 'drawer must start off-canvas');
 assert.ok(css.includes('.aos-mobile-sidebar-open .pmh-sidebar'), 'open drawer state must exist');
 assert.ok(css.includes('.aos-mobile-dock'), 'legacy dock must be explicitly disabled');
+assert.ok(css.includes('button b[hidden]'), 'hidden navigation badges must remain hidden');
 assert.ok(index.includes('andre-os-mobile-navigation-v2.css'), 'navigation CSS must load from the official entry');
 assert.ok(index.includes('andre-os-mobile-shell-v2.js?v=20260805-9'), 'new shell cache version must load');
 
