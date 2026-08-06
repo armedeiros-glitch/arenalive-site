@@ -1,0 +1,337 @@
+/* André OS · mobile navigation drawer v2
+   Uses the existing sidebar and routes. No desktop selectors are changed. */
+
+html:not(.aos-mobile) .aos-mobile-menu-toggle,
+html:not(.aos-mobile) .aos-mobile-sidebar-close,
+html:not(.aos-mobile) .aos-mobile-backdrop {
+  display: none !important;
+}
+
+html.aos-mobile {
+  --aos-mobile-sidebar-width: min(86vw, 330px);
+  --aos-mobile-drawer-duration: 240ms;
+}
+
+html.aos-mobile .aos-mobile-dock {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-main {
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+html.aos-mobile .pmh-topbar > div:first-child {
+  display: grid !important;
+  grid-template-columns: 40px minmax(0, 1fr) !important;
+  grid-template-rows: auto auto !important;
+  align-items: center !important;
+  column-gap: 10px !important;
+}
+
+html.aos-mobile .pmh-topbar > div:first-child > .aos-mobile-menu-toggle {
+  grid-column: 1 !important;
+  grid-row: 1 / 3 !important;
+}
+
+html.aos-mobile .pmh-topbar > div:first-child > small,
+html.aos-mobile .pmh-topbar > div:first-child > h1 {
+  grid-column: 2 !important;
+}
+
+html.aos-mobile .pmh-topbar h1 {
+  max-width: calc(100vw - 160px) !important;
+}
+
+html.aos-mobile .aos-mobile-menu-toggle {
+  position: relative;
+  display: grid !important;
+  place-items: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--aos-line, #e4e4ec) !important;
+  border-radius: 12px !important;
+  color: var(--aos-ink, #12131b) !important;
+  background: rgba(255, 255, 255, .96) !important;
+  box-shadow: 0 7px 18px rgba(31, 28, 52, .07) !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.aos-mobile .aos-mobile-menu-toggle > span,
+html.aos-mobile .aos-mobile-menu-toggle::before,
+html.aos-mobile .aos-mobile-menu-toggle::after {
+  position: absolute;
+  left: 11px;
+  width: 17px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  content: '';
+}
+
+html.aos-mobile .aos-mobile-menu-toggle > span { top: 19px; }
+html.aos-mobile .aos-mobile-menu-toggle::before { top: 13px; }
+html.aos-mobile .aos-mobile-menu-toggle::after { top: 25px; }
+
+html.aos-mobile .pmh-sidebar {
+  position: fixed !important;
+  inset: 0 auto 0 0 !important;
+  z-index: 310 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: var(--aos-mobile-sidebar-width) !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+  overflow: hidden !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(115, 92, 255, .22), transparent 32%),
+    linear-gradient(180deg, #191620 0%, #15131b 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, .08) !important;
+  box-shadow: 24px 0 64px rgba(10, 8, 18, .3) !important;
+  transform: translate3d(-102%, 0, 0);
+  transition: transform var(--aos-mobile-drawer-duration) cubic-bezier(.22, .8, .28, 1);
+  will-change: transform;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+html.aos-mobile.aos-mobile-sidebar-open .pmh-sidebar {
+  transform: translate3d(0, 0, 0);
+}
+
+html.aos-mobile .pmh-sidebar .pmh-brand {
+  position: relative;
+  display: flex !important;
+  align-items: center !important;
+  gap: 11px !important;
+  min-height: 58px !important;
+  padding: 0 2px 14px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .08) !important;
+}
+
+html.aos-mobile .pmh-sidebar .pmh-brand > span:first-child {
+  flex: 0 0 42px !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 13px !important;
+  color: #fff !important;
+  background: linear-gradient(145deg, #826fff, #624be6) !important;
+  box-shadow: 0 10px 24px rgba(92, 69, 237, .28) !important;
+  font-size: 19px !important;
+  font-weight: 900 !important;
+}
+
+html.aos-mobile .pmh-sidebar .pmh-brand strong,
+html.aos-mobile .pmh-sidebar .pmh-brand small {
+  display: block !important;
+}
+
+html.aos-mobile .pmh-sidebar .pmh-brand strong {
+  color: #fff !important;
+  font-size: 16px !important;
+  line-height: 1.08 !important;
+}
+
+html.aos-mobile .pmh-sidebar .pmh-brand small {
+  margin-top: 4px !important;
+  color: #9d99ad !important;
+  font-size: 8px !important;
+  letter-spacing: .14em !important;
+}
+
+html.aos-mobile .aos-mobile-sidebar-close {
+  flex: 0 0 36px;
+  display: grid !important;
+  place-items: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  margin-left: auto !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, .1) !important;
+  border-radius: 11px !important;
+  color: #d9d5e3 !important;
+  background: rgba(255, 255, 255, .06) !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav {
+  flex: 1 1 auto;
+  display: grid !important;
+  align-content: start !important;
+  gap: 4px !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  padding: 15px 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.aos-mobile .pmh-sidebar > nav::-webkit-scrollbar {
+  display: none;
+}
+
+html.aos-mobile .pmh-sidebar > nav button {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: 25px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 46px !important;
+  padding: 0 11px !important;
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+  color: #aaa6b7 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-align: left !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav button[hidden] {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav button i {
+  display: grid !important;
+  place-items: center !important;
+  width: 25px !important;
+  height: 25px !important;
+  color: #9488d6 !important;
+  font-style: normal !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav .aos-mobile-nav-label {
+  display: block !important;
+  width: auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav button b {
+  position: static !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  min-width: 23px !important;
+  height: 21px !important;
+  padding: 0 6px !important;
+  border: 1px solid rgba(255, 255, 255, .06) !important;
+  border-radius: 999px !important;
+  color: #c8c4d2 !important;
+  background: rgba(255, 255, 255, .07) !important;
+  font-size: 9px !important;
+  font-weight: 850 !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav button.active {
+  color: #fff !important;
+  background: rgba(115, 92, 255, .16) !important;
+  border-color: rgba(147, 129, 255, .16) !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav button.active::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 999px 999px 0;
+  background: #9b8bff;
+}
+
+html.aos-mobile .pmh-sidebar > nav button.active i {
+  color: #c0b7ff !important;
+}
+
+html.aos-mobile .pmh-sidebar > footer {
+  flex: 0 0 auto;
+  margin-top: auto !important;
+  padding: 13px 8px 2px !important;
+  border-top: 1px solid rgba(255, 255, 255, .08) !important;
+}
+
+html.aos-mobile .pmh-sidebar > footer small {
+  display: block !important;
+  color: #9692a3 !important;
+  font-size: 10px !important;
+  line-height: 1.45 !important;
+}
+
+html.aos-mobile .pmh-sidebar > footer span {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  min-height: 28px !important;
+  margin-top: 7px !important;
+  color: #aba7b6 !important;
+  font-size: 10px !important;
+}
+
+html.aos-mobile .aos-mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background: rgba(12, 10, 20, .54);
+  backdrop-filter: blur(2px);
+  transition:
+    opacity 220ms ease,
+    visibility 220ms ease;
+  touch-action: none;
+}
+
+html.aos-mobile.aos-mobile-sidebar-open .aos-mobile-backdrop {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+html.aos-mobile.aos-mobile-sidebar-open body {
+  overflow: hidden !important;
+}
+
+@media (max-width: 380px) {
+  html.aos-mobile {
+    --aos-mobile-sidebar-width: min(90vw, 320px);
+  }
+
+  html.aos-mobile .pmh-topbar h1 {
+    max-width: calc(100vw - 150px) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.aos-mobile {
+    --aos-mobile-drawer-duration: 1ms;
+  }
+
+  html.aos-mobile .pmh-sidebar,
+  html.aos-mobile .aos-mobile-backdrop {
+    transition-duration: 1ms !important;
+  }
+}
