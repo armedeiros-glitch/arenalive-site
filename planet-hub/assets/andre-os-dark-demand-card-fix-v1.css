@@ -1,0 +1,34 @@
+/* André OS · correção final do card Nova demanda interna
+   Apenas cores no mobile em tema escuro. */
+
+@media (prefers-color-scheme: dark) {
+  html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact {
+    border: 1px solid #393340 !important;
+    background:
+      radial-gradient(circle at 92% 10%, rgba(145, 123, 255, .12), transparent 34%),
+      linear-gradient(145deg, #1b1822 0%, #15131a 100%) !important;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, .24) !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact small {
+    color: #a998ff !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact textarea {
+    border-color: #41394b !important;
+    color: #f4f1f8 !important;
+    background: #0f0e13 !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .015) !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact textarea::placeholder {
+    color: #777180 !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact [data-demand-organize] {
+    border-color: #917bff !important;
+    color: #fff !important;
+    background: linear-gradient(145deg, #9b87ff, #8068f2) !important;
+    box-shadow: 0 10px 24px rgba(94, 72, 218, .25) !important;
+  }
+}
