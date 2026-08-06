@@ -14,7 +14,6 @@ assert.match(core, /importCandidates/);
 assert.match(core, /LEAD_HUNT_STORAGE_KEY/);
 assert.match(core, /DEFAULT_HUNT_LOCATIONS/);
 assert.match(core, /Joinville/);
-assert.match(core, /reviewStatus:\s*'pending'/);
 assert.doesNotMatch(core, /promoteCandidate|promotedLeadId\s*:/);
 assert.doesNotMatch(core, /upsertLead|caca_lead/);
 
@@ -23,6 +22,7 @@ assert.match(provider, /X-Goog-FieldMask/);
 assert.match(provider, /nationalPhoneNumber/);
 assert.match(provider, /websiteUri/);
 assert.match(provider, /source:\s*'google_places'/);
+assert.match(provider, /reviewStatus:\s*'pending'/);
 assert.match(provider, /não representa interesse explícito/i);
 
 assert.match(endpoint, /onRequestGet/);
