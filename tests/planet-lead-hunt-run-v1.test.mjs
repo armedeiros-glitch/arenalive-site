@@ -66,6 +66,8 @@ assert.equal(candidatesAfterFirstRun.data[0].source, 'openstreetmap');
 assert.equal(candidatesAfterFirstRun.data[0].sourceRecordId, 'node/987654');
 assert.equal(candidatesAfterFirstRun.data[0].reviewStatus, 'pending');
 assert.equal(candidatesAfterFirstRun.data[0].promotedLeadId, '');
+assert.ok(candidatesAfterFirstRun.data[0].planetFitScore > 25);
+assert.ok(candidatesAfterFirstRun.data[0].scoreReasons.some((item) => /cafeteria/i.test(item)));
 
 const second = await runLeadHunt({
   store,
