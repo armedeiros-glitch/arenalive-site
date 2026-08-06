@@ -34,5 +34,6 @@ const ui = await readFile(new URL('../planet-hub/assets/planet-lead-hunter-v1.js
 assert.match(ui, /delimiterFromHeader/);
 assert.doesNotMatch(ui, /sourceRecordId:\s*`csv-/);
 assert.match(ui, /state\.importing = false;\s*await load\(\{ silent: true \}\)/);
-assert.match(ui, /setInterval\(\(\) => \{ if \(isExpansion\(\)\) ensureMounted\(\); \}, 1500\)/);
+assert.doesNotMatch(ui, /setInterval|mountTimers|data-hunter-hidden/);
+assert.match(ui, /requestAnimationFrame/);
 console.log('Importação parcial, CSV e atualização da lista validados.');

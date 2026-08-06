@@ -3,7 +3,6 @@
 
   const API = '/api/hub/planet/expansion/candidates';
   const IMPORT_API = `${API}/import`;
-  const SECTION_KEY = 'planet-expansion-section';
   const state = {
     candidates: [],
     loaded: false,
@@ -20,15 +19,13 @@
     },
   };
 
-  let mountTimers = [];
+  let renderFrame = 0;
   let noticeTimer = 0;
 
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
   }[char]));
   const isExpansion = () => location.hash === '#expansao';
-  const section = () => sessionStorage.getItem(SECTION_KEY) === 'caca-lead' ? 'caca-lead' : 'leads';
-  const setSection = (value) => sessionStorage.setItem(SECTION_KEY, value === 'caca-lead' ? 'caca-lead' : 'leads');
   const root = () => document.querySelector('[data-lead-hunter-root]');
   const unique = (values) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   const scoreRange = (value) => ({ high: [75, 100], medium: [50, 74], low: [0, 49] }[value] || [0, 100]);
@@ -71,7 +68,6 @@
     } finally {
       state.loading = false;
       renderHunter();
-      scheduleMount();
     }
   };
 
@@ -179,7 +175,7 @@
 
   const renderHunter = () => {
     const target = root();
-    if (!target || section() !== 'caca-lead') return;
+    if (!target || target.hidden) return;
     const values = metrics();
     const candidates = filteredCandidates();
     target.innerHTML = `<section class="pmh-hunter"><header class="pmh-hunter-head"><div><small>PLANET CHOCOLATE · EXPANSÃO</small><h2>Caça Lead</h2><p>Importe sinais autorizados, revise a evidência e só então promova o candidato para o funil oficial.</p></div><div class="pmh-hunter-head-actions"><button class="pmh-hunter-button" type="button" data-hunter-refresh ${state.loading ? 'disabled' : ''}>${state.loading ? 'Atualizando…' : '↻ Atualizar'}</button><button class="pmh-hunter-button primary" type="button" data-hunter-import>Importar CSV ou JSON</button><input type="file" accept=".csv,.json,text/csv,application/json" data-hunter-file hidden /></div></header>
@@ -187,41 +183,20 @@
       ${state.notice && !state.error ? `<div class="pmh-hunter-notice">${esc(state.notice)}</div>` : ''}${state.error ? `<div class="pmh-hunter-error">${esc(state.error)}</div>` : ''}${importPanel()}${toolbar()}<section class="pmh-hunter-list">${state.loading && !state.loaded ? '<div class="pmh-hunter-empty">Carregando candidatos…</div>' : candidates.length ? candidates.map(candidateCard).join('') : '<div class="pmh-hunter-empty">Nenhum candidato corresponde aos filtros atuais.</div>'}</section></section>`;
   };
 
-  const ensureMounted = () => {
-    if (!isExpansion()) return;
-    const shell = document.querySelector('.pmh-expansion-shell');
-    if (!shell) return;
-    let tabs = shell.querySelector(':scope > [data-expansion-tabs]');
-    if (!tabs) {
-      tabs = document.createElement('nav');
-      tabs.className = 'pmh-expansion-tabs';
-      tabs.dataset.expansionTabs = '1';
-      tabs.setAttribute('aria-label', 'Seções de Expansão');
-      shell.insertAdjacentElement('afterbegin', tabs);
-    }
-    const currentSection = section();
-    tabs.innerHTML = `<button type="button" class="${currentSection === 'leads' ? 'active' : ''}" data-expansion-section="leads">Leads</button><button type="button" class="${currentSection === 'caca-lead' ? 'active' : ''}" data-expansion-section="caca-lead">Caça Lead</button>`;
-    [...shell.children].forEach((child) => {
-      if (child === tabs || child.matches('[data-lead-hunter-root]')) return;
-      if (currentSection === 'caca-lead') child.dataset.hunterHidden = '1';
-      else delete child.dataset.hunterHidden;
-    });
-    let hunterRoot = shell.querySelector(':scope > [data-lead-hunter-root]');
-    if (currentSection === 'caca-lead') {
-      if (!hunterRoot) {
-        hunterRoot = document.createElement('div');
-        hunterRoot.dataset.leadHunterRoot = '1';
-        shell.appendChild(hunterRoot);
-      }
-      renderHunter();
-      if (!state.loaded && !state.loading) load();
-    } else if (hunterRoot) hunterRoot.remove();
+  const activateHunter = () => {
+    const target = root();
+    if (!target || target.hidden) return;
+    renderHunter();
+    if (!state.loaded && !state.loading) load();
   };
 
-  function scheduleMount() {
-    mountTimers.forEach(clearTimeout);
-    mountTimers = [0, 120, 450, 1100].map((delay) => window.setTimeout(ensureMounted, delay));
-  }
+  const scheduleRender = () => {
+    if (renderFrame) cancelAnimationFrame(renderFrame);
+    renderFrame = requestAnimationFrame(() => {
+      renderFrame = 0;
+      activateHunter();
+    });
+  };
 
   const updateCandidate = async (id, changes) => {
     const payload = await requestJson(`${API}/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify({ changes }) });
@@ -241,10 +216,7 @@
   };
   const openLead = (leadId) => {
     if (!leadId) return;
-    setSection('leads');
-    sessionStorage.setItem('planet-expansion-open-lead', leadId);
     window.dispatchEvent(new CustomEvent('planet:open-lead', { detail: { leadId } }));
-    scheduleMount();
   };
   const promoteCandidate = async (id) => {
     try {
@@ -339,8 +311,6 @@
   };
 
   document.addEventListener('click', (event) => {
-    const sectionButton = event.target.closest?.('[data-expansion-section]');
-    if (sectionButton) { setSection(sectionButton.dataset.expansionSection); ensureMounted(); return; }
     if (!event.target.closest?.('[data-lead-hunter-root]')) return;
     if (event.target.closest('[data-hunter-refresh]')) load();
     const detailsButton = event.target.closest('[data-hunter-details]');
@@ -371,19 +341,23 @@
     if (file?.files?.[0]) { handleFile(file.files[0]); file.value = ''; }
   });
 
-  window.addEventListener('hashchange', scheduleMount);
-  window.addEventListener('pmh:view-rendered', scheduleMount);
-  window.addEventListener('pmh:access-ready', scheduleMount);
-  window.addEventListener('planet:open-candidate', (event) => {
-    const candidateId = String(event.detail?.candidateId || '');
-    setSection('caca-lead');
-    state.selectedId = candidateId;
-    if (!isExpansion()) location.hash = '#expansao';
-    scheduleMount();
+  window.addEventListener('planet:expansion-section-rendered', (event) => {
+    if (event.detail?.section === 'caca-lead') scheduleRender();
   });
-  if (window.AndreOS?.events?.on) window.AndreOS.events.on('notifications.updated', scheduleMount, { replayLatest: true });
+  window.addEventListener('planet:open-candidate', (event) => {
+    state.selectedId = String(event.detail?.candidateId || '');
+    scheduleRender();
+  });
+  window.addEventListener('pmh:access-ready', scheduleRender);
 
-  window.PlanetLeadHunter = { load, mount: scheduleMount, openCandidate: (id) => window.dispatchEvent(new CustomEvent('planet:open-candidate', { detail: { candidateId: id } })) };
-  window.setInterval(() => { if (isExpansion()) ensureMounted(); }, 1500);
-  scheduleMount();
+  window.PlanetLeadHunter = {
+    load,
+    render: scheduleRender,
+    openCandidate(id) {
+      window.dispatchEvent(new CustomEvent('planet:open-candidate', {
+        detail: { candidateId: id },
+      }));
+    },
+  };
+  scheduleRender();
 })();

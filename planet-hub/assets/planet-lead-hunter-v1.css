@@ -22,7 +22,6 @@ body .pmh-expansion-tabs button.active {
   background: var(--aos-accent);
   box-shadow: var(--aos-shadow-xs, 0 6px 18px rgba(31, 28, 52, .12));
 }
-body [data-hunter-hidden="1"] { display: none !important; }
 body .pmh-hunter { display: grid; gap: var(--aos-space-5, 20px); }
 body .pmh-hunter-head {
   display: flex;

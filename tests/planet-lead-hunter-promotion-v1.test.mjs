@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
 if (!globalThis.crypto) globalThis.crypto = webcrypto;
 import { createCandidate, promoteCandidate, updateCandidate } from '../functions/_lib/planet-lead-candidates.js';
-import { readLeadDocument } from '../functions/_lib/planet-leads.js';
+import { readLeadDocument, upsertLead } from '../functions/_lib/planet-leads.js';
 
 class KV { constructor() { this.values = new Map(); } async get(key, options) { const value = this.values.get(key); return options?.type === 'json' && value ? JSON.parse(value) : value ?? null; } async put(key, value) { this.values.set(key, value); } }
 const store = new KV();
@@ -26,4 +26,42 @@ await assert.rejects(() => promoteCandidate(store, rejected.candidate.id), /reje
 const noContact = await createCandidate(store, { name: 'Sem contato', company: 'XPTO', source: 'manual', sourceRecordId: '3' });
 await updateCandidate(store, noContact.candidate.id, { reviewStatus: 'approved' });
 await assert.rejects(() => promoteCandidate(store, noContact.candidate.id), /telefone ou e-mail/i);
-console.log('Promoção explícita e idempotente validada.');
+
+
+const linkedStore = new KV();
+const linkedCandidate = await createCandidate(linkedStore, {
+  name: 'Lead concorrente',
+  phone: '47999990009',
+  source: 'lista_autorizada',
+  sourceRecordId: 'late-1',
+  sourceName: 'Lista autorizada',
+});
+const officialLead = await upsertLead(linkedStore, {
+  source: 'rd_station',
+  externalId: 'rd-original-9',
+  name: 'Lead oficial',
+  phone: '47999990009',
+  origin: 'Landing page',
+  conversion: 'Quero ser franqueado',
+  assignedTo: 'Expansão',
+  status: 'contacted',
+  notes: 'Contato já em andamento.',
+});
+await updateCandidate(linkedStore, linkedCandidate.candidate.id, {
+  reviewStatus: 'approved',
+  reviewedBy: 'André',
+});
+const linkedPromotion = await promoteCandidate(linkedStore, linkedCandidate.candidate.id);
+const linkedLeads = await readLeadDocument(linkedStore);
+assert.equal(linkedPromotion.duplicate, true, 'promoção deve vincular ao lead que surgiu depois');
+assert.equal(linkedLeads.data.length, 1, 'promoção não pode criar funil paralelo');
+assert.equal(linkedLeads.data[0].id, officialLead.lead.id);
+assert.equal(linkedLeads.data[0].source, 'rd_station');
+assert.equal(linkedLeads.data[0].externalId, 'rd-original-9');
+assert.equal(linkedLeads.data[0].origin, 'Landing page');
+assert.equal(linkedLeads.data[0].conversion, 'Quero ser franqueado');
+assert.equal(linkedLeads.data[0].status, 'contacted');
+assert.equal(linkedLeads.data[0].notes, 'Contato já em andamento.');
+assert.match(linkedLeads.data[0].history[0].title, /Caça Lead/);
+
+console.log('Promoção explícita, idempotente e sem sobrescrever o funil validada.');
