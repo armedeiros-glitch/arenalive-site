@@ -4,9 +4,12 @@ import {
   nowIso,
   upsertLead,
 } from './planet-leads.js';
+import {
+  normalizeNotification,
+  readNotificationDocument,
+  writeNotificationDocument,
+} from './planet-notifications.js';
 
-const NOTIFICATIONS_KEY = 'planet-hub:planet-notifications:v1';
-const MAX_NOTIFICATIONS = 1000;
 const MAX_BODY_BYTES = 128_000;
 const MOVEMENT_GROUP_WINDOW_MS = 15 * 60 * 1000;
 
@@ -42,61 +45,51 @@ const extractPayload = (payload = {}) => {
     source: 'rd_station',
     externalId: cleanText(lead.uuid || lead.id || lead.contact_id || root.uuid || lead.email, 180),
     name: cleanText(lead.name || lead.nome || lead.full_name, 180),
-    phone: cleanPhone(lead.phone || lead.mobile_phone || lead.personal_phone || lead.telefone || lead.celular || lead.whatsapp || fieldValue(fields, ['telefone', 'phone', 'celular', 'whatsapp'])),
+    phone: cleanPhone(
+      lead.phone
+      || lead.mobile_phone
+      || lead.personal_phone
+      || lead.telefone
+      || lead.celular
+      || lead.whatsapp
+      || fieldValue(fields, ['telefone', 'phone', 'celular', 'whatsapp']),
+    ),
     email: cleanText(lead.email, 220).toLowerCase(),
     city: cleanText(lead.city || lead.cidade || fieldValue(fields, ['cidade', 'city']), 140),
     state: cleanText(lead.state || lead.estado || lead.uf || fieldValue(fields, ['estado', 'state', 'uf']), 80),
-    company: cleanText(lead.company?.name || lead.company || lead.empresa || fieldValue(fields, ['empresa', 'company']), 180),
-    origin: cleanText(funnel.origin || conversion.source || conversion.traffic_source || root.source || lead.source || fieldValue(fields, ['origem', 'source']), 180),
-    conversion: cleanText(root.event_identifier || root.conversion_identifier || conversion.name || conversion.identifier || lead.conversion_identifier || fieldValue(fields, ['conversao', 'conversion']), 220),
-    assignedTo: cleanText(owner.name || owner.email || lead.owner_name || lead.user_name || fieldValue(fields, ['responsavel', 'responsável', 'owner']), 160),
+    company: cleanText(
+      lead.company?.name || lead.company || lead.empresa || fieldValue(fields, ['empresa', 'company']),
+      180,
+    ),
+    origin: cleanText(
+      funnel.origin
+      || conversion.source
+      || conversion.traffic_source
+      || root.source
+      || lead.source
+      || fieldValue(fields, ['origem', 'source']),
+      180,
+    ),
+    conversion: cleanText(
+      root.event_identifier
+      || root.conversion_identifier
+      || conversion.name
+      || conversion.identifier
+      || lead.conversion_identifier
+      || fieldValue(fields, ['conversao', 'conversion']),
+      220,
+    ),
+    assignedTo: cleanText(
+      owner.name
+      || owner.email
+      || lead.owner_name
+      || lead.user_name
+      || fieldValue(fields, ['responsavel', 'responsável', 'owner']),
+      160,
+    ),
     rdStage: cleanText(stage.name || stage.label || lead.lead_stage || lead.funnel_stage || root.lead_stage, 160),
     eventAt: cleanText(root.event_timestamp || root.created_at || lead.updated_at || lead.created_at, 40),
   };
-};
-
-const normalizeNotification = (item = {}) => {
-  const createdAt = cleanText(item.createdAt, 40) || nowIso();
-  return {
-    id: cleanText(item.id, 120) || `notification-${crypto.randomUUID()}`,
-    tenantId: 'planet',
-    area: 'expansion',
-    type: ['lead.new', 'lead.updated', 'lead.alert'].includes(item.type) ? item.type : 'lead.updated',
-    priority: ['high', 'medium', 'low'].includes(item.priority) ? item.priority : 'medium',
-    title: cleanText(item.title, 180) || 'Atualização da expansão',
-    summary: cleanText(item.summary, 500),
-    leadId: cleanText(item.leadId, 120),
-    leadName: cleanText(item.leadName, 180),
-    count: Math.max(1, Math.min(99, Number(item.count) || 1)),
-    changes: Array.isArray(item.changes)
-      ? item.changes.map((value) => cleanText(value, 80)).filter(Boolean).slice(0, 20)
-      : [],
-    readAt: cleanText(item.readAt, 40),
-    resolvedAt: cleanText(item.resolvedAt, 40),
-    createdAt,
-    updatedAt: cleanText(item.updatedAt, 40) || createdAt,
-  };
-};
-
-const readNotificationDocument = async (store) => {
-  const stored = await store.get(NOTIFICATIONS_KEY, { type: 'json' });
-  return stored && Array.isArray(stored.data)
-    ? {
-        revision: stored.revision || null,
-        updatedAt: stored.updatedAt || null,
-        data: stored.data.slice(0, MAX_NOTIFICATIONS).map(normalizeNotification),
-      }
-    : { revision: null, updatedAt: null, data: [] };
-};
-
-const writeNotificationDocument = async (store, data) => {
-  const document = {
-    revision: crypto.randomUUID(),
-    updatedAt: nowIso(),
-    data: data.slice(0, MAX_NOTIFICATIONS).map(normalizeNotification),
-  };
-  await store.put(NOTIFICATIONS_KEY, JSON.stringify(document));
-  return document;
 };
 
 const authorized = (request, env) => {
