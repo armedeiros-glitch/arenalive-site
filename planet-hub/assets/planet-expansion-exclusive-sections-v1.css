@@ -1,4 +1,0 @@
-/* Planet Expansão · garante que apenas a seção ativa ocupe o workspace */
-.pmh-expansion-shell > [hidden] {
-  display: none !important;
-}
