@@ -129,6 +129,7 @@ export const mergeExternalLeadData = (existing, incoming) => {
   ];
   externalFields.forEach((key) => {
     const value = key === 'phone' ? cleanPhone(incoming[key]) : cleanText(incoming[key], 500);
+    if (key === 'name' && value === 'Lead sem nome') return;
     if (value) merged[key] = incoming[key];
   });
   return merged;
@@ -179,6 +180,10 @@ export const upsertLead = async (store, rawLead, options = {}) => {
     const lead = normalizeLead({
       ...merged,
       id: duplicate.id,
+      source: options.preserveIdentityOnDuplicate ? duplicate.source : merged.source,
+      externalId: options.preserveIdentityOnDuplicate ? duplicate.externalId : merged.externalId,
+      origin: options.preserveIdentityOnDuplicate ? duplicate.origin : merged.origin,
+      conversion: options.preserveIdentityOnDuplicate ? duplicate.conversion : merged.conversion,
       status: options.preserveStatus ? duplicate.status : merged.status,
       notes: options.preserveNotes ? duplicate.notes : merged.notes,
       whatsappMessage: options.preserveWhatsapp ? duplicate.whatsappMessage : merged.whatsappMessage,
