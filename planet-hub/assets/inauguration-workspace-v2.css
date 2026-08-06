@@ -1,25 +1,25 @@
 /* Inauguration workspace v2 */
 .pmh-inauguration-workspace {
   display: grid;
-  gap: 13px;
-  margin-top: 16px;
-  padding-top: 15px;
-  border-top: 1px solid #ececf2;
+  gap: var(--os-space-3);
+  margin-top: var(--os-space-4);
+  padding-top: var(--os-space-4);
+  border-top: 1px solid var(--os-border);
 }
 
 .pmh-inauguration-workspace-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--os-space-3);
 }
 
 .pmh-inauguration-workspace-title {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: var(--os-space-2);
   min-width: 0;
-  color: var(--aos-accent);
+  color: var(--os-accent);
 }
 
 .pmh-inauguration-workspace-title > i {
@@ -27,8 +27,9 @@
   place-items: center;
   width: 34px;
   height: 34px;
-  border-radius: 11px;
-  background: var(--aos-accent-soft);
+  border-radius: var(--os-radius-sm);
+  color: var(--os-accent);
+  background: var(--os-accent-soft);
   font-style: normal;
   font-size: 16px;
 }
@@ -39,14 +40,14 @@
 }
 
 .pmh-inauguration-workspace-title strong {
-  color: var(--aos-ink);
+  color: var(--os-text-strong);
   font-size: 14px;
   font-weight: 850;
 }
 
 .pmh-inauguration-workspace-title small {
   margin-top: 2px;
-  color: var(--aos-muted-2);
+  color: var(--os-text-faint);
   font-size: 11px;
 }
 
@@ -59,13 +60,13 @@
   height: 44px !important;
   min-width: 44px !important;
   min-height: 44px !important;
-  border-radius: 15px !important;
+  border-radius: var(--os-radius-md) !important;
 }
 
 .pmh-inauguration-finance-access .aos-thinking-orb {
   width: 31px !important;
   height: 31px !important;
-  border-radius: 10px !important;
+  border-radius: var(--os-radius-sm) !important;
   font-size: 16px !important;
 }
 
@@ -77,10 +78,11 @@
   width: min(980px, 100%);
   max-height: calc(100vh - 44px);
   overflow: auto;
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 24px;
-  background: #f8f7fc;
-  box-shadow: 0 34px 90px rgba(9,8,18,.35);
+  border: 1px solid var(--os-border);
+  border-radius: var(--os-radius-2xl);
+  color: var(--os-text);
+  background: var(--os-page);
+  box-shadow: var(--os-shadow-lg);
 }
 
 .pmh-inauguration-finance-panel > header {
@@ -90,15 +92,15 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
+  gap: var(--os-space-5);
   padding: 22px 24px 18px;
-  border-bottom: 1px solid var(--aos-line);
-  background: rgba(255,255,255,.96);
+  border-bottom: 1px solid var(--os-border);
+  background: color-mix(in srgb, var(--os-surface) 96%, transparent);
   backdrop-filter: blur(16px);
 }
 
 .pmh-inauguration-finance-panel > header small {
-  color: var(--aos-accent);
+  color: var(--os-accent);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: .07em;
@@ -106,29 +108,30 @@
 
 .pmh-inauguration-finance-panel > header h2 {
   margin: 5px 0 0;
-  color: var(--aos-ink);
+  color: var(--os-text-strong);
   font-size: 25px;
   line-height: 1.2;
 }
 
 .pmh-inauguration-finance-panel > header p {
   margin: 6px 0 0;
-  color: var(--aos-muted);
+  color: var(--os-text-muted);
   font-size: 13px;
 }
 
 .pmh-inauguration-finance-panel > header button {
   width: 40px;
   height: 40px;
-  border: 1px solid var(--aos-line);
-  border-radius: 12px;
-  background: #f7f6fa;
+  border: 1px solid var(--os-border);
+  border-radius: var(--os-radius-md);
+  color: var(--os-text);
+  background: var(--os-surface-subtle);
   font-size: 21px;
 }
 
 .pmh-inauguration-finance-body {
   display: grid;
-  gap: 15px;
+  gap: var(--os-space-4);
   padding: 20px 22px 24px;
 }
 
@@ -136,17 +139,19 @@
 .pmh-inauguration-payment-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: var(--os-space-3);
 }
 
 .pmh-inauguration-finance-summary > label,
 .pmh-inauguration-finance-summary > article,
 .pmh-inauguration-payment-kpis > article {
   min-height: 96px;
-  padding: 15px;
-  border: 1px solid var(--aos-line);
-  border-radius: 15px;
-  background: #fff;
+  padding: var(--os-space-4);
+  border: 1px solid var(--os-border);
+  border-radius: var(--os-radius-md);
+  color: var(--os-text);
+  background: var(--os-surface);
+  box-shadow: var(--os-shadow-sm);
 }
 
 .pmh-inauguration-finance-summary small,
@@ -158,15 +163,15 @@
 
 .pmh-inauguration-finance-summary small,
 .pmh-inauguration-payment-kpis small {
-  color: var(--aos-muted-2);
+  color: var(--os-text-faint);
   font-size: 10px;
   font-weight: 900;
 }
 
 .pmh-inauguration-finance-summary strong,
 .pmh-inauguration-payment-kpis strong {
-  margin-top: 8px;
-  color: var(--aos-ink);
+  margin-top: var(--os-space-2);
+  color: var(--os-text-strong);
   font-size: 20px;
 }
 
@@ -174,50 +179,51 @@
   width: 100%;
   margin-top: 7px;
   border: 0;
-  border-bottom: 1px solid var(--aos-line-strong);
+  border-bottom: 1px solid var(--os-border-strong);
+  color: var(--os-text);
   background: transparent;
   font-size: 18px;
   font-weight: 800;
 }
 
 .pmh-inauguration-finance-summary .negative strong {
-  color: #c84038;
+  color: var(--os-danger);
 }
 
 .pmh-inauguration-finance-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--os-space-3);
 }
 
 .pmh-inauguration-finance-toolbar > div {
   display: flex;
-  gap: 8px;
+  gap: var(--os-space-2);
   flex-wrap: wrap;
 }
 
 .pmh-inauguration-finance-toolbar button {
   min-height: 42px;
-  padding: 0 14px;
-  border: 1px solid var(--aos-line-strong);
-  border-radius: 11px;
-  color: var(--aos-text);
-  background: #fff;
+  padding: 0 var(--os-space-4);
+  border: 1px solid var(--os-border-strong);
+  border-radius: var(--os-radius-sm);
+  color: var(--os-text);
+  background: var(--os-surface);
   font-size: 13px;
   font-weight: 800;
 }
 
 .pmh-inauguration-finance-toolbar .primary {
-  border-color: var(--aos-accent);
+  border-color: var(--os-accent);
   color: #fff;
-  background: var(--aos-accent);
+  background: var(--os-accent);
 }
 
 .pmh-inauguration-finance-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(250px, .55fr);
-  gap: 15px;
+  gap: var(--os-space-4);
   align-items: start;
 }
 
@@ -244,7 +250,7 @@
   .pmh-inauguration-finance-panel {
     width: 100%;
     max-height: calc(100vh - 20px);
-    border-radius: 20px;
+    border-radius: var(--os-radius-xl);
   }
 
   .pmh-inauguration-finance-summary,
