@@ -279,26 +279,31 @@
     font-weight: 750;
   }
 
-  /* O bloco 2 sobe um ou dois tons, enquanto o foco principal permanece mais escuro. */
+  /* O bloco 2 fica claramente mais claro que o foco principal. */
   html.aos-mobile .pmh-priority-other {
-    border-color: rgba(255, 255, 255, .13);
+    border-color: rgba(255, 255, 255, .19);
     background:
-      radial-gradient(circle at 102% -18%, rgba(164, 145, 255, .28), transparent 46%),
-      linear-gradient(145deg, #2b2738 0%, #403a52 100%);
-    box-shadow: 0 13px 30px rgba(24, 19, 43, .13);
+      radial-gradient(circle at 102% -18%, rgba(181, 164, 255, .34), transparent 47%),
+      linear-gradient(145deg, #423d50 0%, #5b536d 100%);
+    box-shadow: 0 11px 25px rgba(24, 19, 43, .10);
+  }
+
+  html.aos-mobile .pmh-priority-other .pmh-priority-movement {
+    border-color: rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .10);
   }
 
   html.aos-mobile .pmh-priority-other.tone-risk,
   html.aos-mobile .pmh-priority-other.tone-follow-up {
     background:
-      radial-gradient(circle at 102% -18%, rgba(255, 155, 112, .22), transparent 46%),
-      linear-gradient(145deg, #30242c 0%, #493540 100%);
+      radial-gradient(circle at 102% -18%, rgba(255, 177, 137, .28), transparent 47%),
+      linear-gradient(145deg, #49343d 0%, #664a57 100%);
   }
 
   html.aos-mobile .pmh-priority-other.tone-approval {
     background:
-      radial-gradient(circle at 102% -18%, rgba(105, 221, 170, .20), transparent 46%),
-      linear-gradient(145deg, #263532 0%, #385048 100%);
+      radial-gradient(circle at 102% -18%, rgba(136, 231, 190, .26), transparent 47%),
+      linear-gradient(145deg, #3a504a 0%, #557067 100%);
   }
 }
 
