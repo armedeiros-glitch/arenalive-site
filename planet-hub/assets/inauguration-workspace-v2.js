@@ -40,6 +40,10 @@
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'aos-thinking-floating-trigger pmh-inauguration-finance-access';
+    button.style.display = 'grid';
+    button.style.placeItems = 'center';
+    button.style.padding = '0';
+    button.style.lineHeight = '1';
     button.dataset.inaugurationFinanceOpen = itemId;
     button.dataset.inaugurationUnit = unit;
     button.dataset.financePlanned = planned;
@@ -49,7 +53,22 @@
     button.dataset.financeUnitCost = unitCost;
     button.setAttribute('aria-label', `Abrir financeiro da implantação ${unit}`);
     button.title = `Financeiro · ${unit}`;
-    button.innerHTML = '<span class="aos-thinking-orb" aria-hidden="true">💲</span>';
+    button.innerHTML = '<span class="aos-thinking-orb" aria-hidden="true"><span class="pmh-finance-glyph">$</span></span>';
+
+    const glyph = button.querySelector('.pmh-finance-glyph');
+    if (glyph) {
+      glyph.style.display = 'grid';
+      glyph.style.placeItems = 'center';
+      glyph.style.width = '100%';
+      glyph.style.height = '100%';
+      glyph.style.margin = '0';
+      glyph.style.color = '#39e58c';
+      glyph.style.fontSize = '16px';
+      glyph.style.fontWeight = '900';
+      glyph.style.lineHeight = '1';
+      glyph.style.transform = 'translateY(-1px)';
+    }
+
     return button;
   };
 
