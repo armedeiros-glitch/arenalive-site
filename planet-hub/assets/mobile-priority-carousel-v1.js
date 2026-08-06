@@ -129,18 +129,26 @@
     if (!target) return;
 
     if (!mobileViewport()) {
+      target.classList.remove('pmh-priority-ready');
       target.querySelector('[data-priority-deck]')?.remove();
       return;
     }
 
     const entries = readEntries(target);
-    if (!entries.length) return;
+    if (!entries.length) {
+      target.classList.remove('pmh-priority-ready');
+      target.querySelector('[data-priority-deck]')?.remove();
+      return;
+    }
 
     const signature = entries
       .map((entry) => [entry.id, entry.title, entry.summary, entry.due].join('|'))
       .join('::');
     const current = target.querySelector('[data-priority-deck]');
-    if (current?.dataset.prioritySignature === signature) return;
+    if (current?.dataset.prioritySignature === signature) {
+      target.classList.add('pmh-priority-ready');
+      return;
+    }
 
     const deck = makeElement('section', `pmh-priority-deck${entries.length === 1 ? ' is-single' : ''}`);
     deck.dataset.priorityDeck = '1';
@@ -181,6 +189,7 @@
     deck.append(heading, track, controls);
     current?.remove();
     target.prepend(deck);
+    target.classList.add('pmh-priority-ready');
   };
 
   const scheduleBuild = () => {
@@ -195,7 +204,9 @@
     const deck = dot.closest('[data-priority-deck]');
     const track = deck?.querySelector('[data-priority-track]');
     const slide = track?.querySelector(`[data-priority-slide="${dot.dataset.priorityDot}"]`);
-    slide?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    if (slide && track) {
+      track.scrollTo({ left: slide.offsetLeft, behavior: 'smooth' });
+    }
   });
 
   window.addEventListener('pmh:radar-data', scheduleBuild);
