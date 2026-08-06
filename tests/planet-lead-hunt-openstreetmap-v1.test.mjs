@@ -42,6 +42,13 @@ const fetchImpl = async (url, options) => {
         'addr:city': 'Joinville',
         'addr:state': 'SC',
       },
+    }, {
+      type: 'node',
+      id: 999999,
+      tags: {
+        name: 'Planet Chocolate Joinville',
+        amenity: 'cafe',
+      },
     }],
   }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 };
@@ -53,11 +60,12 @@ const elements = await searchOpenStreetMap({
   fetchImpl,
 });
 assert.equal(elements.length, 1);
+assert.equal(elements[0].id, 123456);
 assert.equal(captured.url, 'https://overpass-api.de/api/interpreter');
 assert.equal(captured.options.method, 'POST');
 assert.match(captured.options.headers['Content-Type'], /application\/x-www-form-urlencoded/);
 const body = new URLSearchParams(captured.options.body);
-assert.match(body.get('data'), /Joinville|around:24000/);
+assert.match(body.get('data'), /around:24000/);
 
 const candidate = osmElementToCandidate(elements[0], {
   location,
@@ -77,6 +85,8 @@ assert.equal(candidate.enrichmentStatus, 'completed');
 assert.match(candidate.sourceUrl, /openstreetmap\.org\/node\/123456/);
 assert.ok(candidate.evidences.some((item) => item.sourceUrl === OSM_LICENSE_URL));
 assert.ok(candidate.evidences.some((item) => /telefone comercial/i.test(item.description)));
+assert.ok(candidate.evidences.some((item) => item.type === 'inference' && /cafeteria/i.test(item.description)));
+assert.match(candidate.reviewNotes, /Segmento sugerido: cafeteria/);
 assert.match(candidate.reviewNotes, /não representa interesse explícito/i);
 assert.equal(candidate.promotedLeadId, undefined);
 
