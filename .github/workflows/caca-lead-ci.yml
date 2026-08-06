@@ -1,0 +1,75 @@
+name: Expansão e Caça Lead CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: expansion-caca-lead-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Arquitetura, sintaxe e fluxos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validar sintaxe JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            mime=$(file --brief --mime-type "$file")
+            if [[ "$mime" == text/* || "$mime" == application/javascript ]]; then
+              node --check "$file"
+            else
+              echo "Ignorando asset não textual ($mime): $file"
+            fi
+          done < <(find functions planet-hub/assets -type f -name '*.js' -print0)
+
+      - name: Bloquear camadas e fontes duplicadas
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -Eq 'setInterval|MutationObserver|insertAdjacentElement|data-hunter-hidden|mountTimers' planet-hub/assets/planet-lead-hunter-v1.js
+          ! grep -q '!important' planet-hub/assets/planet-lead-hunter-v1.css
+          test "$(grep -RIl "planet-hub:planet-expansion-leads:v1" functions | wc -l)" -eq 1
+          test "$(grep -RIl "planet-hub:planet-expansion-candidates:v1" functions | wc -l)" -eq 1
+          test "$(grep -RIl "planet-hub:planet-notifications:v1" functions | wc -l)" -eq 1
+          test "$(grep -o "planet-lead-hunter-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
+          test "$(grep -o "planet-lead-hunter-v1.css" index.html | wc -l)" -eq 1
+
+      - name: Executar testes da área auditada
+        shell: bash
+        run: |
+          set -euo pipefail
+          tests=(
+            tests/planet-expansion-v1.test.mjs
+            tests/planet-expansion-flow-v1.test.mjs
+            tests/planet-notifications-ui.test.mjs
+            tests/planet-rd-webhook.test.mjs
+            tests/planet-rd-notifications.integration.test.mjs
+            tests/planet-lead-hunter-auth-v1.test.mjs
+            tests/planet-lead-hunter-contract-v1.test.mjs
+            tests/planet-lead-hunter-dedup-v1.test.mjs
+            tests/planet-lead-hunter-import-v1.test.mjs
+            tests/planet-lead-hunter-promotion-v1.test.mjs
+          )
+          for test_file in "${tests[@]}"; do
+            echo "Executando $test_file"
+            node "$test_file"
+          done

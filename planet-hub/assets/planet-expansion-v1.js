@@ -3,6 +3,7 @@
 
   const VIEW = 'expansao';
   const API = '/api/hub/planet/leads';
+  const SECTION_KEY = 'planet-expansion-section';
   const STATUS_LABELS = {
     new: 'Novo',
     claimed: 'Assumido',
@@ -43,6 +44,8 @@
   const content = () => document.querySelector('[data-content]');
   const title = () => document.querySelector('[data-title]');
   const isOpen = () => location.hash === '#expansao';
+  const activeSection = () => sessionStorage.getItem(SECTION_KEY) === 'caca-lead' ? 'caca-lead' : 'leads';
+  const setActiveSection = (value) => sessionStorage.setItem(SECTION_KEY, value === 'caca-lead' ? 'caca-lead' : 'leads');
 
   const showNotice = (message, tone = 'success') => {
     clearTimeout(noticeTimer);
@@ -60,7 +63,7 @@
     const style = document.createElement('style');
     style.dataset.planetExpansionStyles = '1';
     style.textContent = `
-      .pmh-expansion-shell{display:grid;gap:20px}
+      .pmh-expansion-shell,.pmh-expansion-panel{display:grid;gap:20px}
       .pmh-expansion-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:24px;border:1px solid #eadbd4;border-radius:20px;background:#fff}
       .pmh-expansion-head small{color:#7558e8;font-weight:900;letter-spacing:.08em}.pmh-expansion-head h2{margin:6px 0 8px;font-size:30px}.pmh-expansion-head p{margin:0;color:#6d5a52}
       .pmh-expansion-head-actions{display:flex;align-items:flex-end;gap:10px;flex-direction:column}.pmh-expansion-head-actions small{color:#84726a;font-size:11px;letter-spacing:0;text-align:right}
@@ -190,27 +193,41 @@
     if (!target) return;
 
     const values = metrics();
+    const section = activeSection();
     if (title()) title().textContent = 'Expansão';
     target.innerHTML = `<section class="pmh-expansion-shell">
-      <header class="pmh-expansion-head">
-        <div><small>PLANET CHOCOLATE · PROFISSIONAL</small><h2>Expansão e Leads</h2><p>Receba o lead, abra o contato e registre o avanço sem sair do André OS.</p></div>
-        <div class="pmh-expansion-head-actions">
-          <button type="button" class="pmh-expansion-refresh" data-expansion-refresh ${state.loading ? 'disabled' : ''}>${state.loading ? 'Atualizando…' : '↻ Atualizar leads'}</button>
-          <small>${state.updatedAt ? `Base atualizada em ${esc(fmtDate(state.updatedAt))}` : 'Aguardando o primeiro webhook válido'}</small>
-        </div>
-      </header>
-      <section class="pmh-expansion-metrics">
-        <article><small>NÃO VISUALIZADOS</small><strong>${values.unread}</strong></article>
-        <article><small>EM ABERTO</small><strong>${values.active}</strong></article>
-        <article><small>QUALIFICADOS</small><strong>${values.qualified}</strong></article>
+      <nav class="pmh-expansion-tabs" aria-label="Seções de Expansão">
+        <button type="button" class="${section === 'leads' ? 'active' : ''}" data-expansion-section="leads">Leads</button>
+        <button type="button" class="${section === 'caca-lead' ? 'active' : ''}" data-expansion-section="caca-lead">Caça Lead</button>
+      </nav>
+      <section class="pmh-expansion-panel" data-expansion-leads-panel ${section === 'leads' ? '' : 'hidden'}>
+        <header class="pmh-expansion-head">
+          <div><small>PLANET CHOCOLATE · PROFISSIONAL</small><h2>Expansão e Leads</h2><p>Receba o lead, abra o contato e registre o avanço sem sair do André OS.</p></div>
+          <div class="pmh-expansion-head-actions">
+            <button type="button" class="pmh-expansion-refresh" data-expansion-refresh ${state.loading ? 'disabled' : ''}>${state.loading ? 'Atualizando…' : '↻ Atualizar leads'}</button>
+            <small>${state.updatedAt ? `Base atualizada em ${esc(fmtDate(state.updatedAt))}` : 'Aguardando o primeiro webhook válido'}</small>
+          </div>
+        </header>
+        <section class="pmh-expansion-metrics">
+          <article><small>NÃO VISUALIZADOS</small><strong>${values.unread}</strong></article>
+          <article><small>EM ABERTO</small><strong>${values.active}</strong></article>
+          <article><small>QUALIFICADOS</small><strong>${values.qualified}</strong></article>
+        </section>
+        ${state.notice ? `<div class="pmh-expansion-notice ${state.noticeTone === 'error' ? 'error' : ''}">${esc(state.notice)}</div>` : ''}
+        ${state.error ? `<div class="pmh-expansion-error">${esc(state.error)}</div>` : ''}
+        <section class="pmh-expansion-list">
+          ${state.loading && !state.loaded ? '<div class="pmh-expansion-empty"><b>Carregando leads…</b></div>' : state.leads.length ? state.leads.map(leadCard).join('') : emptyState()}
+        </section>
       </section>
-      ${state.notice ? `<div class="pmh-expansion-notice ${state.noticeTone === 'error' ? 'error' : ''}">${esc(state.notice)}</div>` : ''}
-      ${state.error ? `<div class="pmh-expansion-error">${esc(state.error)}</div>` : ''}
-      <section class="pmh-expansion-list">
-        ${state.loading && !state.loaded ? '<div class="pmh-expansion-empty"><b>Carregando leads…</b></div>' : state.leads.length ? state.leads.map(leadCard).join('') : emptyState()}
-      </section>
+      <section data-lead-hunter-root ${section === 'caca-lead' ? '' : 'hidden'}></section>
     </section>`;
-    focusSelected();
+
+    if (section === 'leads') focusSelected();
+    requestAnimationFrame(() => {
+      window.dispatchEvent(new CustomEvent('planet:expansion-section-rendered', {
+        detail: { section },
+      }));
+    });
   };
 
   const load = async ({ silent = false } = {}) => {
@@ -357,6 +374,13 @@
       return;
     }
 
+    const sectionButton = event.target.closest?.('[data-expansion-section]');
+    if (sectionButton) {
+      setActiveSection(sectionButton.dataset.expansionSection || 'leads');
+      render();
+      return;
+    }
+
     if (event.target.closest?.('[data-expansion-refresh]')) {
       load();
       return;
@@ -390,6 +414,7 @@
     const leadId = String(event.detail?.leadId || '');
     if (!leadId) return;
     state.selectedLeadId = leadId;
+    setActiveSection('leads');
     if (isOpen()) {
       render();
       markViewed(leadId);
@@ -398,6 +423,12 @@
       sessionStorage.setItem('planet-expansion-open-lead', leadId);
       location.hash = '#expansao';
     }
+  });
+
+  window.addEventListener('planet:open-candidate', () => {
+    setActiveSection('caca-lead');
+    if (isOpen()) render();
+    else location.hash = '#expansao';
   });
 
   window.addEventListener('pmh:view-rendered', () => {
@@ -416,6 +447,15 @@
     if (isOpen()) setTimeout(activate, 0);
     else syncNavigation();
   });
+
+  window.PlanetExpansion = {
+    openSection(value) {
+      setActiveSection(value);
+      if (isOpen()) render();
+      else location.hash = '#expansao';
+    },
+    render,
+  };
 
   injectStyles();
   ensureNavigation();
