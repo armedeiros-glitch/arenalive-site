@@ -10,10 +10,14 @@ Remover adaptações temporizadas e contratos visuais de emergência antes de co
 - Demandas e Radar deixam de criar botões de navegação por conta própria;
 - as gavetas respondem apenas a eventos reais do sistema e `requestAnimationFrame`;
 - removidos temporizadores de montagem de 250 ms e 900 ms;
-- removido `insertAdjacentElement` da camada de gavetas;
+- removido `insertAdjacentElement` das gavetas e da Expansão;
 - o CSS das páginas Hoje, Demandas e Radar passa a ser carregado estaticamente pelo `index.html`;
+- o CSS estrutural de Expansão sai do JavaScript e vira folha oficial do componente;
+- a antiga folha corretiva de exclusividade é removida;
 - o atributo `hidden` volta a ser a fonte de verdade entre Leads e Caça Leads;
-- o contrato de exclusividade da Expansão não usa `!important`;
+- Expansão deixa de reescrever os rótulos organizados pelas gavetas e atualiza somente seu badge;
+- a troca de rota da Expansão usa um único frame, sem `setTimeout(activate, 0)`;
+- os contratos consolidados não usam `!important`;
 - testes recentes de gavetas, páginas, mobile e Expansão entram no CI do Caça Leads.
 
 ## Preservado
@@ -25,7 +29,8 @@ Remover adaptações temporizadas e contratos visuais de emergência antes de co
 - dados, APIs, KV e autenticação;
 - integração RD Station;
 - candidatos, score, revisão, deduplicação e promoção;
-- notificações e funil oficial de Leads.
+- notificações e funil oficial de Leads;
+- o contrato `view: inicio` usado pelos módulos existentes de Demandas e Radar.
 
 ## Validação manual antes do merge
 
@@ -35,6 +40,7 @@ Remover adaptações temporizadas e contratos visuais de emergência antes de co
 - alternar Leads e Caça Leads várias vezes;
 - confirmar que somente a seção ativa ocupa o workspace;
 - recarregar a página em `#demandas`, `#radar` e `#expansao`;
+- confirmar que os badges e rótulos da gaveta Expansão permanecem corretos após atualizar dados;
 - confirmar que nenhuma aparência aprovada mudou.
 
 ## Próxima etapa
