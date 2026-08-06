@@ -3,12 +3,13 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [indexHtml, access, pages, styles, drawers] = await Promise.all([
+const [indexHtml, access, pages, styles, drawers, demands] = await Promise.all([
   read('index.html'),
   read('planet-hub/assets/hub-access-v1.js'),
   read('planet-hub/assets/andre-os-home-pages-v1.js'),
   read('planet-hub/assets/andre-os-home-pages-v1.css'),
   read('planet-hub/assets/andre-os-navigation-drawers-v1.js'),
+  read('planet-hub/assets/internal-demands-v1.js'),
 ]);
 
 const drawerIndex = access.indexOf('andre-os-navigation-drawers-v1.js');
@@ -26,8 +27,11 @@ assert.match(pages, /radar:\s*\{/);
 assert.match(pages, /data-decision-cockpit/);
 assert.match(pages, /data-internal-demands/);
 assert.match(pages, /data-active-workstream/);
+assert.match(pages, /view:\s*'inicio'/);
+assert.match(pages, /page,/);
 assert.match(pages, /segmented:\s*true/);
 assert.match(pages, /andre-os:home-page-rendered/);
+assert.match(demands, /event\.detail\?\.view === 'inicio'/);
 assert.doesNotMatch(pages, /MutationObserver/);
 assert.doesNotMatch(pages, /createElement\('link'\)|appendChild\(link\)/);
 assert.doesNotMatch(pages, /ensureDestination|ensureDestinations/);
