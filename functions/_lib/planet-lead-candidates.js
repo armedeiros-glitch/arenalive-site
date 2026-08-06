@@ -9,9 +9,9 @@ import {
   upsertLead,
 } from './planet-leads.js';
 import { scoreCandidate } from './planet-lead-scoring.js';
+import { appendNotification } from './planet-notifications.js';
 
 export const CANDIDATES_STORAGE_KEY = 'planet-hub:planet-expansion-candidates:v1';
-export const NOTIFICATIONS_STORAGE_KEY = 'planet-hub:planet-notifications:v1';
 export const MAX_CANDIDATES = 2000;
 export const MAX_IMPORT_ITEMS = 500;
 export const MAX_CANDIDATE_BODY_BYTES = 256_000;
@@ -230,6 +230,29 @@ export const updateCandidate = async (store, id, changes = {}) => {
   next.promotedAt = existing.promotedAt;
   next.updatedAt = nowIso();
   const candidate = normalizeCandidate(next);
+
+  const identityFields = ['source', 'sourceRecordId', 'phone', 'email', 'company', 'city'];
+  const identityChanged = identityFields.some((field) => Object.prototype.hasOwnProperty.call(changes, field));
+  if (identityChanged) {
+    const candidateDuplicate = findDuplicateCandidate(
+      current.data.filter((item) => item.id !== candidateId),
+      candidate,
+    );
+    if (candidateDuplicate) {
+      const error = new Error('Os dados informados já pertencem a outro candidato.');
+      error.status = 409;
+      throw error;
+    }
+
+    const leadDocument = await readLeadDocument(store);
+    const leadDuplicate = findCandidateLeadDuplicate(leadDocument.data, candidate);
+    if (leadDuplicate && leadDuplicate.id !== existing.promotedLeadId) {
+      const error = new Error('Os dados informados já pertencem a um lead do funil.');
+      error.status = 409;
+      throw error;
+    }
+  }
+
   const document = await writeCandidateDocument(
     store,
     current.data.map((item) => item.id === candidateId ? candidate : item),
@@ -237,39 +260,11 @@ export const updateCandidate = async (store, id, changes = {}) => {
   return { candidate, revision: document.revision };
 };
 
-const normalizeNotification = (item = {}) => {
-  const createdAt = cleanText(item.createdAt, 40) || nowIso();
-  return {
-    id: cleanText(item.id, 120) || `notification-${crypto.randomUUID()}`,
-    tenantId: 'planet',
-    area: 'expansion',
-    type: 'lead.alert',
-    priority: ['high', 'medium', 'low'].includes(item.priority) ? item.priority : 'medium',
-    title: cleanText(item.title, 180) || 'Atualização do Caça Lead',
-    summary: cleanText(item.summary, 500),
-    leadId: cleanText(item.leadId, 120),
-    leadName: cleanText(item.leadName, 180),
-    count: 1,
-    changes: Array.isArray(item.changes)
-      ? item.changes.map((value) => cleanText(value, 80)).filter(Boolean).slice(0, 20)
-      : [],
-    readAt: '',
-    resolvedAt: '',
-    createdAt,
-    updatedAt: createdAt,
-  };
-};
-
 export const emitCandidateNotification = async (store, input) => {
-  const stored = await store.get(NOTIFICATIONS_STORAGE_KEY, { type: 'json' });
-  const current = stored && Array.isArray(stored.data) ? stored.data : [];
-  const notification = normalizeNotification(input);
-  const document = {
-    revision: crypto.randomUUID(),
-    updatedAt: nowIso(),
-    data: [notification, ...current].slice(0, 1000),
-  };
-  await store.put(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(document));
+  const { notification } = await appendNotification(store, {
+    ...input,
+    type: 'lead.alert',
+  });
   return notification;
 };
 
@@ -344,6 +339,13 @@ export const promoteCandidate = async (store, id) => {
     conversion: 'Caça Lead',
     notes: promotionNotes(candidate),
   }, {
+    mergeExternalOnly: true,
+    preserveIdentityOnDuplicate: true,
+    preserveStatus: true,
+    preserveNotes: true,
+    preserveWhatsapp: true,
+    preserveViewedAt: true,
+    preserveLastActionAt: true,
     initialHistory: [promotionHistory],
     appendHistory: [promotionHistory],
     createdTitle: 'Lead promovido pelo Caça Lead',
