@@ -240,6 +240,10 @@ html.aos-mobile .pmh-sidebar > nav button b {
   font-weight: 850 !important;
 }
 
+html.aos-mobile .pmh-sidebar > nav button b[hidden] {
+  display: none !important;
+}
+
 html.aos-mobile .pmh-sidebar > nav button.active {
   color: #fff !important;
   background: rgba(115, 92, 255, .16) !important;
