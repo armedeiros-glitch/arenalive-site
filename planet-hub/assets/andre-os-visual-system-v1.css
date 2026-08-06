@@ -1,3 +1,5 @@
+@import url('/planet-hub/assets/planet-expansion-v2.css?v=20260806-1');
+
 /* André OS · sistema visual oficial
    Fonte única de tokens e contratos compartilhados.
    Módulos devem consumir estas variáveis em vez de cores, raios e sombras fixos. */
