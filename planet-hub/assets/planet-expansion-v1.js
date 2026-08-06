@@ -82,13 +82,21 @@
       button = document.createElement('button');
       button.type = 'button';
       button.dataset.expansionNav = '1';
+      button.innerHTML = '<i aria-hidden="true">↗</i><span class="aos-mobile-nav-label" data-full-label="Expansão">Expansão</span><b data-expansion-badge hidden>0</b>';
       nav.appendChild(button);
     }
 
     button.type = 'button';
     button.classList.add('pmh-expansion-nav');
     button.setAttribute('aria-label', 'Expansão');
-    button.innerHTML = '<i aria-hidden="true">↗</i><span class="aos-mobile-nav-label" data-full-label="Expansão">Expansão</span><b data-expansion-badge hidden>0</b>';
+
+    if (!button.querySelector('[data-expansion-badge]')) {
+      const badge = document.createElement('b');
+      badge.dataset.expansionBadge = '1';
+      badge.hidden = true;
+      badge.textContent = '0';
+      button.appendChild(badge);
+    }
 
     syncNavigation();
     return button;
