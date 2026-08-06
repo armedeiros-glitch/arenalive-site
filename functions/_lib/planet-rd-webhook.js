@@ -1,6 +1,11 @@
-const LEADS_KEY = 'planet-hub:planet-expansion-leads:v1';
+import {
+  cleanPhone,
+  cleanText,
+  nowIso,
+  upsertLead,
+} from './planet-leads.js';
+
 const NOTIFICATIONS_KEY = 'planet-hub:planet-notifications:v1';
-const MAX_LEADS = 2000;
 const MAX_NOTIFICATIONS = 1000;
 const MAX_BODY_BYTES = 128_000;
 const MOVEMENT_GROUP_WINDOW_MS = 15 * 60 * 1000;
@@ -12,9 +17,6 @@ const headers = {
 };
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers });
-const cleanText = (value, max = 300) => String(value ?? '').trim().slice(0, max);
-const cleanPhone = (value) => cleanText(value, 40).replace(/[^\d+]/g, '');
-const nowIso = () => new Date().toISOString();
 
 const fieldValue = (fields, names) => {
   const wanted = names.map((name) => String(name).toLowerCase());
@@ -53,56 +55,6 @@ const extractPayload = (payload = {}) => {
   };
 };
 
-const normalizeHistory = (items) => (Array.isArray(items) ? items : [])
-  .map((item) => ({
-    id: cleanText(item?.id, 120) || `history-${crypto.randomUUID()}`,
-    type: cleanText(item?.type, 40) || 'updated',
-    title: cleanText(item?.title, 180),
-    changes: Array.isArray(item?.changes)
-      ? item.changes.map((value) => cleanText(value, 80)).filter(Boolean).slice(0, 20)
-      : [],
-    createdAt: cleanText(item?.createdAt, 40) || nowIso(),
-  }))
-  .slice(0, 100);
-
-const normalizeLead = (item = {}) => {
-  const createdAt = cleanText(item.createdAt, 40) || nowIso();
-  const phone = cleanPhone(item.phone);
-  const name = cleanText(item.name, 180) || 'Lead sem nome';
-  const firstName = name === 'Lead sem nome' ? '' : name.split(/\s+/)[0] || '';
-  const suggestedMessage = firstName
-    ? `Olá, ${firstName}! Tudo bem?\n\nSou da equipe Planet Chocolate. Recebemos seu interesse em conhecer nossa franquia.`
-    : 'Olá! Tudo bem?\n\nSou da equipe Planet Chocolate. Recebemos seu interesse em conhecer nossa franquia.';
-
-  return {
-    id: cleanText(item.id, 120) || `lead-${crypto.randomUUID()}`,
-    tenantId: 'planet',
-    source: 'rd_station',
-    externalId: cleanText(item.externalId, 180),
-    status: cleanText(item.status, 40) || 'new',
-    name,
-    phone,
-    email: cleanText(item.email, 220).toLowerCase(),
-    city: cleanText(item.city, 140),
-    state: cleanText(item.state, 80),
-    company: cleanText(item.company, 180),
-    origin: cleanText(item.origin, 180),
-    conversion: cleanText(item.conversion, 220),
-    assignedTo: cleanText(item.assignedTo, 160),
-    rdStage: cleanText(item.rdStage, 160),
-    notes: cleanText(item.notes, 1600),
-    whatsappMessage: cleanText(item.whatsappMessage, 1200) || suggestedMessage,
-    whatsappUrl: phone
-      ? `https://wa.me/${phone}?text=${encodeURIComponent(cleanText(item.whatsappMessage, 1200) || suggestedMessage)}`
-      : '',
-    viewedAt: cleanText(item.viewedAt, 40),
-    lastActionAt: cleanText(item.lastActionAt, 40),
-    history: normalizeHistory(item.history),
-    createdAt,
-    updatedAt: cleanText(item.updatedAt, 40) || createdAt,
-  };
-};
-
 const normalizeNotification = (item = {}) => {
   const createdAt = cleanText(item.createdAt, 40) || nowIso();
   return {
@@ -126,24 +78,24 @@ const normalizeNotification = (item = {}) => {
   };
 };
 
-const readDocument = async (store, key, normalizer, maxItems) => {
-  const stored = await store.get(key, { type: 'json' });
+const readNotificationDocument = async (store) => {
+  const stored = await store.get(NOTIFICATIONS_KEY, { type: 'json' });
   return stored && Array.isArray(stored.data)
     ? {
         revision: stored.revision || null,
         updatedAt: stored.updatedAt || null,
-        data: stored.data.slice(0, maxItems).map(normalizer),
+        data: stored.data.slice(0, MAX_NOTIFICATIONS).map(normalizeNotification),
       }
     : { revision: null, updatedAt: null, data: [] };
 };
 
-const writeDocument = async (store, key, data, normalizer, maxItems) => {
+const writeNotificationDocument = async (store, data) => {
   const document = {
     revision: crypto.randomUUID(),
     updatedAt: nowIso(),
-    data: data.slice(0, maxItems).map(normalizer),
+    data: data.slice(0, MAX_NOTIFICATIONS).map(normalizeNotification),
   };
-  await store.put(key, JSON.stringify(document));
+  await store.put(NOTIFICATIONS_KEY, JSON.stringify(document));
   return document;
 };
 
@@ -157,49 +109,6 @@ const authorized = (request, env) => {
   const query = url.searchParams.get('secret') || '';
   return bearer === expected || direct === expected || query === expected;
 };
-
-const mergeExternalData = (existing, incoming) => {
-  const merged = { ...existing };
-  const externalFields = [
-    'externalId', 'name', 'phone', 'email', 'city', 'state', 'company',
-    'origin', 'conversion', 'assignedTo', 'rdStage',
-  ];
-  externalFields.forEach((key) => {
-    const value = key === 'phone' ? cleanPhone(incoming[key]) : cleanText(incoming[key], 500);
-    if (value) merged[key] = incoming[key];
-  });
-  return merged;
-};
-
-const relevantChanges = (before, after) => {
-  const labels = {
-    name: 'nome',
-    phone: 'telefone',
-    email: 'e-mail',
-    city: 'cidade',
-    state: 'estado',
-    origin: 'origem',
-    conversion: 'conversão',
-    assignedTo: 'responsável',
-    rdStage: 'etapa do funil',
-  };
-  return Object.entries(labels)
-    .filter(([key]) => cleanText(before?.[key], 300) !== cleanText(after?.[key], 300))
-    .map(([key, label]) => ({
-      key,
-      label,
-      before: cleanText(before?.[key], 300),
-      after: cleanText(after?.[key], 300),
-    }));
-};
-
-const historyEvent = (type, title, changes = []) => ({
-  id: `history-${crypto.randomUUID()}`,
-  type,
-  title,
-  changes: changes.map((item) => item.label || item).filter(Boolean),
-  createdAt: nowIso(),
-});
 
 const notificationForNewLead = (lead) => {
   const location = [lead.city, lead.state].filter(Boolean).join('/') || 'Local não informado';
@@ -282,91 +191,53 @@ export async function onRequestPost({ env, request }) {
   if (!extracted.phone && !extracted.email) return json({ error: 'Lead sem telefone e e-mail.' }, 400);
 
   try {
-    const current = await readDocument(env.PLANET_HUB_DATA, LEADS_KEY, normalizeLead, MAX_LEADS);
-    const duplicate = current.data.find((lead) => (
-      extracted.externalId && lead.externalId === extracted.externalId && lead.source === 'rd_station'
-    ) || (
-      extracted.phone && lead.phone === extracted.phone && lead.status !== 'discarded'
-    ) || (
-      extracted.email && lead.email === extracted.email && lead.status !== 'discarded'
-    ));
-
-    let lead;
-    let data;
-    let changes = [];
-    if (duplicate) {
-      const merged = mergeExternalData(duplicate, extracted);
-      lead = normalizeLead({
-        ...merged,
-        id: duplicate.id,
-        status: duplicate.status,
-        notes: duplicate.notes,
-        whatsappMessage: duplicate.whatsappMessage,
-        viewedAt: duplicate.viewedAt,
-        lastActionAt: duplicate.lastActionAt,
-        createdAt: duplicate.createdAt,
-        history: duplicate.history,
-        updatedAt: nowIso(),
-      });
-      changes = relevantChanges(duplicate, lead);
-      if (changes.length) {
-        lead.history = [
-          historyEvent('updated', 'Movimentação recebida do RD Station', changes),
-          ...lead.history,
-        ].slice(0, 100);
-      }
-      data = current.data.map((item) => item.id === duplicate.id ? lead : item);
-    } else {
-      const createdAt = extracted.eventAt || nowIso();
-      lead = normalizeLead({
-        ...extracted,
-        id: `lead-${crypto.randomUUID()}`,
-        createdAt,
-        updatedAt: nowIso(),
-        history: [historyEvent('created', 'Lead recebido do RD Station')],
-      });
-      data = [lead, ...current.data];
-    }
-
-    const leadDocument = await writeDocument(
-      env.PLANET_HUB_DATA,
-      LEADS_KEY,
-      data,
-      normalizeLead,
-      MAX_LEADS,
-    );
+    const result = await upsertLead(env.PLANET_HUB_DATA, extracted, {
+      sourceOverride: 'rd_station',
+      ensureWhatsapp: true,
+      mergeExternalOnly: true,
+      preserveStatus: true,
+      preserveNotes: true,
+      preserveWhatsapp: true,
+      preserveViewedAt: true,
+      preserveLastActionAt: true,
+      historyOnDuplicate: {
+        type: 'updated',
+        title: 'Movimentação recebida do RD Station',
+      },
+      initialHistory: [{
+        id: `history-${crypto.randomUUID()}`,
+        type: 'created',
+        title: 'Lead recebido do RD Station',
+        changes: [],
+        createdAt: extracted.eventAt || nowIso(),
+      }],
+      createdAt: extracted.eventAt,
+      missingContactMessage: 'Lead sem telefone e e-mail.',
+    });
 
     let notification = {
       created: false,
       grouped: false,
-      reason: duplicate && !changes.length ? 'no_relevant_changes' : 'not_created',
+      reason: result.duplicate && !result.changes.length ? 'no_relevant_changes' : 'not_created',
     };
 
-    if (!duplicate || changes.length) {
+    if (!result.duplicate || result.changes.length) {
       try {
-        const currentNotifications = await readDocument(
-          env.PLANET_HUB_DATA,
-          NOTIFICATIONS_KEY,
-          normalizeNotification,
-          MAX_NOTIFICATIONS,
-        );
-        const result = duplicate
-          ? upsertMovementNotification(currentNotifications.data, lead, changes)
+        const currentNotifications = await readNotificationDocument(env.PLANET_HUB_DATA);
+        const notificationResult = result.duplicate
+          ? upsertMovementNotification(currentNotifications.data, result.lead, result.changes)
           : {
-              data: [notificationForNewLead(lead), ...currentNotifications.data],
+              data: [notificationForNewLead(result.lead), ...currentNotifications.data],
               grouped: false,
             };
-        const notificationDocument = await writeDocument(
+        const notificationDocument = await writeNotificationDocument(
           env.PLANET_HUB_DATA,
-          NOTIFICATIONS_KEY,
-          result.data,
-          normalizeNotification,
-          MAX_NOTIFICATIONS,
+          notificationResult.data,
         );
-        const createdNotification = result.notification || notificationDocument.data[0];
+        const createdNotification = notificationResult.notification || notificationDocument.data[0];
         notification = {
           created: true,
-          grouped: Boolean(result.grouped),
+          grouped: Boolean(notificationResult.grouped),
           id: createdNotification?.id || '',
           unread: notificationDocument.data.filter((item) => !item.readAt && !item.resolvedAt).length,
         };
@@ -381,12 +252,12 @@ export async function onRequestPost({ env, request }) {
 
     return json({
       ok: true,
-      duplicate: Boolean(duplicate),
-      changes: changes.map((item) => item.label),
-      leadId: lead.id,
-      revision: leadDocument.revision,
+      duplicate: result.duplicate,
+      changes: result.changes.map((item) => item.label),
+      leadId: result.lead.id,
+      revision: result.revision,
       notification,
-    }, duplicate ? 200 : 201);
+    }, result.duplicate ? 200 : 201);
   } catch (error) {
     return json({
       error: 'Falha ao processar o webhook do RD.',
