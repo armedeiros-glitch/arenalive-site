@@ -1,4 +1,6 @@
-/* Planet Expansão · garante que apenas a seção ativa ocupe o workspace */
-.pmh-expansion-shell > [hidden] {
-  display: none !important;
+/* Planet Expansão · contrato de exclusividade entre Leads e Caça Leads.
+   O atributo hidden é a fonte de verdade da seção ativa. */
+.pmh-expansion-shell > .pmh-expansion-panel[hidden],
+.pmh-expansion-shell > [data-lead-hunter-root][hidden] {
+  display: none;
 }
