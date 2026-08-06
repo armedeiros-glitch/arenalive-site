@@ -1,0 +1,143 @@
+/* André OS · cobertura final de superfícies no tema escuro */
+@media (prefers-color-scheme: dark) {
+  html.aos-mobile .pmh-section-head,
+  html.aos-mobile .pmh-command-metric,
+  html.aos-mobile .pmh-command-filters,
+  html.aos-mobile .pmh-command-group,
+  html.aos-mobile .pmh-command-group > header,
+  html.aos-mobile .pmh-command-empty,
+  html.aos-mobile .pmh-command-loading,
+  html.aos-mobile .pmh-command-error,
+  html.aos-mobile .pmh-command-ticket-facts > div,
+  html.aos-mobile .pmh-campaign-storage,
+  html.aos-mobile .pmh-campaign-metric,
+  html.aos-mobile .pmh-campaign-focus-card:nth-child(2),
+  html.aos-mobile .pmh-campaign-timeline,
+  html.aos-mobile .pmh-campaign-annual,
+  html.aos-mobile .pmh-campaign-timeline-card,
+  html.aos-mobile .pmh-campaign-date-block,
+  html.aos-mobile .pmh-campaign-next-step,
+  html.aos-mobile .pmh-campaign-months > section,
+  html.aos-mobile .pmh-campaign-annual-card,
+  html.aos-mobile .pmh-campaign-month-empty,
+  html.aos-mobile .pmh-campaign-empty,
+  html.aos-mobile .pmh-campaign-loading,
+  html.aos-mobile .pmh-expansion-head,
+  html.aos-mobile .pmh-expansion-metrics article,
+  html.aos-mobile .pmh-expansion-lead,
+  html.aos-mobile .pmh-expansion-empty {
+    border-color: #3a3442 !important;
+    background: #19171f !important;
+    color: #f2eef8 !important;
+    box-shadow: 0 14px 36px rgba(0,0,0,.22) !important;
+  }
+
+  html.aos-mobile .pmh-section-head {
+    background: linear-gradient(145deg,#1d1925,#141218) !important;
+  }
+
+  html.aos-mobile .pmh-section-head h2,
+  html.aos-mobile .pmh-section-head h3,
+  html.aos-mobile .pmh-command-metric strong,
+  html.aos-mobile .pmh-command-filter-title strong,
+  html.aos-mobile .pmh-command-group h3,
+  html.aos-mobile .pmh-campaign-metric strong,
+  html.aos-mobile .pmh-campaign-focus-card:nth-child(2) h3,
+  html.aos-mobile .pmh-campaign-timeline h3,
+  html.aos-mobile .pmh-campaign-timeline-main h4,
+  html.aos-mobile .pmh-campaign-date-block strong,
+  html.aos-mobile .pmh-campaign-next-step strong,
+  html.aos-mobile .pmh-campaign-annual summary strong,
+  html.aos-mobile .pmh-campaign-months h3,
+  html.aos-mobile .pmh-campaign-annual-card h4,
+  html.aos-mobile .pmh-expansion-head h2,
+  html.aos-mobile .pmh-expansion-metrics strong,
+  html.aos-mobile .pmh-expansion-lead strong,
+  html.aos-mobile .pmh-expansion-empty b {
+    color: #f4f1f8 !important;
+  }
+
+  html.aos-mobile .pmh-section-head p,
+  html.aos-mobile .pmh-command-metric small,
+  html.aos-mobile .pmh-command-metric span,
+  html.aos-mobile .pmh-command-filter-title span,
+  html.aos-mobile .pmh-command-group header p,
+  html.aos-mobile .pmh-campaign-storage,
+  html.aos-mobile .pmh-campaign-metric small,
+  html.aos-mobile .pmh-campaign-metric span,
+  html.aos-mobile .pmh-campaign-focus-card:nth-child(2) p,
+  html.aos-mobile .pmh-campaign-focus-card:nth-child(2) footer,
+  html.aos-mobile .pmh-campaign-focus-card:nth-child(2) em,
+  html.aos-mobile .pmh-campaign-timeline > header > span,
+  html.aos-mobile .pmh-campaign-date-block span,
+  html.aos-mobile .pmh-campaign-timeline-main p,
+  html.aos-mobile .pmh-campaign-timeline-meta > span:last-child,
+  html.aos-mobile .pmh-campaign-next-step small,
+  html.aos-mobile .pmh-campaign-next-step span,
+  html.aos-mobile .pmh-campaign-annual summary > span,
+  html.aos-mobile .pmh-campaign-annual-card small,
+  html.aos-mobile .pmh-campaign-annual-card p,
+  html.aos-mobile .pmh-campaign-annual-card footer > span:last-child,
+  html.aos-mobile .pmh-expansion-head p,
+  html.aos-mobile .pmh-expansion-head-actions small,
+  html.aos-mobile .pmh-expansion-metrics small,
+  html.aos-mobile .pmh-expansion-lead small,
+  html.aos-mobile .pmh-expansion-empty span {
+    color: #aaa4b3 !important;
+  }
+
+  html.aos-mobile .pmh-command-metric::after,
+  html.aos-mobile .pmh-campaign-metric::after {
+    opacity: .72;
+  }
+
+  html.aos-mobile .pmh-command-filters select,
+  html.aos-mobile .pmh-command-filters button,
+  html.aos-mobile .pmh-expansion-refresh {
+    border-color: #47404f !important;
+    background: #211e29 !important;
+    color: #e9e4f0 !important;
+  }
+
+  html.aos-mobile .pmh-command-clear {
+    background: #25212c !important;
+    color: #aaa4b3 !important;
+  }
+
+  html.aos-mobile .pmh-command-list {
+    background: #19171f !important;
+  }
+
+  html.aos-mobile .pmh-command-ticket-facts > div,
+  html.aos-mobile .pmh-campaign-date-block,
+  html.aos-mobile .pmh-campaign-next-step {
+    background: #211e29 !important;
+  }
+
+  html.aos-mobile .pmh-campaign-focus-card:nth-child(2) {
+    background: linear-gradient(145deg,#211d2b,#18151f) !important;
+  }
+
+  html.aos-mobile .pmh-campaign-timeline-card:hover,
+  html.aos-mobile .pmh-campaign-annual-card:hover,
+  html.aos-mobile .pmh-expansion-lead:hover,
+  html.aos-mobile .pmh-expansion-lead.selected {
+    border-color: #675b7b !important;
+    background: #231f2c !important;
+  }
+
+  html.aos-mobile .pmh-expansion-head {
+    background: linear-gradient(145deg,#211b26,#17141b) !important;
+  }
+
+  html.aos-mobile .pmh-expansion-status {
+    background: #2b2544 !important;
+    color: #c9bdff !important;
+  }
+
+  html.aos-mobile .pmh-alert {
+    border-color: #75444a !important;
+    background: #3b2427 !important;
+    color: #ffaaa2 !important;
+  }
+}
