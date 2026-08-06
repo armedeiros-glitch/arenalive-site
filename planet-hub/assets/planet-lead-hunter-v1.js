@@ -3,11 +3,16 @@
 
   const API = '/api/hub/planet/expansion/candidates';
   const IMPORT_API = `${API}/import`;
+  const HUNT_API = '/api/hub/planet/expansion/hunt';
+  const OSM_LICENSE_URL = 'https://www.openstreetmap.org/copyright';
   const state = {
     candidates: [],
     loaded: false,
     loading: false,
     importing: false,
+    hunting: false,
+    huntStatus: null,
+    huntReport: null,
     error: '',
     notice: '',
     selectedId: '',
@@ -29,6 +34,11 @@
   const root = () => document.querySelector('[data-lead-hunter-root]');
   const unique = (values) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   const scoreRange = (value) => ({ high: [75, 100], medium: [50, 74], low: [0, 49] }[value] || [0, 100]);
+  const fmtDateTime = (value) => {
+    const date = new Date(value || 0);
+    if (Number.isNaN(date.getTime())) return 'Ainda não executado';
+    return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(date);
+  };
 
   const showNotice = (message, tone = 'success') => {
     clearTimeout(noticeTimer);
@@ -59,8 +69,12 @@
     if (!silent) state.error = '';
     renderHunter();
     try {
-      const payload = await requestJson(API);
+      const [payload, huntStatus] = await Promise.all([
+        requestJson(API),
+        requestJson(HUNT_API).catch(() => null),
+      ]);
       state.candidates = Array.isArray(payload.data) ? payload.data : [];
+      if (huntStatus) state.huntStatus = huntStatus;
       state.loaded = true;
       if (state.selectedId && !state.candidates.some((item) => item.id === state.selectedId)) state.selectedId = '';
     } catch (error) {
@@ -163,6 +177,17 @@
     </div>${selected ? details(candidate) : ''}</article>`;
   };
 
+  const automationPanel = () => {
+    const status = state.huntStatus;
+    const run = status?.lastRun || null;
+    const report = state.huntReport;
+    const locations = Array.isArray(status?.locations) && status.locations.length
+      ? status.locations.map((item) => `${item.city}${item.state ? `/${item.state}` : ''}`).join(', ')
+      : 'Joinville/SC';
+    const runStatus = ({ completed: 'Concluída', partial: 'Concluída com alertas', failed: 'Falhou', running: 'Em andamento' }[run?.status] || 'Ainda não executada');
+    return `<section class="pmh-hunter-import pmh-hunter-automation"><div><small>BUSCA AUTOMÁTICA</small><h3>${esc(runStatus)}</h3><p>Praça piloto: ${esc(locations)} · Última execução: ${esc(fmtDateTime(run?.completedAt || run?.startedAt))}.</p><p>${run ? `${esc(run.candidatesCreated || 0)} novos · ${esc(run.duplicates || 0)} duplicados · ${esc(run.withoutContact || 0)} sem contato.` : 'O robô ainda não realizou a primeira varredura.'}</p>${report ? `<p><strong>Última busca manual:</strong> ${esc(report.placesFound || 0)} estabelecimentos encontrados, ${esc(report.candidatesCreated || 0)} candidatos criados.</p>` : ''}<p><a href="${OSM_LICENSE_URL}" target="_blank" rel="noopener noreferrer">${esc(status?.attribution || '© OpenStreetMap contributors')}</a></p></div></section>`;
+  };
+
   const importPanel = () => {
     if (!state.importPreview && !state.importReport) return '';
     if (state.importReport) {
@@ -178,9 +203,9 @@
     if (!target || target.hidden) return;
     const values = metrics();
     const candidates = filteredCandidates();
-    target.innerHTML = `<section class="pmh-hunter"><header class="pmh-hunter-head"><div><small>PLANET CHOCOLATE · EXPANSÃO</small><h2>Caça Lead</h2><p>Importe sinais autorizados, revise a evidência e só então promova o candidato para o funil oficial.</p></div><div class="pmh-hunter-head-actions"><button class="pmh-hunter-button" type="button" data-hunter-refresh ${state.loading ? 'disabled' : ''}>${state.loading ? 'Atualizando…' : '↻ Atualizar'}</button><button class="pmh-hunter-button primary" type="button" data-hunter-import>Importar CSV ou JSON</button><input type="file" accept=".csv,.json,text/csv,application/json" data-hunter-file hidden /></div></header>
+    target.innerHTML = `<section class="pmh-hunter"><header class="pmh-hunter-head"><div><small>PLANET CHOCOLATE · EXPANSÃO</small><h2>Caça Lead</h2><p>O robô encontra operações públicas, organiza as evidências e entrega candidatos para sua revisão.</p></div><div class="pmh-hunter-head-actions"><button class="pmh-hunter-button primary" type="button" data-hunter-hunt ${state.hunting ? 'disabled' : ''}>${state.hunting ? 'Buscando…' : '⌖ Buscar agora'}</button><button class="pmh-hunter-button" type="button" data-hunter-refresh ${state.loading ? 'disabled' : ''}>${state.loading ? 'Atualizando…' : '↻ Atualizar'}</button><button class="pmh-hunter-button" type="button" data-hunter-import>Importar arquivo</button><input type="file" accept=".csv,.json,text/csv,application/json" data-hunter-file hidden /></div></header>
       <section class="pmh-hunter-metrics"><article><small>TOTAL</small><strong>${values.total}</strong></article><article><small>EM REVISÃO</small><strong>${values.pending}</strong></article><article><small>APROVADOS</small><strong>${values.approved}</strong></article><article><small>REJEITADOS</small><strong>${values.rejected}</strong></article><article><small>PROMOVIDOS</small><strong>${values.promoted}</strong></article><article><small>SCORE MÉDIO</small><strong>${values.average}</strong></article></section>
-      ${state.notice && !state.error ? `<div class="pmh-hunter-notice">${esc(state.notice)}</div>` : ''}${state.error ? `<div class="pmh-hunter-error">${esc(state.error)}</div>` : ''}${importPanel()}${toolbar()}<section class="pmh-hunter-list">${state.loading && !state.loaded ? '<div class="pmh-hunter-empty">Carregando candidatos…</div>' : candidates.length ? candidates.map(candidateCard).join('') : '<div class="pmh-hunter-empty">Nenhum candidato corresponde aos filtros atuais.</div>'}</section></section>`;
+      ${state.notice && !state.error ? `<div class="pmh-hunter-notice">${esc(state.notice)}</div>` : ''}${state.error ? `<div class="pmh-hunter-error">${esc(state.error)}</div>` : ''}${automationPanel()}${importPanel()}${toolbar()}<section class="pmh-hunter-list">${state.loading && !state.loaded ? '<div class="pmh-hunter-empty">Carregando candidatos…</div>' : candidates.length ? candidates.map(candidateCard).join('') : '<div class="pmh-hunter-empty">Nenhum candidato corresponde aos filtros atuais.</div>'}</section></section>`;
   };
 
   const activateHunter = () => {
@@ -225,6 +250,28 @@
       showNotice(payload.idempotent ? 'Este candidato já estava promovido.' : 'Candidato promovido para Leads.');
       window.setTimeout(() => openLead(payload.leadId), 250);
     } catch (error) { showNotice(error instanceof Error ? error.message : String(error), 'error'); }
+  };
+  const runHunt = async () => {
+    if (state.hunting) return;
+    state.hunting = true;
+    state.error = '';
+    renderHunter();
+    try {
+      const payload = await requestJson(HUNT_API, { method: 'POST', body: '{}' });
+      state.huntReport = payload.report || null;
+      if (payload.run) {
+        state.huntStatus = { ...(state.huntStatus || {}), lastRun: payload.run, attribution: payload.run.attribution || state.huntStatus?.attribution };
+      }
+      await load({ silent: true });
+      const created = Number(payload.report?.candidatesCreated || 0);
+      const duplicates = Number(payload.report?.duplicates || 0);
+      showNotice(`Busca concluída: ${created} novos e ${duplicates} duplicados.`);
+    } catch (error) {
+      showNotice(error instanceof Error ? error.message : String(error), 'error');
+    } finally {
+      state.hunting = false;
+      renderHunter();
+    }
   };
 
   const normalizeHeader = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -312,6 +359,7 @@
 
   document.addEventListener('click', (event) => {
     if (!event.target.closest?.('[data-lead-hunter-root]')) return;
+    if (event.target.closest('[data-hunter-hunt]')) runHunt();
     if (event.target.closest('[data-hunter-refresh]')) load();
     const detailsButton = event.target.closest('[data-hunter-details]');
     if (detailsButton) { state.selectedId = state.selectedId === detailsButton.dataset.hunterDetails ? '' : detailsButton.dataset.hunterDetails; renderHunter(); }
@@ -352,6 +400,7 @@
 
   window.PlanetLeadHunter = {
     load,
+    hunt: runHunt,
     render: scheduleRender,
     openCandidate(id) {
       window.dispatchEvent(new CustomEvent('planet:open-candidate', {

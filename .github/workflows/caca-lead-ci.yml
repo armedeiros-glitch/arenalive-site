@@ -39,7 +39,7 @@ jobs:
             else
               echo "Ignorando asset não textual ($mime): $file"
             fi
-          done < <(find functions planet-hub/assets -type f -name '*.js' -print0)
+          done < <(find functions planet-hub/assets workers -type f -name '*.js' -print0)
 
       - name: Bloquear camadas e fontes duplicadas
         shell: bash
@@ -52,9 +52,12 @@ jobs:
           ! grep -q '!important' planet-hub/assets/planet-lead-hunter-v1.css
           ! grep -q '!important' planet-hub/assets/planet-expansion-v1.css
           ! grep -q 'planet-expansion-exclusive-sections-v1' index.html
+          ! grep -Eq 'promoteCandidate|upsertLead|promotedLeadId\s*:' functions/_lib/planet-lead-hunt.js
+          ! grep -Riq 'GOOGLE_PLACES_API_KEY\|places.googleapis.com\|google_places' functions/_lib/planet-lead-hunt* functions/api/hub/planet/expansion/hunt.js workers/planet-caca-leads docs/caca-leads-automatic-v1.md
           test "$(grep -RIl "planet-hub:planet-expansion-leads:v1" functions | wc -l)" -eq 1
           test "$(grep -RIl "planet-hub:planet-expansion-candidates:v1" functions | wc -l)" -eq 1
           test "$(grep -RIl "planet-hub:planet-notifications:v1" functions | wc -l)" -eq 1
+          test "$(grep -RIl "planet-hub:planet-lead-hunt-runs:v1" functions | wc -l)" -eq 1
           test "$(grep -o "planet-expansion-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "planet-lead-hunter-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "andre-os-navigation-drawers-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
@@ -78,6 +81,10 @@ jobs:
             tests/planet-lead-hunter-dedup-v1.test.mjs
             tests/planet-lead-hunter-import-v1.test.mjs
             tests/planet-lead-hunter-promotion-v1.test.mjs
+            tests/planet-lead-hunt-openstreetmap-v1.test.mjs
+            tests/planet-lead-hunt-run-v1.test.mjs
+            tests/planet-lead-hunt-contract-v1.test.mjs
+            tests/planet-lead-hunt-ui-v1.test.mjs
             tests/andre-os-navigation-drawers-v1.test.mjs
             tests/andre-os-home-pages-v1.test.mjs
             tests/planet-expansion-exclusive-sections-v1.test.mjs

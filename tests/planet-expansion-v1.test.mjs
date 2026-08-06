@@ -11,7 +11,7 @@ const apiSource = read('functions/api/hub/planet/leads.js');
 const leadCore = read('functions/_lib/planet-leads.js');
 
 assert.match(accessSource, /planet-expansion-v1\.js\?v=20260806-2/);
-assert.match(accessSource, /planet-lead-hunter-v1\.js\?v=20260806-2/);
+assert.match(accessSource, /planet-lead-hunter-v1\.js\?v=20260806-3/);
 assert.match(accessSource, /value\.includes\('expans'\)/);
 assert.match(indexSource, /planet-expansion-v1\.css\?v=20260806-1/);
 assert.doesNotMatch(indexSource, /planet-expansion-exclusive-sections/);
@@ -31,6 +31,9 @@ assert.match(moduleStyles, /pmh-expansion-panel\[hidden\]/);
 assert.match(moduleStyles, /data-lead-hunter-root\]\[hidden\]/);
 assert.doesNotMatch(moduleStyles, /!important/);
 assert.doesNotMatch(hunterSource, /pmh-expansion-shell|insertAdjacentElement|setInterval|MutationObserver/);
+assert.match(hunterSource, /const HUNT_API = '\/api\/hub\/planet\/expansion\/hunt'/);
+assert.match(hunterSource, /data-hunter-hunt/);
+assert.match(hunterSource, /© OpenStreetMap contributors/);
 assert.match(apiSource, /PLANET_HUB_DATA/);
 assert.match(apiSource, /upsertLead/);
 assert.match(leadCore, /tenantId: 'planet'/);

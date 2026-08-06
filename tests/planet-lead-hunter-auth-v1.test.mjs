@@ -6,10 +6,11 @@ const routeFiles = [
   '../functions/api/hub/planet/expansion/candidates/[id].js',
   '../functions/api/hub/planet/expansion/candidates/[id]/promote.js',
   '../functions/api/hub/planet/expansion/candidates/import.js',
+  '../functions/api/hub/planet/expansion/hunt.js',
 ];
 assert.match(middleware, /getAuthState/);
 assert.match(middleware, /RD_WEBHOOK_PATH/);
-assert.doesNotMatch(middleware, /expansion\/candidates/);
+assert.doesNotMatch(middleware, /expansion\/candidates|expansion\/hunt/);
 for (const route of routeFiles) {
   const source = await readFile(new URL(route, import.meta.url), 'utf8');
   assert.match(source, /PLANET_HUB_DATA/);
