@@ -278,6 +278,28 @@
     font-size: 9px;
     font-weight: 750;
   }
+
+  /* O bloco 2 sobe um ou dois tons, enquanto o foco principal permanece mais escuro. */
+  html.aos-mobile .pmh-priority-other {
+    border-color: rgba(255, 255, 255, .13);
+    background:
+      radial-gradient(circle at 102% -18%, rgba(164, 145, 255, .28), transparent 46%),
+      linear-gradient(145deg, #2b2738 0%, #403a52 100%);
+    box-shadow: 0 13px 30px rgba(24, 19, 43, .13);
+  }
+
+  html.aos-mobile .pmh-priority-other.tone-risk,
+  html.aos-mobile .pmh-priority-other.tone-follow-up {
+    background:
+      radial-gradient(circle at 102% -18%, rgba(255, 155, 112, .22), transparent 46%),
+      linear-gradient(145deg, #30242c 0%, #493540 100%);
+  }
+
+  html.aos-mobile .pmh-priority-other.tone-approval {
+    background:
+      radial-gradient(circle at 102% -18%, rgba(105, 221, 170, .20), transparent 46%),
+      linear-gradient(145deg, #263532 0%, #385048 100%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
