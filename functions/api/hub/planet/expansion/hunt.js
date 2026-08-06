@@ -47,14 +47,13 @@ export async function onRequestPost({ env, request }) {
   try {
     const result = await runLeadHunt({
       store: env.PLANET_HUB_DATA,
-      apiKey: env.GOOGLE_PLACES_API_KEY,
       env,
       options: {
         trigger: 'manual',
         force: payload.force === true,
         locations: payload.locations || payload.cities,
         segments: payload.segments,
-        maxResultsPerQuery: payload.maxResultsPerQuery,
+        maxResultsPerLocation: payload.maxResultsPerLocation ?? payload.maxResultsPerQuery,
       },
     });
     return json(result);
