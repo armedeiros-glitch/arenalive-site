@@ -152,7 +152,7 @@
     const wasOpen = isOpen();
     document.documentElement.classList.remove(OPEN_CLASS);
     document.body.classList.remove(OPEN_CLASS);
-    unlockPageScroll();
+    if (wasOpen) unlockPageScroll();
     syncAccessibility();
 
     if (wasOpen && restoreFocus) {
