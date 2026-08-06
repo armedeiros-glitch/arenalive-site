@@ -1,13 +1,20 @@
 import { importCandidates } from './planet-lead-candidates.js';
 import { nowIso } from './planet-leads.js';
 import {
-  googlePlaceToCandidate,
-  searchGooglePlaces,
-} from './planet-lead-hunt-google-places.js';
+  DEFAULT_OVERPASS_API_URL,
+  osmElementToCandidate,
+  searchOpenStreetMap,
+} from './planet-lead-hunt-openstreetmap.js';
 
 export const LEAD_HUNT_STORAGE_KEY = 'planet-hub:planet-lead-hunt-runs:v1';
 export const DEFAULT_HUNT_LOCATIONS = Object.freeze([
-  Object.freeze({ city: 'Joinville', state: 'SC' }),
+  Object.freeze({
+    city: 'Joinville',
+    state: 'SC',
+    lat: -26.3045,
+    lon: -48.8487,
+    radiusMeters: 24_000,
+  }),
 ]);
 export const DEFAULT_HUNT_SEGMENTS = Object.freeze([
   'cafeteria',
@@ -17,9 +24,9 @@ export const DEFAULT_HUNT_SEGMENTS = Object.freeze([
   'confeitaria',
   'alimentação em shopping',
 ]);
-export const MAX_HUNT_QUERIES = 12;
-export const MAX_RESULTS_PER_QUERY = 20;
-export const DEFAULT_RESULTS_PER_QUERY = 8;
+export const MAX_HUNT_LOCATIONS = 4;
+export const MAX_RESULTS_PER_LOCATION = 100;
+export const DEFAULT_RESULTS_PER_LOCATION = 40;
 export const HUNT_LOCK_MINUTES = 20;
 
 const clean = (value, limit = 500) => String(value || '').trim().slice(0, limit);
@@ -28,9 +35,13 @@ const clampInteger = (value, min, max, fallback) => {
   if (!Number.isFinite(parsed)) return fallback;
   return Math.max(min, Math.min(max, parsed));
 };
+const finiteNumber = (value, fallback = null) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
 
 const parseList = (value) => String(value || '')
-  .split(/[\n,;]+/)
+  .split(/[\n;]+/)
   .map((item) => item.trim())
   .filter(Boolean);
 
@@ -38,12 +49,23 @@ const normalizeLocation = (value) => {
   if (value && typeof value === 'object') {
     const city = clean(value.city, 140);
     const state = clean(value.state, 40).toUpperCase();
-    return city ? { city, state } : null;
+    const lat = finiteNumber(value.lat);
+    const lon = finiteNumber(value.lon ?? value.lng);
+    const radiusMeters = clampInteger(value.radiusMeters, 2_000, 50_000, 24_000);
+    return city && lat != null && lon != null
+      ? { city, state, lat, lon, radiusMeters }
+      : null;
   }
-  const [cityPart, statePart = ''] = clean(value, 220).split('|');
+
+  const [cityPart, statePart = '', latPart = '', lonPart = '', radiusPart = ''] = clean(value, 320).split('|');
   const city = clean(cityPart, 140);
   const state = clean(statePart, 40).toUpperCase();
-  return city ? { city, state } : null;
+  const lat = finiteNumber(latPart);
+  const lon = finiteNumber(lonPart);
+  const radiusMeters = clampInteger(radiusPart, 2_000, 50_000, 24_000);
+  return city && lat != null && lon != null
+    ? { city, state, lat, lon, radiusMeters }
+    : null;
 };
 
 const normalizeLocations = (value) => {
@@ -53,16 +75,20 @@ const normalizeLocations = (value) => {
   normalized.forEach((location) => {
     unique.set(`${location.city.toLowerCase()}|${location.state}`, location);
   });
-  return [...unique.values()].slice(0, 4);
+  return [...unique.values()].slice(0, MAX_HUNT_LOCATIONS);
 };
 
 const normalizeSegments = (value) => {
-  const input = Array.isArray(value) ? value : parseList(value);
+  const input = Array.isArray(value)
+    ? value
+    : String(value || '').split(/[\n,;]+/).map((item) => item.trim()).filter(Boolean);
   return [...new Set(input.map((segment) => clean(segment, 120)).filter(Boolean))].slice(0, 8);
 };
 
 export const leadHuntConfigFromEnv = (env = {}, overrides = {}) => {
-  const envLocations = normalizeLocations(env.PLANET_LEAD_HUNT_CITIES);
+  const envLocations = normalizeLocations(
+    env.PLANET_LEAD_HUNT_LOCATIONS || env.PLANET_LEAD_HUNT_CITIES,
+  );
   const envSegments = normalizeSegments(env.PLANET_LEAD_HUNT_SEGMENTS);
   const overrideLocations = normalizeLocations(overrides.locations || overrides.cities);
   const overrideSegments = normalizeSegments(overrides.segments);
@@ -76,30 +102,28 @@ export const leadHuntConfigFromEnv = (env = {}, overrides = {}) => {
     : envSegments.length
       ? envSegments
       : [...DEFAULT_HUNT_SEGMENTS];
-  const maxResultsPerQuery = clampInteger(
-    overrides.maxResultsPerQuery ?? env.PLANET_LEAD_HUNT_MAX_RESULTS,
+  const maxResultsPerLocation = clampInteger(
+    overrides.maxResultsPerLocation
+      ?? overrides.maxResultsPerQuery
+      ?? env.PLANET_LEAD_HUNT_MAX_RESULTS,
     1,
-    MAX_RESULTS_PER_QUERY,
-    DEFAULT_RESULTS_PER_QUERY,
+    MAX_RESULTS_PER_LOCATION,
+    DEFAULT_RESULTS_PER_LOCATION,
   );
-  const queries = [];
-  locations.forEach((location) => {
-    segments.forEach((segment) => {
-      if (queries.length >= MAX_HUNT_QUERIES) return;
-      queries.push({
-        segment,
-        city: location.city,
-        state: location.state,
-        textQuery: `${segment} em ${location.city}${location.state ? ` ${location.state}` : ''}`,
-      });
-    });
-  });
   return {
-    provider: 'google_places',
+    provider: 'openstreetmap_overpass',
+    endpoint: clean(env.OVERPASS_API_URL, 1200) || DEFAULT_OVERPASS_API_URL,
     locations,
     segments,
-    maxResultsPerQuery,
-    queries,
+    maxResultsPerLocation,
+    queries: locations.map((location) => ({
+      city: location.city,
+      state: location.state,
+      lat: location.lat,
+      lon: location.lon,
+      radiusMeters: location.radiusMeters,
+      label: `${location.city}${location.state ? `/${location.state}` : ''}`,
+    })),
   };
 };
 
@@ -137,25 +161,10 @@ const recentRunningJob = (lastRun) => {
   return Date.now() - startedAt < HUNT_LOCK_MINUTES * 60_000;
 };
 
-const executeWithConcurrency = async (items, worker, concurrency = 2) => {
-  const results = new Array(items.length);
-  let cursor = 0;
-  const runners = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (cursor < items.length) {
-      const index = cursor;
-      cursor += 1;
-      results[index] = await worker(items[index], index);
-    }
-  });
-  await Promise.all(runners);
-  return results;
-};
-
 const errorText = (error) => clean(error instanceof Error ? error.message : error, 800);
 
 export const runLeadHunt = async ({
   store,
-  apiKey,
   env = {},
   options = {},
   fetchImpl = fetch,
@@ -165,15 +174,10 @@ export const runLeadHunt = async ({
     error.status = 503;
     throw error;
   }
-  if (!clean(apiKey, 500)) {
-    const error = new Error('GOOGLE_PLACES_API_KEY não configurada.');
-    error.status = 503;
-    throw error;
-  }
 
   const config = leadHuntConfigFromEnv(env, options);
-  if (!config.queries.length) {
-    const error = new Error('Nenhuma praça ou segmento configurado para o Caça Leads.');
+  if (!config.queries.length || !config.segments.length) {
+    const error = new Error('Nenhuma praça ou segmento válido foi configurado para o Caça Leads.');
     error.status = 400;
     throw error;
   }
@@ -190,13 +194,14 @@ export const runLeadHunt = async ({
   const run = {
     id: `lead-hunt-${crypto.randomUUID()}`,
     provider: config.provider,
+    attribution: '© OpenStreetMap contributors',
     trigger: clean(options.trigger, 40) || 'manual',
     status: 'running',
     startedAt,
     completedAt: '',
     locations: config.locations,
     segments: config.segments,
-    maxResultsPerQuery: config.maxResultsPerQuery,
+    maxResultsPerLocation: config.maxResultsPerLocation,
     queriesPlanned: config.queries.length,
     queriesCompleted: 0,
     placesFound: 0,
@@ -212,35 +217,35 @@ export const runLeadHunt = async ({
 
   try {
     const discoveredAt = nowIso();
-    const queryReports = await executeWithConcurrency(config.queries, async (query) => {
+    const queryReports = [];
+    for (const query of config.queries) {
       try {
-        const places = await searchGooglePlaces({
-          apiKey,
-          textQuery: query.textQuery,
-          pageSize: config.maxResultsPerQuery,
+        const elements = await searchOpenStreetMap({
+          location: query,
+          segments: config.segments,
+          maxResults: config.maxResultsPerLocation,
+          endpoint: config.endpoint,
           fetchImpl,
         });
-        return {
+        queryReports.push({
           ...query,
           ok: true,
-          found: places.length,
-          candidates: places.map((place) => googlePlaceToCandidate(place, {
-            query: query.textQuery,
-            city: query.city,
-            state: query.state,
+          found: elements.length,
+          candidates: elements.map((element) => osmElementToCandidate(element, {
+            location: query,
             discoveredAt,
           })),
-        };
+        });
       } catch (error) {
-        return {
+        queryReports.push({
           ...query,
           ok: false,
           found: 0,
           candidates: [],
           error: errorText(error),
-        };
+        });
       }
-    }, 2);
+    }
 
     const uniqueCandidates = new Map();
     queryReports.forEach((report) => {
@@ -257,13 +262,12 @@ export const runLeadHunt = async ({
     const report = importResult.report || {};
     const failedQueries = queryReports.filter((item) => !item.ok);
     const successfulQueries = queryReports.filter((item) => item.ok);
-    const completedAt = nowIso();
     const finalRun = {
       ...run,
       status: successfulQueries.length
         ? failedQueries.length ? 'partial' : 'completed'
         : 'failed',
-      completedAt,
+      completedAt: nowIso(),
       queriesCompleted: successfulQueries.length,
       placesFound: queryReports.reduce((sum, item) => sum + Number(item.found || 0), 0),
       uniqueCandidatesFound: candidates.length,
@@ -272,7 +276,7 @@ export const runLeadHunt = async ({
       invalid: Number(report.invalid || 0),
       withoutContact: Number(report.withoutContact || 0),
       errors: [
-        ...failedQueries.map((item) => ({ query: item.textQuery, error: item.error })),
+        ...failedQueries.map((item) => ({ query: item.label, error: item.error })),
         ...(Array.isArray(report.errors) ? report.errors.slice(0, 20) : []),
       ].slice(0, 40),
       queryReports: queryReports.map(({ candidates: _candidates, ...item }) => item),
@@ -310,10 +314,11 @@ export const getLeadHuntStatus = async ({ store, env = {} }) => {
   const config = leadHuntConfigFromEnv(env);
   return {
     provider: config.provider,
-    providerConfigured: Boolean(clean(env.GOOGLE_PLACES_API_KEY, 500)),
+    providerConfigured: true,
+    attribution: '© OpenStreetMap contributors',
     locations: config.locations,
     segments: config.segments,
-    maxResultsPerQuery: config.maxResultsPerQuery,
+    maxResultsPerLocation: config.maxResultsPerLocation,
     queriesPlanned: config.queries.length,
     lastRun: document.lastRun,
     history: document.history.slice(0, 10),
