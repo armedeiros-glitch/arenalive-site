@@ -7,8 +7,10 @@
 
   const ITEMS = {
     inicio: { label: 'Hoje', icon: '⌂', order: 0, group: '' },
-    chamados: { label: 'Chamados', icon: '▥', order: 11, group: 'operacao' },
-    inauguracoes: { label: 'Inaugurações', icon: '⚑', order: 12, group: 'operacao' },
+    demandas: { label: 'Demandas', icon: '✎', order: 11, group: 'operacao' },
+    radar: { label: 'Radar', icon: '◎', order: 12, group: 'operacao' },
+    chamados: { label: 'Chamados', icon: '▥', order: 13, group: 'operacao' },
+    inauguracoes: { label: 'Inaugurações', icon: '⚑', order: 14, group: 'operacao' },
     calendario: { label: 'Calendário', icon: '▦', order: 21, group: 'marketing' },
     conteudos: { label: 'Conteúdos', icon: '▤', order: 22, group: 'marketing' },
   };
@@ -27,7 +29,7 @@
   const activeDrawer = () => {
     const hash = currentHash();
     if (hash.includes('expans')) return 'expansao';
-    if (hash.includes('cham') || hash.includes('inaug')) return 'operacao';
+    if (hash.includes('demanda') || hash.includes('radar') || hash.includes('cham') || hash.includes('inaug')) return 'operacao';
     if (hash.includes('calend') || hash.includes('campanha') || hash.includes('conte')) return 'marketing';
     return '';
   };
@@ -136,7 +138,9 @@
     const heading = title();
     if (!heading) return;
     const hash = currentHash();
-    if (!hash || hash === 'inicio') heading.textContent = 'Hoje';
+    if (!hash || hash === 'inicio' || hash === 'hoje') heading.textContent = 'Hoje';
+    if (hash.includes('demanda')) heading.textContent = 'Demandas';
+    if (hash.includes('radar')) heading.textContent = 'Radar';
     if (hash.includes('expans')) heading.textContent = expansionSection() === 'caca-lead' ? 'Caça Leads' : 'Leads recebidos';
   };
 
@@ -175,6 +179,7 @@
   }, true);
 
   window.addEventListener('pmh:view-rendered', () => scheduleMount({ forceActive: true }));
+  window.addEventListener('andre-os:home-page-rendered', () => scheduleMount({ forceActive: true }));
   window.addEventListener('planet:expansion-section-rendered', () => scheduleMount({ forceActive: true }));
   window.addEventListener('pmh:access-ready', () => {
     scheduleMount({ forceActive: true });
