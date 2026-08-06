@@ -74,7 +74,7 @@
     }));
     window.dispatchEvent(new CustomEvent('pmh:view-rendered', {
       detail: {
-        view: page === 'hoje' ? 'inicio' : page,
+        view: 'inicio',
         page,
         content: target,
         segmented: true,
