@@ -1,7 +1,7 @@
-/* André OS · mobile priority carousel
-   Compacta o Decision Cockpit somente no celular, sem alterar dados ou desktop. */
+/* André OS · mobile priority layout
+   Separa o foco principal do carrossel de outros pontos somente no celular. */
 
-.pmh-priority-deck {
+.pmh-priority-mobile {
   display: none;
 }
 
@@ -16,17 +16,24 @@
     box-shadow: none !important;
   }
 
-  html.aos-mobile .pmh-decision-cockpit > :not(.pmh-priority-deck) {
+  html.aos-mobile .pmh-decision-cockpit.pmh-priority-ready > :not(.pmh-priority-mobile) {
     display: none !important;
   }
 
-  html.aos-mobile .pmh-priority-deck {
+  html.aos-mobile .pmh-priority-mobile {
     display: grid;
-    gap: 10px;
+    gap: 15px;
     min-width: 0;
   }
 
-  html.aos-mobile .pmh-priority-deck-head {
+  html.aos-mobile .pmh-priority-focus-section,
+  html.aos-mobile .pmh-priority-others-section {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  html.aos-mobile .pmh-priority-section-head {
     display: flex;
     align-items: end;
     justify-content: space-between;
@@ -34,100 +41,79 @@
     padding: 0 2px;
   }
 
-  html.aos-mobile .pmh-priority-deck-head small,
-  html.aos-mobile .pmh-priority-deck-head strong {
+  html.aos-mobile .pmh-priority-section-head small,
+  html.aos-mobile .pmh-priority-section-head strong {
     display: block;
   }
 
-  html.aos-mobile .pmh-priority-deck-head small {
+  html.aos-mobile .pmh-priority-section-head small {
     color: var(--aos-accent, #735cff);
-    font-size: 8px;
+    font-size: 8.5px;
     font-weight: 900;
-    letter-spacing: .09em;
+    letter-spacing: .085em;
   }
 
-  html.aos-mobile .pmh-priority-deck-head strong {
+  html.aos-mobile .pmh-priority-section-head strong {
     margin-top: 3px;
-    color: var(--aos-ink, #12131b);
-    font-size: 15px;
-    font-weight: 900;
-    letter-spacing: -.02em;
+    color: var(--aos-muted, #747684);
+    font-size: 10px;
+    font-weight: 750;
   }
 
   html.aos-mobile .pmh-priority-counter {
     flex: 0 0 auto;
-    padding: 6px 9px;
+    padding: 5px 8px;
     border: 1px solid var(--aos-line, #e4e4ec);
     border-radius: 999px;
     color: var(--aos-muted, #747684);
     background: #fff;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 850;
   }
 
-  html.aos-mobile .pmh-priority-track {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: calc(100% - 26px);
-    gap: 10px;
-    width: calc(100% + var(--aos-mobile-pad, 16px));
-    margin-right: calc(-1 * var(--aos-mobile-pad, 16px));
-    padding: 0 var(--aos-mobile-pad, 16px) 2px 0;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: 0;
-    overscroll-behavior-inline: contain;
-    scrollbar-width: none;
-    touch-action: pan-x pan-y;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  html.aos-mobile .pmh-priority-track::-webkit-scrollbar {
-    display: none;
-  }
-
-  html.aos-mobile .pmh-priority-deck.is-single .pmh-priority-track {
-    grid-auto-columns: 100%;
-    width: 100%;
-    margin-right: 0;
-    padding-right: 0;
-  }
-
-  html.aos-mobile .pmh-priority-slide {
+  html.aos-mobile .pmh-priority-card {
     position: relative;
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr) auto;
-    gap: 10px;
-    min-height: 184px;
-    padding: 15px;
+    gap: 9px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, .09);
-    border-radius: 20px;
     color: #fff;
     background:
       radial-gradient(circle at 102% -18%, rgba(137, 111, 255, .38), transparent 45%),
       linear-gradient(145deg, #17141f 0%, #24203a 100%);
-    box-shadow: 0 17px 38px rgba(24, 19, 43, .18);
+    box-shadow: 0 16px 36px rgba(24, 19, 43, .17);
+  }
+
+  html.aos-mobile .pmh-priority-focus {
+    min-height: 165px;
+    padding: 14px;
+    border-radius: 19px;
+  }
+
+  html.aos-mobile .pmh-priority-other {
+    min-height: 148px;
+    padding: 13px;
+    border-radius: 17px;
     scroll-snap-align: start;
     scroll-snap-stop: always;
   }
 
-  html.aos-mobile .pmh-priority-slide.tone-risk,
-  html.aos-mobile .pmh-priority-slide.tone-follow-up {
+  html.aos-mobile .pmh-priority-card.tone-risk,
+  html.aos-mobile .pmh-priority-card.tone-follow-up {
     background:
       radial-gradient(circle at 102% -18%, rgba(255, 130, 87, .25), transparent 45%),
       linear-gradient(145deg, #1b151b 0%, #302027 100%);
   }
 
-  html.aos-mobile .pmh-priority-slide.tone-approval {
+  html.aos-mobile .pmh-priority-card.tone-approval {
     background:
       radial-gradient(circle at 102% -18%, rgba(83, 208, 151, .23), transparent 45%),
       linear-gradient(145deg, #141b1a 0%, #1d302b 100%);
   }
 
-  html.aos-mobile .pmh-priority-slide-head,
-  html.aos-mobile .pmh-priority-slide-footer {
+  html.aos-mobile .pmh-priority-card-head,
+  html.aos-mobile .pmh-priority-card-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -146,20 +132,20 @@
 
   html.aos-mobile .pmh-priority-kind {
     color: #c9c0ff;
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: 900;
-    letter-spacing: .06em;
+    letter-spacing: .055em;
     text-transform: uppercase;
   }
 
   html.aos-mobile .pmh-priority-due {
     flex: 0 0 auto;
-    max-width: 42%;
-    padding: 5px 7px;
+    max-width: 43%;
+    padding: 4px 7px;
     border-radius: 999px;
     color: rgba(255, 255, 255, .78);
     background: rgba(255, 255, 255, .08);
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: 850;
   }
 
@@ -173,12 +159,11 @@
     background: rgba(173, 98, 27, .28);
   }
 
-  html.aos-mobile .pmh-priority-slide h3 {
+  html.aos-mobile .pmh-priority-card h3 {
     display: -webkit-box;
     margin: 0;
     overflow: hidden;
     color: #fff;
-    font-size: 21px;
     font-weight: 900;
     line-height: 1.08;
     letter-spacing: -.035em;
@@ -186,18 +171,26 @@
     -webkit-line-clamp: 2;
   }
 
+  html.aos-mobile .pmh-priority-focus h3 {
+    font-size: 20px;
+  }
+
+  html.aos-mobile .pmh-priority-other h3 {
+    font-size: 17px;
+  }
+
   html.aos-mobile .pmh-priority-movement {
-    min-height: 49px;
-    padding: 10px 11px;
+    min-height: 43px;
+    padding: 9px 10px;
     border: 1px solid rgba(255, 255, 255, .09);
-    border-radius: 12px;
+    border-radius: 11px;
     background: rgba(255, 255, 255, .065);
   }
 
   html.aos-mobile .pmh-priority-movement small {
     display: block;
     color: #bfb2ff;
-    font-size: 8px;
+    font-size: 7.5px;
     font-weight: 900;
     letter-spacing: .07em;
   }
@@ -207,30 +200,58 @@
     margin: 4px 0 0;
     overflow: hidden;
     color: rgba(255, 255, 255, .82);
-    font-size: 11.5px;
+    font-size: 10.8px;
     font-weight: 700;
-    line-height: 1.35;
+    line-height: 1.32;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
 
   html.aos-mobile .pmh-priority-origin {
-    color: rgba(255, 255, 255, .62);
-    font-size: 9px;
+    color: rgba(255, 255, 255, .61);
+    font-size: 8.5px;
     font-weight: 800;
   }
 
   html.aos-mobile .pmh-priority-open {
     flex: 0 0 auto;
-    min-height: 36px;
-    padding: 0 12px;
+    min-height: 34px;
+    padding: 0 11px;
     border: 0;
-    border-radius: 10px;
+    border-radius: 9px;
     color: #fff;
     background: var(--aos-accent, #735cff);
-    box-shadow: 0 8px 20px rgba(91, 67, 237, .28);
-    font-size: 10px;
+    box-shadow: 0 8px 20px rgba(91, 67, 237, .26);
+    font-size: 9.5px;
     font-weight: 900;
+  }
+
+  html.aos-mobile .pmh-priority-track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc(100% - 42px);
+    gap: 9px;
+    width: calc(100% + var(--aos-mobile-pad, 16px));
+    margin-right: calc(-1 * var(--aos-mobile-pad, 16px));
+    padding: 0 var(--aos-mobile-pad, 16px) 2px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+    touch-action: pan-x pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html.aos-mobile .pmh-priority-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  html.aos-mobile .pmh-priority-others-section[data-priority-total="1"] .pmh-priority-track {
+    grid-auto-columns: 100%;
+    width: 100%;
+    margin-right: 0;
+    padding-right: 0;
   }
 
   html.aos-mobile .pmh-priority-controls {
@@ -238,7 +259,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    min-height: 20px;
+    min-height: 18px;
     padding: 0 3px;
   }
 
