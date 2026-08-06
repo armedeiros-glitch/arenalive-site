@@ -232,11 +232,9 @@ export async function onRequestPost({ env, request }) {
   }
 
   try {
-    const leadOptions = {
-      normalizerOptions: { forceSource: 'rd_station', suggestWhatsappMessage: true },
-    };
-    const current = await readPlanetLeadsDocument(env.PLANET_HUB_DATA, leadOptions);
-    const normalizedIncoming = normalizePlanetLead(extracted, leadOptions.normalizerOptions);
+    const rdNormalizeOptions = { forceSource: 'rd_station', suggestWhatsappMessage: true };
+    const current = await readPlanetLeadsDocument(env.PLANET_HUB_DATA);
+    const normalizedIncoming = normalizePlanetLead(extracted, rdNormalizeOptions);
     const duplicate = findPlanetLeadDuplicate(current.data, normalizedIncoming, { source: 'rd_station' });
 
     let lead;
@@ -247,6 +245,7 @@ export async function onRequestPost({ env, request }) {
       const merged = mergePlanetLeadExternalData(duplicate, extracted);
       lead = normalizePlanetLead({
         ...merged,
+        source: duplicate.source,
         id: duplicate.id,
         status: duplicate.status,
         notes: duplicate.notes,
@@ -257,7 +256,7 @@ export async function onRequestPost({ env, request }) {
         createdAt: duplicate.createdAt,
         history: duplicate.history,
         updatedAt: planetLeadNowIso(),
-      }, leadOptions.normalizerOptions);
+      }, { suggestWhatsappMessage: true });
       changes = planetLeadRelevantChanges(duplicate, lead);
       if (changes.length) {
         lead.history = [
@@ -274,11 +273,11 @@ export async function onRequestPost({ env, request }) {
         createdAt,
         updatedAt: planetLeadNowIso(),
         history: [createPlanetLeadHistoryEvent('created', 'Lead recebido do RD Station')],
-      }, leadOptions.normalizerOptions);
+      }, rdNormalizeOptions);
       data = [lead, ...current.data];
     }
 
-    const leadDocument = await writePlanetLeadsDocument(env.PLANET_HUB_DATA, data, leadOptions);
+    const leadDocument = await writePlanetLeadsDocument(env.PLANET_HUB_DATA, data);
 
     let notification = {
       created: false,
