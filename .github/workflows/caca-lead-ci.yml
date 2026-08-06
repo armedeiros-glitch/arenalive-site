@@ -84,6 +84,7 @@ jobs:
             tests/planet-lead-hunt-openstreetmap-v1.test.mjs
             tests/planet-lead-hunt-run-v1.test.mjs
             tests/planet-lead-hunt-contract-v1.test.mjs
+            tests/planet-lead-hunt-ui-v1.test.mjs
             tests/andre-os-navigation-drawers-v1.test.mjs
             tests/andre-os-home-pages-v1.test.mjs
             tests/planet-expansion-exclusive-sections-v1.test.mjs
