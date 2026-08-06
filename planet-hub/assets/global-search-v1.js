@@ -10,13 +10,11 @@
   const cache = { tickets: [], projects: [], inaugurations: [], loaded: false, loading: null };
   let activeIndex = -1;
 
-  const normalize = (value) => String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-
+  const normalize = (value) => String(value || '').normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
+  }[char]));
   const text = (...values) => values.flat(Infinity).filter(Boolean).join(' ');
   const input = () => document.querySelector('[data-search-wrap] input[type="search"]');
   const wrap = () => document.querySelector('[data-search-wrap]');
@@ -43,7 +41,7 @@
   };
 
   const ticketResult = (item) => ({
-    type: 'Chamado', icon: '▥', id: String(item.sultsTicketId || item.id || ''),
+    type: 'Chamado', icon: '▥',
     title: item.title || item.subject || 'Chamado sem título',
     subtitle: text(item.unit || 'Unidade não informada', item.responsible || item.requester || 'Sem responsável'),
     search: normalize(text(item.sultsTicketId, item.id, item.title, item.subject, item.unit, item.requester, item.responsible, item.department, item.sendingDepartment, (item.labels || []).map((label) => label.name))),
@@ -51,7 +49,7 @@
   });
 
   const projectResult = (item) => ({
-    type: 'Implantação', icon: '⚑', id: String(item.sultsProjectId || item.id || ''),
+    type: 'Implantação', icon: '⚑',
     title: item.unit || item.projectName || item.name || 'Implantação sem nome',
     subtitle: text(item.responsible || 'Sem responsável', item.endDate || item.startDate || ''),
     search: normalize(text(item.sultsProjectId, item.id, item.unit, item.projectName, item.name, item.responsible, item.category, item.status)),
@@ -59,7 +57,7 @@
   });
 
   const inaugurationResult = (item) => ({
-    type: 'Inauguração', icon: '🚀', id: String(item.id || ''),
+    type: 'Inauguração', icon: '🚀',
     title: item.unit || 'Unidade sem nome',
     subtitle: text(item.responsible || 'Sem responsável', item.location || '', item.openingDate || ''),
     search: normalize(text(item.id, item.unit, item.responsible, item.location, item.openingDate, (item.checklist || []).map((entry) => entry.action), (item.inauguralActions || []).map((entry) => [entry.name, entry.owner, entry.notes]))),
@@ -73,26 +71,23 @@
     ['Calendário', 'Campanhas e datas de 2026', '▦', 'calendario'],
     ['Conteúdos', 'Biblioteca do Marketing', '▤', 'conteudos'],
     ['Expansão', 'Leads e oportunidades de franquia', '↗', 'expansao'],
-  ].map(([title, subtitle, icon, view]) => ({ type: 'Área', title, subtitle, icon, view, query: '', target: '', search: normalize(`${title} ${subtitle}`) }));
+  ].map(([title, subtitle, icon, view]) => ({
+    type: 'Área', title, subtitle, icon, view, query: '', target: '', search: normalize(`${title} ${subtitle}`),
+  }));
 
   const score = (result, query) => {
-    const haystack = result.search;
-    if (haystack === query) return 0;
+    if (result.search === query) return 0;
     if (normalize(result.title).startsWith(query)) return 10;
-    if (haystack.startsWith(query)) return 20;
-    const index = haystack.indexOf(query);
+    if (result.search.startsWith(query)) return 20;
+    const index = result.search.indexOf(query);
     return index >= 0 ? 100 + index : Number.POSITIVE_INFINITY;
   };
 
   const resultsFor = (rawQuery) => {
     const query = normalize(rawQuery);
     if (!query) return [];
-    return [
-      ...cache.tickets.map(ticketResult),
-      ...cache.projects.map(projectResult),
-      ...cache.inaugurations.map(inaugurationResult),
-      ...navigationResults,
-    ]
+    return [...cache.tickets.map(ticketResult), ...cache.projects.map(projectResult),
+      ...cache.inaugurations.map(inaugurationResult), ...navigationResults]
       .map((result) => ({ ...result, rank: score(result, query) }))
       .filter((result) => Number.isFinite(result.rank))
       .sort((a, b) => a.rank - b.rank || a.type.localeCompare(b.type) || a.title.localeCompare(b.title))
@@ -124,20 +119,20 @@
       panel.replaceChildren();
       return;
     }
+    panel.hidden = false;
     if (!cache.loaded) {
-      panel.hidden = false;
       panel.innerHTML = '<div class="pmh-global-search-state">Buscando em todo o André OS…</div>';
       return;
     }
-    panel.hidden = false;
     if (!results.length) {
       panel.innerHTML = '<div class="pmh-global-search-state"><strong>Nada encontrado</strong><span>Tente nome da unidade, número do chamado ou responsável.</span></div>';
       return;
     }
     panel.innerHTML = results.map((result, index) => `
       <button type="button" role="option" class="pmh-global-search-item${index === activeIndex ? ' active' : ''}"
-        data-search-index="${index}" data-search-view="${result.view}" data-search-query="${encodeURIComponent(result.query)}" data-search-target="${encodeURIComponent(result.target)}">
-        <i>${result.icon}</i><span><small>${result.type}</small><strong>${result.title}</strong><em>${result.subtitle}</em></span><b>↵</b>
+        data-search-index="${index}" data-search-view="${escapeHtml(result.view)}"
+        data-search-query="${encodeURIComponent(result.query)}" data-search-target="${encodeURIComponent(result.target)}">
+        <i>${escapeHtml(result.icon)}</i><span><small>${escapeHtml(result.type)}</small><strong>${escapeHtml(result.title)}</strong><em>${escapeHtml(result.subtitle)}</em></span><b>↵</b>
       </button>`).join('');
   };
 
@@ -147,21 +142,21 @@
     activeIndex = -1;
   };
 
-  const focusTarget = (target) => {
-    if (!target) return;
+  const focusTarget = (target, query) => {
     window.setTimeout(() => {
-      const selectors = [
-        `[data-ticket-id="${CSS.escape(target)}"]`,
-        `[data-item-id="${CSS.escape(target)}"]`,
-        `[data-inauguration-id="${CSS.escape(target)}"]`,
-      ];
-      const element = document.querySelector(selectors.join(','));
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        element.classList.add('pmh-global-search-highlight');
-        window.setTimeout(() => element.classList.remove('pmh-global-search-highlight'), 1800);
+      const safeTarget = window.CSS?.escape ? CSS.escape(target) : target.replace(/["\\]/g, '\\$&');
+      const selectors = target ? [`[data-ticket-id="${safeTarget}"]`, `[data-item-id="${safeTarget}"]`, `[data-inauguration-id="${safeTarget}"]`] : [];
+      let element = selectors.length ? document.querySelector(selectors.join(',')) : null;
+      if (!element && query) {
+        const needle = normalize(query);
+        element = [...document.querySelectorAll('[data-content] article')]
+          .find((candidate) => normalize(candidate.textContent).includes(needle)) || null;
       }
-    }, 350);
+      if (!element) return;
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.classList.add('pmh-global-search-highlight');
+      window.setTimeout(() => element.classList.remove('pmh-global-search-highlight'), 1800);
+    }, 420);
   };
 
   const openResult = (button) => {
@@ -174,7 +169,7 @@
     location.hash = `#${view}`;
     field?.dispatchEvent(new Event('input', { bubbles: true }));
     close();
-    focusTarget(target);
+    focusTarget(target, query);
   };
 
   const move = (direction) => {
@@ -186,7 +181,7 @@
     items[activeIndex]?.scrollIntoView({ block: 'nearest' });
   };
 
-  const bind = async () => {
+  const bind = () => {
     const field = input();
     if (!field || field.dataset.globalSearchBound) return;
     field.dataset.globalSearchBound = '1';
@@ -195,27 +190,22 @@
     field.setAttribute('aria-label', 'Buscar em todo o André OS');
     ensurePanel();
 
-    field.addEventListener('focus', async () => {
+    const search = async () => {
       render(field.value);
       await load();
       render(field.value);
-    });
-    field.addEventListener('input', async () => {
-      render(field.value);
-      await load();
-      render(field.value);
-    });
+    };
+    field.addEventListener('focus', search);
+    field.addEventListener('input', search);
     field.addEventListener('keydown', (event) => {
       if (event.key === 'ArrowDown') { event.preventDefault(); move(1); }
       if (event.key === 'ArrowUp') { event.preventDefault(); move(-1); }
       if (event.key === 'Enter') {
-        const panel = ensurePanel();
-        const selected = panel?.querySelector(`[data-search-index="${Math.max(0, activeIndex)}"]`);
+        const selected = ensurePanel()?.querySelector(`[data-search-index="${Math.max(0, activeIndex)}"]`);
         if (selected) { event.preventDefault(); openResult(selected); }
       }
       if (event.key === 'Escape') close();
     });
-
     wrap()?.addEventListener('click', (event) => {
       const result = event.target.closest('[data-search-index]');
       if (result) openResult(result);
