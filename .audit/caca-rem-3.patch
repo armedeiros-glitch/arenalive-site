@@ -1,0 +1,184 @@
+diff -ruN '--exclude=.git' /tmp/caca-remote-current/tests/planet-expansion-flow-v1.test.mjs /tmp/caca-full/tests/planet-expansion-flow-v1.test.mjs
+--- /tmp/caca-remote-current/tests/planet-expansion-flow-v1.test.mjs	2026-08-06 14:40:12.000000000 +0000
++++ /tmp/caca-full/tests/planet-expansion-flow-v1.test.mjs	2026-08-06 14:44:48.728646457 +0000
+@@ -2,47 +2,37 @@
+ import { readFile } from 'node:fs/promises';
+ 
+ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+-
+-const [
+-  expansion,
+-  feedbackCss,
+-  feedbackJs,
+-  index,
+-  access,
+-  webhook,
+-  leadsApi,
+-] = await Promise.all([
++const [expansion, hunter, index, access, webhook, leadsApi, leadCore, notificationCore] = await Promise.all([
+   read('planet-hub/assets/planet-expansion-v1.js'),
+-  read('planet-hub/assets/andre-os-feedback-v1.css'),
+-  read('planet-hub/assets/andre-os-feedback-v1.js'),
++  read('planet-hub/assets/planet-lead-hunter-v1.js'),
+   read('index.html'),
+   read('planet-hub/assets/hub-access-v1.js'),
+   read('functions/_lib/planet-rd-webhook.js'),
+   read('functions/api/hub/planet/leads.js'),
++  read('functions/_lib/planet-leads.js'),
++  read('functions/_lib/planet-notifications.js'),
+ ]);
+ 
+-assert.ok(!expansion.includes('cloneNode('), 'Expansão não pode voltar a clonar item de navegação.');
+-assert.ok(!expansion.includes('new MutationObserver'), 'Expansão não pode reintroduzir observer global.');
+-assert.ok(expansion.includes('data-expansion-badge'), 'Navegação precisa exibir badge de leads.');
+-assert.ok(expansion.includes('data-lead-whatsapp'), 'Lead precisa oferecer ação de WhatsApp.');
+-assert.ok(expansion.includes('data-lead-status'), 'Lead precisa permitir avanço de status.');
+-assert.ok(expansion.includes("events.on('notifications.updated'"), 'Expansão deve reutilizar o relógio das notificações.');
+-assert.ok(expansion.includes('payload.updatedAt'), 'Tela deve informar o estado real da sincronização.');
+-
+-assert.match(feedbackCss, /position:\s*fixed\s*!important/);
+-assert.match(feedbackCss, /animation:\s*aos-feedback-toast-lifecycle 5s/);
+-assert.ok(feedbackJs.includes('const DISPLAY_MS = 5000'));
+-assert.ok(feedbackJs.includes("window.addEventListener('pmh:view-rendered'"));
++assert.ok(!expansion.includes('cloneNode('));
++assert.ok(!expansion.includes('new MutationObserver'));
++assert.ok(expansion.includes('data-expansion-badge'));
++assert.ok(expansion.includes('data-lead-whatsapp'));
++assert.ok(expansion.includes('data-lead-status'));
++assert.ok(expansion.includes("events.on('notifications.updated'"));
++assert.ok(expansion.includes('payload.updatedAt'));
++assert.ok(expansion.includes('data-lead-hunter-root'));
++assert.ok(expansion.includes('planet:expansion-section-rendered'));
++assert.doesNotMatch(hunter, /setInterval|MutationObserver|insertAdjacentElement|data-hunter-hidden/);
+ 
+-const feedbackScriptIndex = index.indexOf('andre-os-feedback-v1.js');
+ const accessScriptIndex = index.indexOf('hub-access-v1.js');
+-assert.ok(feedbackScriptIndex >= 0 && feedbackScriptIndex < accessScriptIndex, 'Feedback deve iniciar antes do Hub.');
+-assert.ok(access.includes('planet-expansion-v1.js?v=20260805-3'));
+-
+-const webhookKey = webhook.match(/const LEADS_KEY = '([^']+)'/)?.[1];
+-const apiKey = leadsApi.match(/const STORAGE_KEY = '([^']+)'/)?.[1];
+-assert.ok(webhookKey, 'Webhook precisa declarar a chave de leads.');
+-assert.equal(webhookKey, apiKey, 'Webhook e API precisam compartilhar a mesma chave KV.');
+-assert.ok(webhook.includes('root.contact'), 'Webhook precisa aceitar o payload oficial de contato do RD Station.');
++assert.ok(accessScriptIndex >= 0);
++assert.ok(access.includes('planet-expansion-v1.js?v=20260806-1'));
++assert.ok(access.includes('planet-lead-hunter-v1.js?v=20260806-2'));
++assert.ok(leadsApi.includes('upsertLead'));
++assert.ok(webhook.includes('upsertLead'));
++assert.ok(webhook.includes('readNotificationDocument'));
++assert.equal([leadCore, leadsApi, webhook].filter((source) => source.includes('planet-hub:planet-expansion-leads:v1')).length, 1);
++assert.equal([notificationCore, webhook].filter((source) => source.includes('planet-hub:planet-notifications:v1')).length, 1);
++assert.ok(webhook.includes('root.contact'));
+ 
+-console.log('Fluxo integrado de Expansão e feedback validado.');
++console.log('Fluxo integrado e sem camadas paralelas validado.');
+diff -ruN '--exclude=.git' /tmp/caca-remote-current/tests/planet-expansion-v1.test.mjs /tmp/caca-full/tests/planet-expansion-v1.test.mjs
+--- /tmp/caca-remote-current/tests/planet-expansion-v1.test.mjs	2026-08-06 14:40:12.000000000 +0000
++++ /tmp/caca-full/tests/planet-expansion-v1.test.mjs	2026-08-06 14:44:48.728141429 +0000
+@@ -3,23 +3,31 @@
+ 
+ const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+ const moduleSource = read('planet-hub/assets/planet-expansion-v1.js');
++const hunterSource = read('planet-hub/assets/planet-lead-hunter-v1.js');
+ const accessSource = read('planet-hub/assets/hub-access-v1.js');
+ const apiSource = read('functions/api/hub/planet/leads.js');
++const leadCore = read('functions/_lib/planet-leads.js');
+ 
+-assert.match(accessSource, /planet-expansion-v1\.js\?v=20260805-1/);
++assert.match(accessSource, /planet-expansion-v1\.js\?v=20260806-1/);
++assert.match(accessSource, /planet-lead-hunter-v1\.js\?v=20260806-2/);
+ assert.match(accessSource, /value\.includes\('expans'\)/);
+ assert.match(moduleSource, /const VIEW = 'expansao'/);
+ assert.match(moduleSource, /const API = '\/api\/hub\/planet\/leads'/);
+ assert.match(moduleSource, /data-expansion-nav/);
++assert.match(moduleSource, /data-expansion-section="leads"/);
++assert.match(moduleSource, /data-expansion-section="caca-lead"/);
++assert.match(moduleSource, /data-lead-hunter-root/);
++assert.match(moduleSource, /planet:expansion-section-rendered/);
+ assert.match(moduleSource, /Expansão e Leads/);
+-assert.match(moduleSource, /RD Station, reativação e futuro Caça Lead/);
+ assert.match(moduleSource, /NÃO VISUALIZADOS/);
+-assert.match(apiSource, /tenantId: 'planet'/);
+-assert.match(apiSource, /rd_station/);
+-assert.match(apiSource, /reactivated/);
+-assert.match(apiSource, /caca_lead/);
++assert.doesNotMatch(hunterSource, /pmh-expansion-shell|insertAdjacentElement|setInterval|MutationObserver/);
+ assert.match(apiSource, /PLANET_HUB_DATA/);
+-assert.match(apiSource, /duplicate: true/);
+-assert.match(apiSource, /O lead precisa ter telefone ou e-mail/);
++assert.match(apiSource, /upsertLead/);
++assert.match(leadCore, /tenantId: 'planet'/);
++assert.match(leadCore, /rd_station/);
++assert.match(leadCore, /reactivated/);
++assert.match(leadCore, /caca_lead/);
++assert.match(leadCore, /duplicate: true/);
++assert.match(leadCore, /O lead precisa ter telefone ou e-mail/);
+ 
+-console.log('Planet expansion MVP: tests passed');
++console.log('Planet expansion e Caça Lead nativos: tests passed');
+diff -ruN '--exclude=.git' /tmp/caca-remote-current/tests/planet-lead-hunter-contract-v1.test.mjs /tmp/caca-full/tests/planet-lead-hunter-contract-v1.test.mjs
+--- /tmp/caca-remote-current/tests/planet-lead-hunter-contract-v1.test.mjs	2026-08-06 14:40:12.000000000 +0000
++++ /tmp/caca-full/tests/planet-lead-hunter-contract-v1.test.mjs	2026-08-06 14:44:48.728001572 +0000
+@@ -24,15 +24,30 @@
+ 
+ const js = await readFile(new URL('../planet-hub/assets/planet-lead-hunter-v1.js', import.meta.url), 'utf8');
+ const css = await readFile(new URL('../planet-hub/assets/planet-lead-hunter-v1.css', import.meta.url), 'utf8');
++const expansion = await readFile(new URL('../planet-hub/assets/planet-expansion-v1.js', import.meta.url), 'utf8');
++const candidateLib = await readFile(new URL('../functions/_lib/planet-lead-candidates.js', import.meta.url), 'utf8');
++const notificationsLib = await readFile(new URL('../functions/_lib/planet-notifications.js', import.meta.url), 'utf8');
++const rdWebhook = await readFile(new URL('../functions/_lib/planet-rd-webhook.js', import.meta.url), 'utf8');
++const notificationsApi = await readFile(new URL('../functions/api/hub/planet/notifications.js', import.meta.url), 'utf8');
+ const access = await readFile(new URL('../planet-hub/assets/hub-access-v1.js', import.meta.url), 'utf8');
+ const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+-assert.match(js, /planet-expansion-section/);
+-assert.match(js, /sessionStorage\.setItem\(SECTION_KEY/);
++assert.doesNotMatch(js, /planet-expansion-section|sessionStorage\.setItem\(SECTION_KEY/);
++assert.match(expansion, /planet-expansion-section/);
++assert.match(expansion, /data-lead-hunter-root/);
++assert.match(expansion, /planet:expansion-section-rendered/);
+ assert.match(js, /data-hunter-import-confirm/);
+ assert.match(js, /Fato confirmado/);
+-assert.doesNotMatch(js, /MutationObserver/);
++assert.doesNotMatch(js, /MutationObserver|setInterval|mountTimers|data-hunter-hidden/);
++assert.match(js, /planet:expansion-section-rendered/);
++assert.doesNotMatch(js, /pmh-expansion-shell|insertAdjacentElement/);
++assert.doesNotMatch(css, /!important/);
+ assert.match(css, /@media \(max-width: 760px\)/);
+ assert.match(css, /var\(--aos-/);
+-assert.match(access, /planet-lead-hunter-v1\.js\?v=20260806-1/);
+-assert.match(html, /planet-lead-hunter-v1\.css\?v=20260806-1/);
++assert.match(access, /planet-lead-hunter-v1\.js\?v=20260806-2/);
++assert.match(html, /planet-lead-hunter-v1\.css\?v=20260806-2/);
++assert.doesNotMatch(candidateLib, /planet-hub:planet-notifications|const normalizeNotification/);
++assert.match(candidateLib, /appendNotification/);
++assert.equal([notificationsLib, candidateLib, rdWebhook, notificationsApi].filter((source) => source.includes('planet-hub:planet-notifications:v1')).length, 1);
++assert.match(rdWebhook, /readNotificationDocument/);
++assert.match(notificationsApi, /summarizeNotifications/);
+ console.log('Contrato do Caça Lead validado.');
+diff -ruN '--exclude=.git' /tmp/caca-remote-current/tests/planet-lead-hunter-dedup-v1.test.mjs /tmp/caca-full/tests/planet-lead-hunter-dedup-v1.test.mjs
+--- /tmp/caca-remote-current/tests/planet-lead-hunter-dedup-v1.test.mjs	2026-08-06 14:40:12.000000000 +0000
++++ /tmp/caca-full/tests/planet-lead-hunter-dedup-v1.test.mjs	2026-08-06 14:43:00.818003149 +0000
+@@ -1,7 +1,7 @@
+ import assert from 'node:assert/strict';
+ import { webcrypto } from 'node:crypto';
+ if (!globalThis.crypto) globalThis.crypto = webcrypto;
+-import { createCandidate } from '../functions/_lib/planet-lead-candidates.js';
++import { createCandidate, updateCandidate } from '../functions/_lib/planet-lead-candidates.js';
+ import { upsertLead } from '../functions/_lib/planet-leads.js';
+ 
+ class KV { constructor() { this.values = new Map(); } async get(key, options) { const value = this.values.get(key); return options?.type === 'json' && value ? JSON.parse(value) : value ?? null; } async put(key, value) { this.values.set(key, value); } }
+@@ -18,4 +18,13 @@
+ const leadDuplicate = await createCandidate(store, { name: 'Lead duplicado', email: 'FUNIL@EXEMPLO.COM', source: 'lista', sourceRecordId: 'C' });
+ assert.equal(leadDuplicate.duplicateType, 'lead');
+ assert.ok(leadDuplicate.leadId);
++
++await assert.rejects(
++  () => updateCandidate(store, noContact.candidate.id, { phone: '47999990002' }),
++  /outro candidato/i,
++);
++await assert.rejects(
++  () => updateCandidate(store, noContact.candidate.id, { email: 'funil@exemplo.com' }),
++  /lead do funil/i,
++);
+ console.log('Deduplicação de candidatos e funil validada.');
