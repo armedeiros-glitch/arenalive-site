@@ -1,12 +1,10 @@
 /* André OS · mobile priority layout
    Separa o foco principal do carrossel de outros pontos somente no celular. */
 
-.pmh-priority-mobile {
-  display: none;
-}
+.pmh-priority-mobile { display: none; }
 
 @media (max-width: 820px) {
-  html.aos-mobile .pmh-decision-cockpit {
+  html.aos-mobile .pmh-decision-cockpit.pmh-priority-ready {
     margin: 0 0 12px !important;
     padding: 0 !important;
     overflow: visible !important;
@@ -42,9 +40,7 @@
   }
 
   html.aos-mobile .pmh-priority-section-head small,
-  html.aos-mobile .pmh-priority-section-head strong {
-    display: block;
-  }
+  html.aos-mobile .pmh-priority-section-head strong { display: block; }
 
   html.aos-mobile .pmh-priority-section-head small {
     color: var(--aos-accent, #735cff);
@@ -171,13 +167,8 @@
     -webkit-line-clamp: 2;
   }
 
-  html.aos-mobile .pmh-priority-focus h3 {
-    font-size: 20px;
-  }
-
-  html.aos-mobile .pmh-priority-other h3 {
-    font-size: 17px;
-  }
+  html.aos-mobile .pmh-priority-focus h3 { font-size: 20px; }
+  html.aos-mobile .pmh-priority-other h3 { font-size: 17px; }
 
   html.aos-mobile .pmh-priority-movement {
     min-height: 43px;
@@ -243,9 +234,7 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  html.aos-mobile .pmh-priority-track::-webkit-scrollbar {
-    display: none;
-  }
+  html.aos-mobile .pmh-priority-track::-webkit-scrollbar { display: none; }
 
   html.aos-mobile .pmh-priority-others-section[data-priority-total="1"] .pmh-priority-track {
     grid-auto-columns: 100%;
@@ -292,11 +281,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pmh-priority-track {
-    scroll-behavior: auto !important;
-  }
-
-  .pmh-priority-dots button {
-    transition: none !important;
-  }
+  .pmh-priority-track { scroll-behavior: auto !important; }
+  .pmh-priority-dots button { transition: none !important; }
 }
