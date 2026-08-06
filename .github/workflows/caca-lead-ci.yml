@@ -33,10 +33,11 @@ jobs:
         run: |
           set -euo pipefail
           while IFS= read -r -d '' file; do
-            if grep -Iq . "$file"; then
+            mime=$(file --brief --mime-type "$file")
+            if [[ "$mime" == text/* || "$mime" == application/javascript ]]; then
               node --check "$file"
             else
-              echo "Ignorando asset binário: $file"
+              echo "Ignorando asset não textual ($mime): $file"
             fi
           done < <(find functions planet-hub/assets -type f -name '*.js' -print0)
 
@@ -60,9 +61,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: caca-lead-source
-          path: |
-            functions
-            planet-hub
-            tests
-            index.html
+          path: .
+          include-hidden-files: false
           retention-days: 1
