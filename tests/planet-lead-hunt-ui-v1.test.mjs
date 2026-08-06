@@ -17,7 +17,12 @@ assert.match(hunter, /duplicates/);
 assert.match(hunter, /withoutContact/);
 assert.match(hunter, /© OpenStreetMap contributors/);
 assert.match(hunter, /openstreetmap\.org\/copyright/);
-assert.doesNotMatch(hunter, /data-hunter-hunt[^\n]+promote|runHunt[^]*promoteCandidate\(/);
+
+const runStart = hunter.indexOf('const runHunt = async');
+const runEnd = hunter.indexOf('const normalizeHeader', runStart);
+assert.ok(runStart >= 0 && runEnd > runStart);
+const runSource = hunter.slice(runStart, runEnd);
+assert.doesNotMatch(runSource, /promoteCandidate|\/promote/);
 
 assert.match(endpoint, /runLeadHunt/);
 assert.match(endpoint, /trigger:\s*'manual'/);
