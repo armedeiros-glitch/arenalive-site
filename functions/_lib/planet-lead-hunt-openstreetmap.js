@@ -5,12 +5,13 @@ export const OSM_LICENSE_URL = 'https://www.openstreetmap.org/copyright';
 const clean = (value, limit = 500) => String(value || '').trim().slice(0, limit);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
 const escapeRegex = (value) => clean(value, 80).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const normalizeSearch = (value) => clean(value, 500)
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase();
 
 const segmentClauses = (segment, around) => {
-  const normalized = clean(segment, 120)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
+  const normalized = normalizeSearch(segment);
 
   if (normalized === 'cafeteria') {
     return [
@@ -26,20 +27,22 @@ const segmentClauses = (segment, around) => {
   }
   if (normalized === 'acai') {
     return [
-      `nwr(${around})["name"~"açaí|acai",i];`,
+      `nwr(${around})["amenity"~"^(cafe|fast_food|restaurant|ice_cream)$"]["name"~"açaí|acai",i];`,
+      `nwr(${around})["shop"~"^(confectionery|ice_cream|food)$"]["name"~"açaí|acai",i];`,
       `nwr(${around})["cuisine"~"(^|;)(açaí|acai)(;|$)",i]["name"];`,
     ];
   }
   if (normalized === 'chocolateria') {
     return [
       `nwr(${around})["shop"="chocolate"]["name"];`,
-      `nwr(${around})["name"~"chocolate|chocolateria",i];`,
+      `nwr(${around})["shop"~"^(confectionery|food)$"]["name"~"chocolate|chocolateria",i];`,
+      `nwr(${around})["amenity"="cafe"]["name"~"chocolate|chocolateria",i];`,
     ];
   }
   if (normalized === 'confeitaria') {
     return [
       `nwr(${around})["shop"~"^(confectionery|bakery)$"]["name"];`,
-      `nwr(${around})["name"~"confeitaria|doceria",i];`,
+      `nwr(${around})["amenity"~"^(cafe|restaurant)$"]["name"~"confeitaria|doceria",i];`,
     ];
   }
   if (normalized === 'alimentacao em shopping') {
@@ -64,7 +67,7 @@ export const buildOverpassQuery = ({ location, segments }) => {
   const around = `around:${radiusMeters},${lat.toFixed(6)},${lon.toFixed(6)}`;
   const clauses = [...new Set((Array.isArray(segments) ? segments : [])
     .flatMap((segment) => segmentClauses(segment, around)))]
-    .slice(0, 20);
+    .slice(0, 24);
   if (!clauses.length) {
     const error = new Error('Nenhum segmento válido foi configurado para a consulta.');
     error.status = 400;
@@ -99,6 +102,32 @@ const categoryText = (tags = {}) => [
   tags.cuisine ? `cuisine=${tags.cuisine}` : '',
 ].filter(Boolean).join(', ');
 
+const segmentFromTags = (tags = {}, name = '') => {
+  const searchable = normalizeSearch([
+    name,
+    tags.amenity,
+    tags.shop,
+    tags.cuisine,
+  ].filter(Boolean).join(' '));
+  if (/acai/.test(searchable)) return 'açaí';
+  if (/chocolate|chocolateria/.test(searchable)) return 'chocolateria';
+  if (/ice_cream/.test(searchable)) return 'sorveteria';
+  if (/confectionery|bakery|confeitaria|doceria/.test(searchable)) return 'confeitaria';
+  if (/food_court/.test(searchable)) return 'alimentação em shopping';
+  if (/cafe|coffee/.test(searchable)) return 'cafeteria';
+  return '';
+};
+
+const isInactive = (tags = {}) => {
+  const truthy = new Set(['yes', 'true', '1']);
+  return truthy.has(normalizeSearch(tags.disused))
+    || truthy.has(normalizeSearch(tags.abandoned))
+    || truthy.has(normalizeSearch(tags.closed))
+    || normalizeSearch(tags.shop) === 'no';
+};
+
+const isOwnBrand = (name) => /\bplanet\s*chocolate\b/i.test(clean(name, 300));
+
 export const osmElementToCandidate = (element = {}, context = {}) => {
   const tags = element.tags || {};
   const name = tagValue(tags, 'name', 'brand', 'operator');
@@ -111,6 +140,7 @@ export const osmElementToCandidate = (element = {}, context = {}) => {
   const sourceUrl = sourceUrlFor(element);
   const address = addressFromTags(tags);
   const categories = categoryText(tags);
+  const segment = segmentFromTags(tags, name);
   const discoveredAt = clean(context.discoveredAt, 40) || new Date().toISOString();
   const evidences = [{
     type: 'fact',
@@ -135,6 +165,15 @@ export const osmElementToCandidate = (element = {}, context = {}) => {
       description: `Categoria pública no OpenStreetMap: ${categories}.`,
       sourceUrl,
       confidence: 88,
+      createdAt: discoveredAt,
+    });
+  }
+  if (segment) {
+    evidences.push({
+      type: 'inference',
+      description: `Segmento compatível com o ICP inicial da Planet: ${segment}.`,
+      sourceUrl,
+      confidence: 84,
       createdAt: discoveredAt,
     });
   }
@@ -184,8 +223,9 @@ export const osmElementToCandidate = (element = {}, context = {}) => {
     reviewNotes: clean([
       'Descoberto automaticamente pelo Caça Leads usando dados abertos do OpenStreetMap.',
       `Praça consultada: ${city}${state ? `/${state.toUpperCase()}` : ''}.`,
+      segment ? `Segmento sugerido: ${segment}.` : '',
       'A descoberta não representa interesse explícito em franquia; confirmar na revisão humana.',
-    ].join(' '), 1600),
+    ].filter(Boolean).join(' '), 1600),
   };
 };
 
@@ -216,10 +256,8 @@ export const searchOpenStreetMap = async ({
   return (Array.isArray(payload.elements) ? payload.elements : [])
     .filter((element) => {
       const tags = element?.tags || {};
-      return tagValue(tags, 'name', 'brand', 'operator')
-        && !tags.disused
-        && !tags.abandoned
-        && tags.shop !== 'no';
+      const name = tagValue(tags, 'name', 'brand', 'operator');
+      return name && !isInactive(tags) && !isOwnBrand(name);
     })
     .slice(0, Math.round(clamp(maxResults, 1, 100)));
 };
