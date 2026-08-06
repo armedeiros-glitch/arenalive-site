@@ -222,7 +222,6 @@
   .pmh-priority-counter { border-color: #494352; color: #bcb6c7; background: #201d27; }
   .pmh-priority-dots button { background: #514b59; }
 
-  /* Sidebar mobile acompanha o tema sem alterar seu comportamento. */
   html.aos-mobile .pmh-sidebar {
     border-right-color: rgba(255, 255, 255, .08);
     color: #f5f2fb;
@@ -233,16 +232,168 @@
 
   html.aos-mobile .pmh-topbar { background: rgba(17, 16, 21, .92); }
 
-  /* Mantém cartões de prioridade com a hierarquia já aprovada. */
   .pmh-priority-card,
   .pmh-desktop-priority-card,
   .pmh-decision-main { color: #fff; }
 
-  /* Evita inversão de documentos destinados à impressão. */
   .pmh-payment-document,
   .pmh-payment-document *,
   [data-payment-document],
   [data-payment-document] * { color-scheme: light; }
+
+  /* Cobertura mobile completa. Vence somente cores fixas antigas. */
+  html.aos-mobile,
+  html.aos-mobile body,
+  html.aos-mobile #root,
+  html.aos-mobile #pmh-app,
+  html.aos-mobile .pmh-main,
+  html.aos-mobile .pmh-content {
+    background: #0d0c11 !important;
+    color: var(--aos-text) !important;
+  }
+
+  html.aos-mobile .pmh-topbar {
+    border-bottom-color: #2e2a35 !important;
+    background: rgba(13, 12, 17, .96) !important;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .28) !important;
+  }
+
+  html.aos-mobile .pmh-topbar h1,
+  html.aos-mobile .pmh-active-head h2,
+  html.aos-mobile .pmh-demand-capture h3,
+  html.aos-mobile .pmh-demand-preview h3,
+  html.aos-mobile .pmh-active-main strong {
+    color: #f5f2fb !important;
+  }
+
+  html.aos-mobile .pmh-top-actions label,
+  html.aos-mobile .pmh-top-actions > button {
+    border-color: #3b3545 !important;
+    background: #1a171f !important;
+    color: #f3effa !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture,
+  html.aos-mobile .pmh-demand-preview,
+  html.aos-mobile .pmh-demand-archive,
+  html.aos-mobile [data-active-workstream] {
+    border-color: #332e3b !important;
+    background: #17151c !important;
+    color: var(--aos-text) !important;
+    box-shadow: 0 16px 42px rgba(0, 0, 0, .24) !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture {
+    background:
+      radial-gradient(circle at 92% 10%, rgba(115, 92, 255, .15), transparent 32%),
+      linear-gradient(145deg, #1d1926, #15131b) !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture textarea,
+  html.aos-mobile .pmh-demand-form-grid input,
+  html.aos-mobile .pmh-demand-form-grid select,
+  html.aos-mobile .pmh-demand-form-grid textarea {
+    border-color: #494153 !important;
+    background: #100f14 !important;
+    color: #f2eef8 !important;
+    box-shadow: none !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture footer button,
+  html.aos-mobile .pmh-demand-preview footer button,
+  html.aos-mobile .pmh-demand-archive button {
+    border-color: #494153 !important;
+    background: #211e29 !important;
+    color: #f2eef8 !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture footer [data-demand-organize],
+  html.aos-mobile .pmh-demand-preview footer button.primary {
+    border-color: var(--aos-accent) !important;
+    background: var(--aos-accent) !important;
+    color: #fff !important;
+  }
+
+  html.aos-mobile .pmh-demand-preview > header,
+  html.aos-mobile .pmh-demand-preview > footer,
+  html.aos-mobile .pmh-active-filters,
+  html.aos-mobile .pmh-active-demand-actions {
+    border-color: #332e3b !important;
+    background: #1d1a23 !important;
+  }
+
+  html.aos-mobile .pmh-active-list {
+    background: #332e3b !important;
+  }
+
+  html.aos-mobile .pmh-active-entry,
+  html.aos-mobile .pmh-active-row,
+  html.aos-mobile .pmh-active-empty,
+  html.aos-mobile .pmh-demand-archive article {
+    background: #17151c !important;
+    color: var(--aos-text) !important;
+  }
+
+  html.aos-mobile .pmh-active-row:hover,
+  html.aos-mobile .pmh-demand-archive article:hover {
+    background: #211e29 !important;
+  }
+
+  html.aos-mobile .pmh-active-filters button,
+  html.aos-mobile .pmh-active-context,
+  html.aos-mobile .pmh-active-demand-actions button,
+  html.aos-mobile .pmh-demand-preview > header > button {
+    border-color: #403a49 !important;
+    background: #211e29 !important;
+    color: #b9b3c3 !important;
+  }
+
+  html.aos-mobile .pmh-active-filters button.active {
+    border-color: var(--aos-accent) !important;
+    background: var(--aos-accent) !important;
+    color: #fff !important;
+  }
+
+  html.aos-mobile .pmh-active-head p,
+  html.aos-mobile .pmh-active-main small,
+  html.aos-mobile .pmh-active-status,
+  html.aos-mobile .pmh-demand-capture p,
+  html.aos-mobile .pmh-demand-preview header p,
+  html.aos-mobile .pmh-demand-capture footer span,
+  html.aos-mobile .pmh-demand-preview footer span,
+  html.aos-mobile .pmh-demand-archive small {
+    color: #aaa5b5 !important;
+  }
+
+  html.aos-mobile .pmh-active-row time {
+    color: #d0cad8 !important;
+    background: #2a2630 !important;
+  }
+
+  html.aos-mobile .pmh-active-row time.today {
+    color: #ffd697 !important;
+    background: #49351e !important;
+  }
+
+  html.aos-mobile .pmh-active-row time.late {
+    color: #ffaaa2 !important;
+    background: #46272b !important;
+  }
+
+  html.aos-mobile .pmh-active-row time.soon {
+    color: #a9c7ff !important;
+    background: #202d49 !important;
+  }
+
+  html.aos-mobile .pmh-active-row time.later {
+    color: #c5baff !important;
+    background: #2b2544 !important;
+  }
+
+  html.aos-mobile .pmh-global-search-results {
+    background: rgba(20, 18, 25, .99) !important;
+    border-color: #42394f !important;
+  }
 }
 
 @media print {
