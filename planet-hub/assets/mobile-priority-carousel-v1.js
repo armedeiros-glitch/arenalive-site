@@ -214,6 +214,10 @@
   };
 
   const scheduleBuild = () => {
+    const target = cockpit();
+    if (target && !target.querySelector('[data-priority-mobile]')) {
+      target.classList.remove('pmh-priority-ready');
+    }
     if (!buildFrame) buildFrame = requestAnimationFrame(buildMobileLayout);
     window.setTimeout(buildMobileLayout, 90);
     window.setTimeout(buildMobileLayout, 240);
