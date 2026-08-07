@@ -62,9 +62,11 @@ jobs:
           test "$(grep -o "planet-lead-hunter-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "andre-os-navigation-drawers-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "andre-os-home-pages-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
+          test "$(grep -o "andre-os-desktop-shell-v2.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "planet-expansion-v1.css" index.html | wc -l)" -eq 1
           test "$(grep -o "planet-lead-hunter-v1.css" index.html | wc -l)" -eq 1
           test "$(grep -o "andre-os-home-pages-v1.css" index.html | wc -l)" -eq 1
+          test "$(grep -o "andre-os-desktop-shell-v2.css" index.html | wc -l)" -eq 1
 
       - name: Executar testes da área auditada
         shell: bash
@@ -87,6 +89,7 @@ jobs:
             tests/planet-lead-hunt-ui-v1.test.mjs
             tests/andre-os-navigation-drawers-v1.test.mjs
             tests/andre-os-home-pages-v1.test.mjs
+            tests/andre-os-desktop-shell-v2.test.mjs
             tests/planet-expansion-exclusive-sections-v1.test.mjs
             tests/andre-os-mobile-gavetas-v1.test.mjs
           )
