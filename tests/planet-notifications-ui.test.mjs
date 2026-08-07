@@ -37,6 +37,6 @@ assert.match(expansion, /viewedAt/);
 assert.match(expansion, /selected/);
 assert.match(access, /planet-expansion-v1\.js\?v=20260806-2/);
 assert.match(access, /planet-notifications-v1\.js\?v=20260805-1/);
-assert.match(rootEntry, /hub-access-v1\.js\?v=20260806-4/);
+assert.match(rootEntry, /hub-access-v1\.js\?v=20260807-1/);
 
 console.log('Planet notification center compartilhado: tests passed');
