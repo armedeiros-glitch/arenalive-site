@@ -61,7 +61,7 @@ assert.match(js, /\+ Novo plano/);
 assert.match(js, /data-p5-plan-unit/);
 assert.match(js, /suggestionFor/);
 assert.match(js, /\/api\/hub\/planet\/five-stars\/evaluations/);
-assert.match(js, /Abrir Marketing/);
+assert.match(js, /data-p5-plan-destination/);
 assert.doesNotMatch(js, /localStorage|sessionStorage|MutationObserver|setInterval/);
 assert.doesNotMatch(css, /!important/);
 assert.match(css, /p5-action-list/);
