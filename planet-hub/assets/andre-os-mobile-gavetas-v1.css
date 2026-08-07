@@ -83,6 +83,150 @@ html.aos-mobile .aos-home-page-shortcuts small {
   display: none !important;
 }
 
+/* Planet · visão geral compacta */
+html.aos-mobile .aos-planet-overview-page {
+  gap: 10px !important;
+  align-content: start !important;
+}
+
+html.aos-mobile .aos-planet-overview-intro {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  padding: 4px 2px 2px !important;
+}
+
+html.aos-mobile .aos-planet-overview-intro > div {
+  min-width: 0 !important;
+}
+
+html.aos-mobile .aos-planet-overview-intro small,
+html.aos-mobile .aos-planet-attention-panel header small,
+html.aos-mobile .aos-planet-drawer-card small {
+  font-size: 8.5px !important;
+  letter-spacing: .11em !important;
+}
+
+html.aos-mobile .aos-planet-overview-intro h2 {
+  margin: 3px 0 0 !important;
+  color: var(--aos-mobile-text) !important;
+  font-size: 28px !important;
+  line-height: 1.04 !important;
+  letter-spacing: -.04em !important;
+}
+
+html.aos-mobile .aos-planet-overview-intro p {
+  margin: 5px 0 0 !important;
+  color: var(--aos-mobile-muted) !important;
+  font-size: 12.5px !important;
+  line-height: 1.35 !important;
+}
+
+html.aos-mobile .aos-planet-overview-status {
+  min-height: 28px !important;
+  padding: 5px 9px !important;
+  border-radius: 999px !important;
+  font-size: 9.5px !important;
+  line-height: 1 !important;
+}
+
+html.aos-mobile .aos-planet-overview-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 10px !important;
+}
+
+html.aos-mobile .aos-planet-attention-panel {
+  padding: 12px !important;
+  border-radius: 17px !important;
+}
+
+html.aos-mobile .aos-planet-attention-panel > header {
+  align-items: center !important;
+  gap: 10px !important;
+  margin-bottom: 8px !important;
+}
+
+html.aos-mobile .aos-planet-attention-panel h3 {
+  margin: 2px 0 0 !important;
+  font-size: 19px !important;
+  line-height: 1.1 !important;
+}
+
+html.aos-mobile .aos-planet-attention-panel > header button {
+  min-height: 34px !important;
+  padding: 0 10px !important;
+  border-radius: 10px !important;
+  font-size: 10px !important;
+}
+
+html.aos-mobile .aos-planet-attention-list {
+  gap: 6px !important;
+}
+
+html.aos-mobile .aos-planet-attention-item {
+  min-height: 54px !important;
+  gap: 10px !important;
+  padding: 8px 10px !important;
+  border-radius: 12px !important;
+}
+
+html.aos-mobile .aos-planet-attention-item span {
+  gap: 2px !important;
+}
+
+html.aos-mobile .aos-planet-attention-item small {
+  font-size: 8px !important;
+}
+
+html.aos-mobile .aos-planet-attention-item strong {
+  font-size: 12.5px !important;
+  line-height: 1.2 !important;
+}
+
+html.aos-mobile .aos-planet-attention-item em {
+  max-width: 88px !important;
+  font-size: 9px !important;
+  line-height: 1.15 !important;
+  text-align: right !important;
+}
+
+html.aos-mobile .aos-planet-drawers {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 7px !important;
+}
+
+html.aos-mobile .aos-planet-drawer-card {
+  grid-template-columns: 36px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  min-height: 70px !important;
+  padding: 9px 11px !important;
+  border-radius: 14px !important;
+}
+
+html.aos-mobile .aos-planet-drawer-card > i {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  font-size: 15px !important;
+}
+
+html.aos-mobile .aos-planet-drawer-card > span {
+  gap: 1px !important;
+}
+
+html.aos-mobile .aos-planet-drawer-card strong {
+  font-size: 14px !important;
+  line-height: 1.15 !important;
+}
+
+html.aos-mobile .aos-planet-drawer-card em {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+}
+
 /* Cabeçalhos de Demandas e Radar */
 html.aos-mobile .aos-home-page-header {
   padding: 16px !important;
