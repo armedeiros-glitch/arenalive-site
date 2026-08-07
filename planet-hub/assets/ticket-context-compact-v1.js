@@ -96,12 +96,21 @@
   const openContext = async (id) => {
     if (!id) return;
     await ensureRadar();
+    const item = contextItem(id);
     const context = window.PMHRadarContext;
     if (!context?.open) {
       window.alert('O contexto operacional ainda não ficou disponível. Atualize a página e tente novamente.');
       return;
     }
     context.open(ticketItemId(id));
+
+    if (!hasContext(item)) {
+      const form = document.querySelector('[data-radar-context-form]');
+      if (form?.elements?.state) {
+        form.elements.state.value = item?.contextSuggestion?.state || 'blocked';
+      }
+      form?.elements?.reason?.focus();
+    }
   };
 
   document.addEventListener('click', (event) => {
