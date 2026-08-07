@@ -103,9 +103,31 @@
     host.innerHTML = mobileNavigationPanel === 'planet' ? planetNavigationMarkup() : rootNavigationMarkup();
   };
 
+  const ensureNavigationContainer = () => {
+    const app = shell();
+    const drawer = sidebar();
+    if (!app || !drawer) return null;
+
+    const dock = app.querySelector(':scope > .aos-mobile-dock');
+    let navigation = drawer.querySelector('nav') || dock?.querySelector('nav') || null;
+
+    if (!navigation) {
+      navigation = document.createElement('nav');
+      navigation.className = 'aos-mobile-nav-root';
+      const footer = drawer.querySelector(':scope > footer');
+      drawer.insertBefore(navigation, footer || null);
+    } else if (navigation.parentElement !== drawer) {
+      const footer = drawer.querySelector(':scope > footer');
+      drawer.insertBefore(navigation, footer || null);
+    }
+
+    dock?.remove();
+    return navigation;
+  };
+
   const ensureMobileNavigation = () => {
     if (!isMobile()) return null;
-    const navigation = sidebar()?.querySelector(':scope > nav');
+    const navigation = ensureNavigationContainer();
     if (!navigation) return null;
 
     let host = navigation.querySelector(':scope > [data-mobile-navigation]');
@@ -115,6 +137,7 @@
       host.dataset.mobileNavigation = 'v3';
       navigation.prepend(host);
     }
+
     renderMobileNavigation();
     return host;
   };
@@ -128,23 +151,8 @@
     mobileNavigationPanel = panel === 'planet' ? 'planet' : 'root';
     renderMobileNavigation();
     requestAnimationFrame(() => {
-      const target = sidebar()?.querySelector('[data-mobile-navigation] button');
-      target?.focus?.({ preventScroll: true });
+      sidebar()?.querySelector('[data-mobile-navigation] button')?.focus?.({ preventScroll: true });
     });
-  };
-
-  const restoreNavigation = () => {
-    const app = shell();
-    const drawer = sidebar();
-    if (!app || !drawer) return;
-
-    const dock = app.querySelector(':scope > .aos-mobile-dock');
-    const nav = drawer.querySelector(':scope > nav') || dock?.querySelector(':scope > nav');
-    if (nav && nav.parentElement !== drawer) {
-      const footer = drawer.querySelector(':scope > footer');
-      drawer.insertBefore(nav, footer || null);
-    }
-    dock?.remove();
   };
 
   const ensureBackdrop = () => {
@@ -200,6 +208,12 @@
     return element;
   };
 
+  const syncBrand = () => {
+    const brand = sidebar()?.querySelector(':scope > .pmh-brand');
+    const subtitle = brand?.querySelector('small');
+    if (subtitle) subtitle.textContent = 'OPERATING SYSTEM';
+  };
+
   const syncAccessibility = () => {
     const drawer = sidebar();
     const trigger = toggle();
@@ -235,10 +249,25 @@
     document.documentElement.style.overscrollBehavior = previousRootOverscroll;
   };
 
+  const ensureShell = () => {
+    if (!shell()) return false;
+    ensureNavigationContainer();
+    ensureBackdrop();
+    ensureToggle();
+    ensureCloseButton();
+    syncBrand();
+    ensureMobileNavigation();
+    syncAccessibility();
+    return true;
+  };
+
   const openSidebar = ({ focus = true } = {}) => {
     if (!isMobile() || isOpen() || !sidebar()) return;
+
+    ensureShell();
     syncNavigationPanelFromRoute();
     ensureMobileNavigation();
+
     lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     document.documentElement.classList.add(OPEN_CLASS);
     document.body.classList.add(OPEN_CLASS);
@@ -267,17 +296,6 @@
     lastFocused = null;
   };
 
-  const ensureShell = () => {
-    if (!shell()) return false;
-    restoreNavigation();
-    ensureBackdrop();
-    ensureToggle();
-    ensureCloseButton();
-    ensureMobileNavigation();
-    syncAccessibility();
-    return true;
-  };
-
   const syncViewport = () => {
     resizeFrame = 0;
     const active = mobileViewport();
@@ -288,6 +306,7 @@
     if (!active) closeSidebar({ restoreFocus: false });
     else {
       syncNavigationPanelFromRoute();
+      ensureMobileNavigation();
       syncAccessibility();
     }
   };
@@ -392,6 +411,11 @@
     closeSidebar({ restoreFocus: false });
   };
 
+  const refreshShell = () => {
+    ensureShell();
+    syncNavigationPanelFromRoute();
+  };
+
   const boot = () => {
     syncViewport();
 
@@ -408,8 +432,11 @@
     window.addEventListener('resize', scheduleViewportSync, { passive: true });
     window.addEventListener('orientationchange', scheduleViewportSync, { passive: true });
     window.visualViewport?.addEventListener('resize', scheduleViewportSync, { passive: true });
-    window.addEventListener('pmh:access-ready', ensureShell);
-    window.addEventListener('pmh:view-rendered', ensureShell);
+    window.addEventListener('pmh:access-ready', refreshShell);
+    window.addEventListener('pmh:view-rendered', refreshShell);
+    window.addEventListener('andre-os:home-page-rendered', refreshShell);
+    window.addEventListener('andre-os:mode-page-rendered', refreshShell);
+    window.addEventListener('planet:expansion-section-rendered', refreshShell);
   };
 
   if (document.readyState === 'loading') {
