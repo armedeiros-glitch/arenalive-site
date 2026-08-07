@@ -69,7 +69,7 @@
     demandas: {
       title: 'Demandas',
       view: 'demandas',
-      eventView: 'demandas',
+      eventView: 'inicio',
       hideSearch: true,
       markup: () => `<section class="aos-home-page aos-home-page-workspace" aria-label="Demandas internas">
         <header class="aos-home-page-header">
@@ -83,7 +83,7 @@
     radar: {
       title: 'Radar',
       view: 'radar',
-      eventView: 'radar',
+      eventView: 'inicio',
       hideSearch: true,
       markup: () => `<section class="aos-home-page aos-home-page-workspace" aria-label="Radar operacional">
         <header class="aos-home-page-header">
