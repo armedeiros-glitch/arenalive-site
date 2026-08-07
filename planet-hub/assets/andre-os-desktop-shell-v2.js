@@ -3,8 +3,8 @@
 
   const DESKTOP_QUERY = '(min-width: 821px)';
   const READY_CLASS = 'aos-desktop-shell-v2-ready';
-  const ROOT_ATTR = 'aosDesktopShell';
-  const CONTEXT_ATTR = 'aosPlanetContext';
+  const HOME_CLASS = 'aos-shell-home-active';
+  const PLANET_CLASS = 'aos-shell-planet-active';
 
   const PLANET_DESTINATIONS = [
     { key: 'planet', label: 'Visão geral', hash: '#planet' },
@@ -37,14 +37,12 @@
     return !hash || hash === 'inicio' || hash === 'hoje';
   };
 
+  const sidebar = () => document.querySelector('.pmh-sidebar');
   const sidebarNav = () => document.querySelector('.pmh-sidebar nav');
   const topbar = () => document.querySelector('.pmh-topbar');
   const main = () => document.querySelector('.pmh-main');
   const pageTitle = () => document.querySelector('[data-title]');
-
   const desktopActive = () => window.matchMedia(DESKTOP_QUERY).matches;
-
-  const shellRoot = () => sidebarNav()?.querySelector(`:scope > [data-${ROOT_ATTR.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}]`) || null;
 
   const ensureSidebar = () => {
     const nav = sidebarNav();
@@ -69,11 +67,7 @@
               <span><strong>Planet Chocolate</strong><small>Marketing e rede</small></span>
             </button>
           </div>
-        </section>
-        <div class="aos-shell-v2-future" aria-label="Ambientes futuros">
-          <span><i aria-hidden="true">○</i>Pessoal <small>próxima etapa</small></span>
-          <span><i aria-hidden="true">◇</i>Laboratório <small>próxima etapa</small></span>
-        </div>`;
+        </section>`;
       nav.prepend(root);
     }
     return root;
@@ -116,12 +110,20 @@
     const header = topbar();
     const kicker = header?.querySelector(':scope > div:first-child > small');
     if (!kicker) return;
-    if (!kicker.dataset.aosOriginalText) kicker.dataset.aosOriginalText = kicker.textContent || '';
     kicker.textContent = planetActive ? 'TRABALHO / PLANET CHOCOLATE' : 'ANDRÉ OS / INÍCIO';
 
     if (planetActive && normalizedHash() === 'planet' && pageTitle()) {
       pageTitle().textContent = 'Planet Chocolate';
     }
+  };
+
+  const syncIdentity = (planetActive) => {
+    const target = sidebar();
+    if (!target) return;
+    const brandSubtitle = target.querySelector('.pmh-brand small');
+    const footerText = target.querySelector('footer > small');
+    if (brandSubtitle) brandSubtitle.textContent = 'OPERATING SYSTEM';
+    if (footerText) footerText.textContent = planetActive ? 'Ambiente Planet Chocolate' : 'André OS · ambiente principal';
   };
 
   const sync = () => {
@@ -130,16 +132,18 @@
     if (!root || !context) return;
 
     if (!desktopActive()) {
-      document.documentElement.classList.remove(READY_CLASS);
+      document.documentElement.classList.remove(READY_CLASS, HOME_CLASS, PLANET_CLASS);
       context.hidden = true;
       return;
     }
 
-    document.documentElement.classList.add(READY_CLASS);
-
     const currentPlanet = planetDestinationFromHash();
     const planetActive = Boolean(currentPlanet);
     const homeActive = isHome();
+
+    document.documentElement.classList.add(READY_CLASS);
+    document.documentElement.classList.toggle(HOME_CLASS, homeActive);
+    document.documentElement.classList.toggle(PLANET_CLASS, planetActive);
 
     root.querySelector('[data-shell-hash="#inicio"]')?.classList.toggle('active', homeActive);
     root.querySelector('[data-shell-work-toggle]')?.classList.toggle('has-active-workspace', planetActive);
@@ -152,6 +156,7 @@
     });
 
     syncTopbar(planetActive);
+    syncIdentity(planetActive);
   };
 
   const navigate = (hash) => {
