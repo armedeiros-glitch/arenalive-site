@@ -8,7 +8,8 @@
     '/planet-hub/assets/andre-os-navigation-drawers-v1.js?v=20260806-2',
     '/planet-hub/assets/andre-os-home-pages-v1.js?v=20260807-3',
     '/planet-hub/assets/andre-os-radar-home-v1.js?v=20260807-1',
-    '/planet-hub/assets/andre-os-desktop-shell-v2.js?v=20260807-2',
+    '/planet-hub/assets/planet-five-stars-v1.js?v=20260807-1',
+    '/planet-hub/assets/andre-os-desktop-shell-v2.js?v=20260807-3',
     '/planet-hub/assets/planet-notifications-v1.js?v=20260805-1',
   ];
 
@@ -32,6 +33,7 @@
     if (value.includes('calend') || value.includes('campanha')) return 'calendario';
     if (value.includes('conte')) return 'conteudos';
     if (value.includes('expans')) return 'expansao';
+    if (value.includes('5-estrelas') || value.includes('cinco-estrelas') || value.includes('5estrelas')) return 'cinco-estrelas';
     return 'inicio';
   };
 
