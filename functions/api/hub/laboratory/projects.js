@@ -23,7 +23,7 @@ const normalize = (item = {}) => {
     nextStep: clean(item.nextStep, 500),
     status: allowedStatus.has(item.status) ? item.status : 'explorando',
     createdAt: clean(item.createdAt, 40) || now,
-    updatedAt: now,
+    updatedAt: clean(item.updatedAt, 40) || now,
   };
 };
 
@@ -41,13 +41,11 @@ const listProjects = async (store) => {
     for (const key of page.keys || []) {
       if (projects.length >= MAX_ITEMS) break;
       const item = await store.get(key.name, { type: 'json' });
-      if (item) projects.push(item);
+      if (item) projects.push(normalize(item));
     }
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor && projects.length < MAX_ITEMS);
-  return projects
-    .map((item) => normalize({ ...item, updatedAt: item.updatedAt }))
-    .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+  return projects.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
 };
 
 const readPayload = async (request) => {
