@@ -205,21 +205,120 @@
   html.aos-shell-home-active .pmh-sidebar footer {
     opacity: .78;
   }
+
+  /* O layout de prioridades recria o cockpit no desktop. Ele precisa assumir
+     a grade por completo para não herdar a coluna vazia do cockpit original. */
+  html.aos-shell-home-active .pmh-decision-cockpit.pmh-desktop-priority-ready {
+    display: block;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  html.aos-shell-home-active .pmh-desktop-priority-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.62fr) minmax(330px, .88fr);
+    align-items: start;
+    gap: 16px;
+  }
+
+  html.aos-shell-home-active .pmh-desktop-priority-focus-section {
+    grid-column: 1;
+  }
+
+  html.aos-shell-home-active .pmh-desktop-priority-others-section {
+    grid-column: 2;
+  }
+
+  html.aos-shell-home-active .pmh-desktop-priority-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  html.aos-shell-home-active .pmh-desktop-priority-card.is-focus {
+    min-height: 248px;
+    padding: 21px 22px;
+  }
+
+  html.aos-shell-home-active .pmh-desktop-priority-card.is-focus h3 {
+    font-size: clamp(25px, 2.45vw, 34px);
+  }
+
+  html.aos-shell-home-active .pmh-desktop-priority-card.is-other {
+    min-height: 0;
+    gap: 7px;
+    padding: 12px 13px;
+    border-radius: 14px;
+  }
+
+  html.aos-shell-home-active .pmh-desktop-priority-card.is-other h3 {
+    font-size: 13px;
+    line-height: 1.18;
+    -webkit-line-clamp: 1;
+  }
+
+  html.aos-shell-home-active .pmh-desktop-priority-card.is-other .pmh-desktop-priority-movement {
+    min-height: 0;
+    padding: 8px 9px;
+    border-radius: 9px;
+  }
+
+  html.aos-shell-home-active .pmh-desktop-priority-card.is-other .pmh-desktop-priority-movement small {
+    display: none;
+  }
+
+  html.aos-shell-home-active .pmh-desktop-priority-card.is-other .pmh-desktop-priority-movement p {
+    margin: 0;
+    font-size: 9.5px;
+    -webkit-line-clamp: 1;
+  }
+
+  html.aos-shell-home-active .pmh-desktop-priority-card.is-other .pmh-desktop-priority-open {
+    min-height: 31px;
+    padding: 0 10px;
+    font-size: 9px;
+  }
+
+  /* A Visão Geral Planet é uma leitura rápida. O conteúdo não deve esticar
+     só para preencher a altura disponível da janela. */
+  html.aos-fixed-workspace-page.aos-shell-planet-active [data-content][data-home-page="planet"],
+  html.aos-fixed-workspace-page.aos-shell-planet-active .aos-planet-overview-page {
+    height: auto;
+    align-self: start;
+  }
+
+  html.aos-fixed-workspace-page.aos-shell-planet-active .aos-planet-overview-page {
+    grid-template-rows: auto auto;
+    align-content: start;
+  }
+
+  html.aos-fixed-workspace-page.aos-shell-planet-active .aos-planet-overview-grid {
+    align-items: start;
+    overflow: visible;
+    scrollbar-gutter: auto;
+  }
+
+  html.aos-fixed-workspace-page.aos-shell-planet-active .aos-planet-attention-panel {
+    align-self: start;
+  }
 }
 
 @media (min-width: 821px) and (max-width: 1160px) {
-  html.aos-shell-home-active .pmh-decision-cockpit {
+  html.aos-shell-home-active .pmh-desktop-priority-layout {
     grid-template-columns: 1fr;
   }
 
-  html.aos-shell-home-active .pmh-attention-queue {
+  html.aos-shell-home-active .pmh-desktop-priority-focus-section,
+  html.aos-shell-home-active .pmh-desktop-priority-others-section {
     grid-column: 1;
-    padding: 14px 0 0;
-    border-top: 1px solid rgba(255, 255, 255, .1);
-    border-left: 0;
   }
 
-  html.aos-shell-home-active .pmh-attention-queue > div {
+  html.aos-shell-home-active .pmh-desktop-priority-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
