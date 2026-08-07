@@ -7,7 +7,7 @@
     '/planet-hub/assets/planet-lead-hunter-v1.js?v=20260806-3',
     '/planet-hub/assets/andre-os-navigation-drawers-v1.js?v=20260806-2',
     '/planet-hub/assets/andre-os-home-pages-v1.js?v=20260807-3',
-    '/planet-hub/assets/andre-os-radar-home-v1.js?v=20260807-1',
+    '/planet-hub/assets/andre-os-radar-home-v1.js?v=20260807-2',
     '/planet-hub/assets/planet-five-stars-v1.js?v=20260807-2',
     '/planet-hub/assets/planet-five-stars-data-v1.js?v=20260807-1',
     '/planet-hub/assets/planet-five-stars-import-v1.js?v=20260807-1',
