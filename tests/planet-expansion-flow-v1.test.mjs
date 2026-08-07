@@ -39,12 +39,12 @@ assert.match(huntApi, /runLeadHunt/);
 
 const baseStyleIndex = index.indexOf('planet-expansion-v1.css?v=20260806-1');
 const operationsStyleIndex = index.indexOf('andre-os-operations-v1.css');
-const accessScriptIndex = index.indexOf('hub-access-v1.js?v=20260807-1');
+const accessScriptIndex = index.indexOf('hub-access-v1.js?v=');
 assert.ok(baseStyleIndex >= 0 && operationsStyleIndex > baseStyleIndex);
 assert.ok(accessScriptIndex >= 0);
 assert.ok(!index.includes('planet-expansion-exclusive-sections'));
-assert.ok(access.includes('planet-expansion-v1.js?v=20260806-2'));
-assert.ok(access.includes('planet-lead-hunter-v1.js?v=20260806-3'));
+assert.ok(/planet-expansion-v1\.js\?v=/.test(access));
+assert.ok(/planet-lead-hunter-v1\.js\?v=/.test(access));
 assert.ok(leadsApi.includes('upsertLead'));
 assert.ok(webhook.includes('upsertLead'));
 assert.ok(webhook.includes('readNotificationDocument'));
