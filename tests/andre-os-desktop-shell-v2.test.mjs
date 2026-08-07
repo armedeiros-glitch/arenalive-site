@@ -24,8 +24,14 @@ assert.match(shell, /data-shell-hash="#inicio"/);
 assert.match(shell, /data-shell-environment="trabalho"/);
 assert.match(shell, /data-shell-workspace="planet"/);
 assert.match(shell, />Planet Chocolate</);
-assert.match(shell, />Pessoal <small>próxima etapa<\/small>/);
-assert.match(shell, />Laboratório <small>próxima etapa<\/small>/);
+assert.doesNotMatch(shell, /próxima etapa/);
+assert.doesNotMatch(shell, />Pessoal </);
+assert.doesNotMatch(shell, />Laboratório </);
+assert.match(shell, /OPERATING SYSTEM/);
+assert.match(shell, /André OS · ambiente principal/);
+assert.match(shell, /Ambiente Planet Chocolate/);
+assert.match(shell, /aos-shell-home-active/);
+assert.match(shell, /aos-shell-planet-active/);
 
 assert.match(shell, /key: 'planet', label: 'Visão geral', hash: '#planet'/);
 assert.match(shell, /key: 'demandas', label: 'Demandas', hash: '#demandas'/);
@@ -45,6 +51,10 @@ assert.doesNotMatch(shell, /localStorage|sessionStorage/);
 assert.match(styles, /@media \(min-width: 821px\)/);
 assert.match(styles, /html\.aos-desktop-shell-v2-ready \.pmh-sidebar nav > :not\(\.aos-shell-v2-root\)/);
 assert.match(styles, /\.aos-planet-context-nav/);
+assert.match(styles, /html\.aos-shell-home-active \.pmh-decision-cockpit/);
+assert.match(styles, /grid-template-columns:\s*minmax\(0, 1\.6fr\)/);
+assert.match(styles, /html\.aos-shell-home-active \.pmh-attention-queue/);
+assert.match(styles, /html\.aos-shell-home-active \.aos-home-page-today/);
 assert.match(styles, /@media \(max-width: 820px\)/);
 assert.match(styles, /\.aos-shell-v2-root,[\s\S]*\.aos-planet-context-nav[\s\S]*display:\s*none !important/);
 
