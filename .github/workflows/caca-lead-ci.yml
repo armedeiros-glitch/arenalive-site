@@ -50,8 +50,10 @@ jobs:
           ! grep -Eq "createElement\('link'\)|ensureDestinations?" planet-hub/assets/andre-os-home-pages-v1.js
           ! grep -Eq "injectStyles|createElement\('style'\)|insertAdjacentElement|setTimeout\(activate" planet-hub/assets/planet-expansion-v1.js
           ! grep -Eq 'setInterval|MutationObserver|localStorage|sessionStorage' planet-hub/assets/planet-five-stars-data-v1.js
+          ! grep -Eq 'setInterval|MutationObserver|localStorage|sessionStorage' planet-hub/assets/planet-five-stars-import-v1.js
           ! grep -q '!important' planet-hub/assets/planet-lead-hunter-v1.css
           ! grep -q '!important' planet-hub/assets/planet-expansion-v1.css
+          ! grep -q '!important' planet-hub/assets/planet-five-stars-import-v1.css
           ! grep -q 'planet-expansion-exclusive-sections-v1' index.html
           ! grep -Eq 'promoteCandidate|upsertLead|promotedLeadId\s*:' functions/_lib/planet-lead-hunt.js
           ! grep -Riq 'GOOGLE_PLACES_API_KEY\|places.googleapis.com\|google_places' functions/_lib/planet-lead-hunt* functions/api/hub/planet/expansion/hunt.js workers/planet-caca-leads docs/caca-leads-automatic-v1.md
@@ -65,10 +67,12 @@ jobs:
           test "$(grep -o "andre-os-navigation-drawers-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "andre-os-home-pages-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "planet-five-stars-data-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
+          test "$(grep -o "planet-five-stars-import-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "andre-os-desktop-shell-v2.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "planet-expansion-v1.css" index.html | wc -l)" -eq 1
           test "$(grep -o "planet-lead-hunter-v1.css" index.html | wc -l)" -eq 1
           test "$(grep -o "planet-five-stars-data-v1.css" index.html | wc -l)" -eq 1
+          test "$(grep -o "planet-five-stars-import-v1.css" index.html | wc -l)" -eq 1
           test "$(grep -o "andre-os-home-pages-v1.css" index.html | wc -l)" -eq 1
           test "$(grep -o "andre-os-desktop-shell-v2.css" index.html | wc -l)" -eq 1
 
@@ -92,6 +96,7 @@ jobs:
             tests/planet-lead-hunt-contract-v1.test.mjs
             tests/planet-lead-hunt-ui-v1.test.mjs
             tests/planet-five-stars-data-v1.test.mjs
+            tests/planet-five-stars-import-v1.test.mjs
             tests/andre-os-navigation-drawers-v1.test.mjs
             tests/andre-os-home-pages-v1.test.mjs
             tests/andre-os-desktop-shell-v2.test.mjs
