@@ -56,14 +56,26 @@
       eventView: 'marketing',
       hideSearch: false,
       markup: () => `<section class="aos-home-page aos-marketing-hub-page" data-marketing-hub aria-label="Marketing Planet Chocolate">
-        <header class="aos-home-page-header aos-marketing-hub-header">
-          <div><small>PLANET CHOCOLATE</small><h2>Marketing</h2><p>Demandas e leitura operacional do fluxo criativo ficam dentro desta gaveta.</p></div>
+        <header class="aos-marketing-hub-intro">
+          <div class="aos-marketing-hub-copy"><small>MARKETING PLANET</small><h2>Fluxo criativo</h2><p>O que está em produção agora e onde entrar para executar.</p></div>
+          <div class="aos-marketing-kpis" aria-label="Resumo do Marketing">
+            <span><small>DEMANDAS</small><strong data-marketing-demand-count>…</strong><em>ativas</em></span>
+            <span><small>PRODUÇÃO</small><strong data-marketing-production-count>…</strong><em>materiais</em></span>
+            <span><small>APROVAÇÃO</small><strong data-marketing-approval-count>…</strong><em>aguardando</em></span>
+            <span><small>EM FLUXO</small><strong data-marketing-flow-count>…</strong><em>itens</em></span>
+          </div>
         </header>
-        <section class="aos-marketing-hub-grid">
-          <button type="button" data-home-destination="demandas" class="aos-marketing-door primary"><i>✎</i><span><small>EXECUÇÃO</small><strong>Demandas</strong><em><b data-marketing-demand-count>…</b> itens ativos</em></span></button>
-          <button type="button" data-home-destination="radar" class="aos-marketing-door"><i>◎</i><span><small>GESTÃO</small><strong>Radar do Marketing</strong><em><b data-marketing-radar-count>…</b> itens para acompanhar</em></span></button>
-          <div class="aos-marketing-readout"><small>EM FLUXO</small><strong data-marketing-flow-count>…</strong><span>conteúdos, demandas e campanhas em andamento</span></div>
-        </section>
+        <div class="aos-marketing-hub-grid">
+          <section class="aos-marketing-queue-panel">
+            <header><div><small>AGORA</small><h3>Em andamento</h3></div><button type="button" data-home-destination="demandas">Ver demandas</button></header>
+            <div class="aos-marketing-queue" data-marketing-queue><div class="aos-planet-loading">Lendo o fluxo criativo…</div></div>
+          </section>
+          <nav class="aos-marketing-doors" aria-label="Acessos do Marketing">
+            <button type="button" data-home-destination="demandas" class="aos-marketing-door primary"><i>✎</i><span><small>EXECUÇÃO</small><strong>Demandas</strong><em>Pedidos, responsáveis e prazos</em></span></button>
+            <button type="button" data-home-destination="radar" class="aos-marketing-door"><i>◎</i><span><small>GESTÃO</small><strong>Radar</strong><em>Prioridades e dependências</em></span></button>
+            <button type="button" data-home-destination="conteudos" class="aos-marketing-door"><i>▤</i><span><small>MATERIAIS</small><strong>Central Planet</strong><em>Conteúdos e arquivos da operação</em></span></button>
+          </nav>
+        </div>
       </section>`,
     },
     demandas: {
@@ -154,7 +166,7 @@
 
   const itemDestination = (action) => ({
     demand: '#demandas',
-    conteudos: '#marketing',
+    conteudos: '#conteudos',
     calendario: '#calendario',
     inauguracoes: '#inauguracoes',
     chamados: '#chamados',
@@ -208,13 +220,30 @@
     if (!root) return;
     const items = Array.isArray(snapshot?.items) ? snapshot.items : [];
     const demands = items.filter((item) => item.action === 'demand');
-    const marketingFlow = items.filter((item) => ['demand', 'conteudos', 'calendario'].includes(item.action));
+    const contents = items.filter((item) => item.action === 'conteudos');
+    const marketingFlow = items.filter((item) => ['demand', 'conteudos'].includes(item.action));
+    const production = contents.filter((item) => /produ/i.test(String(item.status || '')));
+    const approvals = contents.filter((item) => /aprova/i.test(String(item.status || '')));
+
     const demandCount = root.querySelector('[data-marketing-demand-count]');
-    const radarCount = root.querySelector('[data-marketing-radar-count]');
+    const productionCount = root.querySelector('[data-marketing-production-count]');
+    const approvalCount = root.querySelector('[data-marketing-approval-count]');
     const flowCount = root.querySelector('[data-marketing-flow-count]');
     if (demandCount) demandCount.textContent = String(demands.length);
-    if (radarCount) radarCount.textContent = String(marketingFlow.length);
+    if (productionCount) productionCount.textContent = String(production.length);
+    if (approvalCount) approvalCount.textContent = String(approvals.length);
     if (flowCount) flowCount.textContent = String(marketingFlow.length);
+
+    const queue = root.querySelector('[data-marketing-queue]');
+    if (queue) {
+      const visible = marketingFlow.slice(0, 5);
+      queue.innerHTML = visible.length
+        ? visible.map((item) => `<button type="button" class="aos-marketing-queue-item" data-planet-item-action="${esc(item.action)}">
+            <span><small>${esc(item.origin || 'Marketing')}</small><strong>${esc(item.title || 'Item sem título')}</strong><em>${esc(item.status || 'Em andamento')}</em></span>
+            <time>${esc(dueLabel(item))}</time>
+          </button>`).join('')
+        : '<div class="aos-planet-empty"><strong>Fluxo limpo</strong><span>Nenhuma demanda ou material ativo agora.</span></div>';
+    }
   };
 
   const hydrateCurrentPage = async () => {
