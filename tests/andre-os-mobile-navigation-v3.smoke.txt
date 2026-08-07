@@ -1,4 +1,0 @@
-Mobile navigation v3 smoke checklist:
-- root: Início, Trabalho/Planet Chocolate, Laboratório, Pessoal
-- Planet: Visão Geral, Marketing, Campanhas, Inaugurações, Chamados, Aquisição, Expansão, Planet 5 Estrelas, Central Planet
-- desktop unchanged
