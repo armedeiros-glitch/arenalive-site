@@ -11,6 +11,21 @@
   const content = () => document.querySelector('[data-content]');
   const title = () => document.querySelector('[data-title]');
 
+  const ensureOverviewEntry = () => {
+    if (hash() !== 'planet') return;
+    const drawers = document.querySelector('.aos-planet-drawers');
+    if (!drawers || drawers.querySelector('[data-p5-overview-entry]')) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'aos-planet-drawer-card';
+    button.dataset.p5OverviewEntry = 'true';
+    button.dataset.shellHash = '#5-estrelas';
+    button.innerHTML = '<i>☆</i><span><small>REDE</small><strong>Planet 5 Estrelas</strong><em>Avaliações e evolução das unidades</em></span>';
+    const central = drawers.querySelector('[data-home-destination="conteudos"]');
+    if (central) drawers.insertBefore(button, central);
+    else drawers.appendChild(button);
+  };
+
   const emptyPanel = (eyebrow, heading, body, note) => `
     <section class="p5-panel p5-empty-panel">
       <div class="p5-empty-icon">☆</div>
@@ -106,7 +121,10 @@
 
   const schedule = () => {
     cancelAnimationFrame(frame);
-    frame = requestAnimationFrame(render);
+    frame = requestAnimationFrame(() => {
+      ensureOverviewEntry();
+      render();
+    });
   };
 
   document.addEventListener('click', (event) => {
@@ -115,8 +133,9 @@
   });
   window.addEventListener('hashchange', schedule);
   window.addEventListener('pmh:view-rendered', (event) => {
-    if (event.detail?.view !== 'cinco-estrelas' && active()) schedule();
+    if (event.detail?.view !== 'cinco-estrelas') schedule();
   });
+  window.addEventListener('andre-os:home-page-rendered', schedule);
   window.addEventListener('pmh:access-ready', schedule);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedule, { once: true });
   else schedule();
