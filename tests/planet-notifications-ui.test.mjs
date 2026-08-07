@@ -35,8 +35,8 @@ assert.match(expansion, /planet:open-lead/);
 assert.match(expansion, /data-lead-id/);
 assert.match(expansion, /viewedAt/);
 assert.match(expansion, /selected/);
-assert.match(access, /planet-expansion-v1\.js\?v=20260806-1/);
+assert.match(access, /planet-expansion-v1\.js\?v=20260806-2/);
 assert.match(access, /planet-notifications-v1\.js\?v=20260805-1/);
-assert.match(rootEntry, /hub-access-v1\.js\?v=20260806-1/);
+assert.match(rootEntry, /hub-access-v1\.js\?v=20260806-4/);
 
 console.log('Planet notification center compartilhado: tests passed');
