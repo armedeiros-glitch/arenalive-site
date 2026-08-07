@@ -10,11 +10,24 @@
   const OPEN_DISTANCE_PX = 64;
   const CLOSE_DISTANCE_PX = 56;
 
+  const PLANET_ROUTES = [
+    { key: 'planet', label: 'Visão Geral', icon: '▦' },
+    { key: 'marketing', label: 'Marketing', icon: '✦' },
+    { key: 'calendario', label: 'Campanhas', icon: '◫' },
+    { key: 'inauguracoes', label: 'Inaugurações', icon: '⚑' },
+    { key: 'chamados', label: 'Chamados', icon: '▤' },
+    { key: 'aquisicao', label: 'Aquisição', icon: '↙' },
+    { key: 'expansao', label: 'Expansão', icon: '↗' },
+    { key: '5-estrelas', label: 'Planet 5 Estrelas', icon: '★' },
+    { key: 'conteudos', label: 'Central Planet', icon: '▥' },
+  ];
+
   let gesture = null;
   let lastFocused = null;
   let previousBodyOverflow = '';
   let previousRootOverscroll = '';
   let resizeFrame = 0;
+  let mobileNavigationPanel = 'root';
 
   const mobileViewport = () => {
     const viewport = Number(window.innerWidth) || 9999;
@@ -29,6 +42,96 @@
   const topbar = () => shell()?.querySelector('.pmh-topbar') || null;
   const toggle = () => document.querySelector('[data-mobile-menu-toggle]');
   const backdrop = () => document.querySelector('[data-mobile-menu-backdrop]');
+  const currentHash = () => String(location.hash || '#inicio').replace(/^#/, '').toLowerCase();
+
+  const mobileRoute = () => {
+    const hash = currentHash();
+    if (!hash || hash === 'inicio' || hash === 'hoje') return 'inicio';
+    if (hash === 'laboratorio') return 'laboratorio';
+    if (hash === 'pessoal') return 'pessoal';
+    if (hash === 'planet') return 'planet';
+    if (hash.includes('demanda') || hash.includes('radar') || hash === 'marketing') return 'marketing';
+    if (hash.includes('calend') || hash.includes('campanha')) return 'calendario';
+    if (hash.includes('inaug')) return 'inauguracoes';
+    if (hash.includes('cham')) return 'chamados';
+    if (hash.includes('aquis') || hash.includes('lp-franquias')) return 'aquisicao';
+    if (hash.includes('expans')) return 'expansao';
+    if (hash.includes('5-estrelas') || hash.includes('cinco-estrelas') || hash.includes('5estrelas')) return '5-estrelas';
+    if (hash.includes('conte')) return 'conteudos';
+    return 'inicio';
+  };
+
+  const isPlanetContext = () => PLANET_ROUTES.some((route) => route.key === mobileRoute());
+  const activeClass = (route) => mobileRoute() === route ? ' active' : '';
+
+  const rootNavigationMarkup = () => `
+    <div class="aos-mobile-nav-panel" data-mobile-nav-panel="root">
+      <button type="button" class="aos-mobile-nav-row${activeClass('inicio')}" data-mobile-route="inicio">
+        <i aria-hidden="true">⌂</i><span><strong>Início</strong><small>Seu foco e os ambientes do André OS</small></span>
+      </button>
+      <div class="aos-mobile-nav-section-label">AMBIENTES</div>
+      <button type="button" class="aos-mobile-nav-row environment" data-mobile-panel="planet">
+        <i aria-hidden="true">▣</i><span><small>TRABALHO</small><strong>Planet Chocolate</strong></span><b aria-hidden="true">›</b>
+      </button>
+      <button type="button" class="aos-mobile-nav-row environment${activeClass('laboratorio')}" data-mobile-route="laboratorio">
+        <i aria-hidden="true">⌁</i><span><small>LABORATÓRIO</small><strong>Projetos e ideias</strong></span><b aria-hidden="true">›</b>
+      </button>
+      <button type="button" class="aos-mobile-nav-row environment${activeClass('pessoal')}" data-mobile-route="pessoal">
+        <i aria-hidden="true">◉</i><span><small>VIDA PESSOAL</small><strong>Foco e tarefas</strong></span><b aria-hidden="true">›</b>
+      </button>
+    </div>`;
+
+  const planetNavigationMarkup = () => `
+    <div class="aos-mobile-nav-panel" data-mobile-nav-panel="planet">
+      <header class="aos-mobile-nav-context">
+        <button type="button" data-mobile-panel="root" aria-label="Voltar para ambientes">‹</button>
+        <span><small>TRABALHO</small><strong>Planet Chocolate</strong></span>
+      </header>
+      <div class="aos-mobile-nav-section-label">GAVETAS</div>
+      <div class="aos-mobile-nav-route-list">
+        ${PLANET_ROUTES.map((route) => `
+          <button type="button" class="aos-mobile-nav-row${activeClass(route.key)}" data-mobile-route="${route.key}">
+            <i aria-hidden="true">${route.icon}</i><span><strong>${route.label}</strong></span><b aria-hidden="true">›</b>
+          </button>`).join('')}
+      </div>
+    </div>`;
+
+  const renderMobileNavigation = () => {
+    const host = sidebar()?.querySelector('[data-mobile-navigation]');
+    if (!host) return;
+    host.dataset.mobileNavigationPanel = mobileNavigationPanel;
+    host.innerHTML = mobileNavigationPanel === 'planet' ? planetNavigationMarkup() : rootNavigationMarkup();
+  };
+
+  const ensureMobileNavigation = () => {
+    if (!isMobile()) return null;
+    const navigation = sidebar()?.querySelector(':scope > nav');
+    if (!navigation) return null;
+
+    let host = navigation.querySelector(':scope > [data-mobile-navigation]');
+    if (!host) {
+      host = document.createElement('section');
+      host.className = 'aos-mobile-navigation';
+      host.dataset.mobileNavigation = 'v3';
+      navigation.prepend(host);
+    }
+    renderMobileNavigation();
+    return host;
+  };
+
+  const syncNavigationPanelFromRoute = () => {
+    mobileNavigationPanel = isPlanetContext() ? 'planet' : 'root';
+    renderMobileNavigation();
+  };
+
+  const setMobileNavigationPanel = (panel) => {
+    mobileNavigationPanel = panel === 'planet' ? 'planet' : 'root';
+    renderMobileNavigation();
+    requestAnimationFrame(() => {
+      const target = sidebar()?.querySelector('[data-mobile-navigation] button');
+      target?.focus?.({ preventScroll: true });
+    });
+  };
 
   const restoreNavigation = () => {
     const app = shell();
@@ -134,6 +237,8 @@
 
   const openSidebar = ({ focus = true } = {}) => {
     if (!isMobile() || isOpen() || !sidebar()) return;
+    syncNavigationPanelFromRoute();
+    ensureMobileNavigation();
     lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     document.documentElement.classList.add(OPEN_CLASS);
     document.body.classList.add(OPEN_CLASS);
@@ -142,7 +247,7 @@
 
     if (focus) {
       requestAnimationFrame(() => {
-        const target = sidebar()?.querySelector('[data-mobile-menu-close], nav button:not([hidden])');
+        const target = sidebar()?.querySelector('[data-mobile-menu-close], [data-mobile-navigation] button:not([hidden])');
         target?.focus?.({ preventScroll: true });
       });
     }
@@ -168,6 +273,7 @@
     ensureBackdrop();
     ensureToggle();
     ensureCloseButton();
+    ensureMobileNavigation();
     syncAccessibility();
     return true;
   };
@@ -180,7 +286,10 @@
 
     ensureShell();
     if (!active) closeSidebar({ restoreFocus: false });
-    else syncAccessibility();
+    else {
+      syncNavigationPanelFromRoute();
+      syncAccessibility();
+    }
   };
 
   const scheduleViewportSync = () => {
@@ -238,7 +347,29 @@
     if (shouldClose) closeSidebar();
   };
 
+  const navigateMobileRoute = (route) => {
+    if (!route) return;
+    const target = `#${route}`;
+    closeSidebar({ restoreFocus: false });
+    if (location.hash === target) return;
+    location.hash = target;
+  };
+
   const onClick = (event) => {
+    const panelTrigger = event.target.closest?.('[data-mobile-panel]');
+    if (panelTrigger && isMobile()) {
+      event.preventDefault();
+      setMobileNavigationPanel(panelTrigger.dataset.mobilePanel);
+      return;
+    }
+
+    const routeTrigger = event.target.closest?.('[data-mobile-route]');
+    if (routeTrigger && isMobile()) {
+      event.preventDefault();
+      navigateMobileRoute(routeTrigger.dataset.mobileRoute);
+      return;
+    }
+
     if (event.target.closest?.('[data-mobile-menu-toggle]')) {
       if (isOpen()) closeSidebar();
       else openSidebar();
@@ -255,6 +386,12 @@
     }
   };
 
+  const onRouteChange = () => {
+    syncNavigationPanelFromRoute();
+    ensureMobileNavigation();
+    closeSidebar({ restoreFocus: false });
+  };
+
   const boot = () => {
     syncViewport();
 
@@ -267,7 +404,7 @@
     window.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && isOpen()) closeSidebar();
     });
-    window.addEventListener('hashchange', () => closeSidebar({ restoreFocus: false }));
+    window.addEventListener('hashchange', onRouteChange);
     window.addEventListener('resize', scheduleViewportSync, { passive: true });
     window.addEventListener('orientationchange', scheduleViewportSync, { passive: true });
     window.visualViewport?.addEventListener('resize', scheduleViewportSync, { passive: true });
