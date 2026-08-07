@@ -1,0 +1,243 @@
+/* André OS · Desktop Shell v2
+   Primeira fundação da arquitetura por ambientes.
+   Escopo exclusivo de desktop: mobile preserva a navegação atual. */
+
+@media (min-width: 821px) {
+  html.aos-desktop-shell-v2-ready .pmh-sidebar nav {
+    display: block;
+    overflow: visible;
+  }
+
+  html.aos-desktop-shell-v2-ready .pmh-sidebar nav > :not(.aos-shell-v2-root) {
+    display: none !important;
+  }
+
+  .aos-shell-v2-root {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .aos-shell-v2-root button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .aos-shell-v2-home,
+  .aos-shell-v2-environment-toggle,
+  .aos-shell-v2-workspace {
+    display: grid;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, .68);
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    transition: background .16s ease, border-color .16s ease, color .16s ease;
+  }
+
+  .aos-shell-v2-home,
+  .aos-shell-v2-environment-toggle {
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    padding: 10px 11px;
+    font-size: 13px;
+    font-weight: 760;
+  }
+
+  .aos-shell-v2-home:hover,
+  .aos-shell-v2-environment-toggle:hover,
+  .aos-shell-v2-workspace:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, .055);
+  }
+
+  .aos-shell-v2-home.active,
+  .aos-shell-v2-environment-toggle.has-active-workspace {
+    color: #fff;
+    background: rgba(115, 92, 255, .13);
+    border-color: rgba(145, 123, 255, .22);
+  }
+
+  .aos-shell-v2-environment {
+    display: grid;
+    gap: 5px;
+  }
+
+  .aos-shell-v2-environment-toggle > b {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    color: rgba(255, 255, 255, .42);
+    transform: rotate(-90deg);
+    transition: transform .16s ease;
+  }
+
+  .aos-shell-v2-environment-toggle.open > b {
+    transform: rotate(0deg);
+  }
+
+  .aos-shell-v2-workspaces[hidden] {
+    display: none;
+  }
+
+  .aos-shell-v2-workspaces {
+    display: grid;
+    gap: 4px;
+    padding-left: 13px;
+  }
+
+  .aos-shell-v2-workspace {
+    grid-template-columns: 18px minmax(0, 1fr);
+    min-height: 52px;
+    padding: 8px 10px 8px 12px;
+    border-left: 2px solid rgba(255, 255, 255, .08);
+    border-radius: 0 11px 11px 0;
+  }
+
+  .aos-shell-v2-workspace > i {
+    color: #735cff;
+    font-size: 10px;
+  }
+
+  .aos-shell-v2-workspace > span {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .aos-shell-v2-workspace strong {
+    overflow: hidden;
+    color: inherit;
+    font-size: 12.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .aos-shell-v2-workspace small {
+    color: rgba(255, 255, 255, .38);
+    font-size: 9.5px;
+  }
+
+  .aos-shell-v2-workspace.active {
+    color: #fff;
+    background: rgba(115, 92, 255, .11);
+    border-left-color: #917bff;
+  }
+
+  .aos-shell-v2-future {
+    display: grid;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, .06);
+  }
+
+  .aos-shell-v2-future > span {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 11px;
+    color: rgba(255, 255, 255, .28);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .aos-shell-v2-future small {
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+
+  .aos-planet-context-nav[hidden] {
+    display: none !important;
+  }
+
+  .aos-planet-context-nav {
+    display: grid;
+    grid-template-columns: minmax(150px, .7fr) minmax(0, 4fr);
+    align-items: center;
+    gap: 18px;
+    min-height: 62px;
+    padding: 8px 24px;
+    border-bottom: 1px solid var(--os-border);
+    background: rgba(255, 255, 255, .94);
+    backdrop-filter: blur(12px);
+  }
+
+  .aos-planet-context-brand {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .aos-planet-context-brand small {
+    color: var(--os-text-faint);
+    font-size: 8px;
+    font-weight: 850;
+    letter-spacing: .11em;
+  }
+
+  .aos-planet-context-brand strong {
+    overflow: hidden;
+    color: var(--os-text-strong);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .aos-planet-context-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .aos-planet-context-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .aos-planet-context-tabs button {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 0 11px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--os-text-muted);
+    background: transparent;
+    font-size: 11px;
+    font-weight: 760;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color .15s ease, background .15s ease, border-color .15s ease;
+  }
+
+  .aos-planet-context-tabs button:hover {
+    color: var(--os-text-strong);
+    background: var(--os-surface-subtle);
+  }
+
+  .aos-planet-context-tabs button.active {
+    color: var(--os-accent-strong);
+    border-color: rgba(115, 92, 255, .14);
+    background: var(--os-accent-soft);
+  }
+
+  html.aos-desktop-shell-v2-ready .pmh-main {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 820px) {
+  .aos-shell-v2-root,
+  .aos-planet-context-nav {
+    display: none !important;
+  }
+}
