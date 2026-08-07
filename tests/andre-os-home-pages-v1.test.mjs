@@ -20,7 +20,8 @@ assert.ok(pagesIndex > drawerIndex, 'As páginas da Home devem carregar depois d
 assert.ok(notificationsIndex > pagesIndex, 'As páginas devem estar montadas antes do replay final de notificações.');
 
 assert.match(indexHtml, /andre-os-home-pages-v1\.css\?v=20260806-2/);
-assert.match(access, /andre-os-home-pages-v1\.js\?v=20260806-2/);
+assert.match(indexHtml, /andre-os-home-refine-v3\.css\?v=20260807-1/);
+assert.match(access, /andre-os-home-pages-v1\.js\?v=20260807-1/);
 assert.match(pages, /hoje:\s*\{/);
 assert.match(pages, /demandas:\s*\{/);
 assert.match(pages, /radar:\s*\{/);

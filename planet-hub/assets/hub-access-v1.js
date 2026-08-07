@@ -6,8 +6,8 @@
     '/planet-hub/assets/planet-expansion-v1.js?v=20260806-2',
     '/planet-hub/assets/planet-lead-hunter-v1.js?v=20260806-3',
     '/planet-hub/assets/andre-os-navigation-drawers-v1.js?v=20260806-2',
-    '/planet-hub/assets/andre-os-home-pages-v1.js?v=20260806-2',
-    '/planet-hub/assets/andre-os-desktop-shell-v2.js?v=20260806-1',
+    '/planet-hub/assets/andre-os-home-pages-v1.js?v=20260807-1',
+    '/planet-hub/assets/andre-os-desktop-shell-v2.js?v=20260807-1',
     '/planet-hub/assets/planet-notifications-v1.js?v=20260805-1',
   ];
 
@@ -109,7 +109,7 @@
 
   const renderLogin = (message = '') => {
     document.documentElement.classList.remove('pmh-access-pending');
-    document.body.innerHTML = `<main class="pmh-access-screen"><form class="pmh-access-card"><div class="pmh-access-brand"><span>A</span><div><strong>André OS</strong><small>MARKETING COMMAND</small></div></div><h1>Acesso ao comando</h1><p>Entre com a senha interna para acessar chamados, inaugurações, fornecedores e pagamentos da operação.</p><label>Senha de acesso<input name="password" type="password" autocomplete="current-password" required autofocus></label><button type="submit">Entrar no sistema</button><p class="pmh-access-error" ${message ? '' : 'hidden'}>${message}</p></form></main>`;
+    document.body.innerHTML = `<main class="pmh-access-screen"><form class="pmh-access-card"><div class="pmh-access-brand"><span>A</span><div><strong>André OS</strong><small>OPERATING SYSTEM</small></div></div><h1>Acesso ao André OS</h1><p>Entre com a senha interna para acessar seus ambientes, informações e operações.</p><label>Senha de acesso<input name="password" type="password" autocomplete="current-password" required autofocus></label><button type="submit">Entrar no sistema</button><p class="pmh-access-error" ${message ? '' : 'hidden'}>${message}</p></form></main>`;
     const form = document.querySelector('.pmh-access-card');
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
