@@ -1,5 +1,5 @@
-/* André OS · gavetas e páginas mobile v1
-   Camada final exclusiva para telas até 820px. Não altera o desktop. */
+/* André OS · páginas mobile v2
+   Responsividade de conteúdo até 820px. A navegação pertence ao mobile-navigation-v2.css. */
 
 html.aos-mobile {
   --aos-mobile-page-gap: 12px;
@@ -25,60 +25,6 @@ html.aos-mobile [data-lead-hunter-root] {
 html.aos-mobile .pmh-content {
   padding: 12px 12px calc(28px + env(safe-area-inset-bottom, 0px)) !important;
   overflow-x: hidden !important;
-}
-
-/* Navegação por gavetas */
-html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers {
-  gap: 5px !important;
-  padding: 13px 0 18px !important;
-}
-
-html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-toggle {
-  min-height: 46px !important;
-  margin-top: 7px !important;
-  padding: 0 12px !important;
-  border: 1px solid rgba(255, 255, 255, .055) !important;
-  border-radius: 13px !important;
-  color: #aaa5b6 !important;
-  background: rgba(255, 255, 255, .025) !important;
-  font-size: 10px !important;
-  letter-spacing: .095em !important;
-}
-
-html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-toggle.open,
-html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-toggle.has-active-destination {
-  color: #f0edf7 !important;
-  border-color: rgba(139, 119, 255, .18) !important;
-  background: linear-gradient(180deg, rgba(124, 99, 255, .14), rgba(124, 99, 255, .07)) !important;
-}
-
-html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-toggle > b {
-  color: #8f89a0 !important;
-  background: transparent !important;
-}
-
-html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-item[data-navigation-drawer-item]:not([data-navigation-drawer-item="home"]) {
-  min-height: 45px !important;
-  margin-left: 14px !important;
-  padding-left: 18px !important;
-  border-radius: 12px !important;
-}
-
-html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-item[data-navigation-drawer-item]:not([data-navigation-drawer-item="home"])::after {
-  content: '';
-  position: absolute;
-  left: 2px;
-  top: 8px;
-  bottom: 8px;
-  width: 1px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, .085);
-}
-
-html.aos-mobile .pmh-sidebar > nav.aos-nav-drawers .aos-nav-drawer-item.active::after {
-  width: 3px !important;
-  background: #9b8bff !important;
-  box-shadow: 0 0 14px rgba(155, 139, 255, .52);
 }
 
 /* Página Hoje */
