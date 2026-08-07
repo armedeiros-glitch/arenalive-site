@@ -1,7 +1,17 @@
 (() => {
   'use strict';
 
+  const STYLE_ID = 'andre-os-radar-home-v1-style';
   let requestId = 0;
+
+  const ensureStyles = () => {
+    if (document.getElementById(STYLE_ID)) return;
+    const link = document.createElement('link');
+    link.id = STYLE_ID;
+    link.rel = 'stylesheet';
+    link.href = '/planet-hub/assets/andre-os-radar-home-v1.css?v=20260807-1';
+    document.head.appendChild(link);
+  };
 
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
@@ -16,6 +26,7 @@
   };
 
   const claimHome = () => {
+    ensureStyles();
     const root = homeRoot();
     if (!root) return null;
     root.removeAttribute('data-decision-cockpit');
