@@ -9,6 +9,7 @@
     '/planet-hub/assets/andre-os-home-pages-v1.js?v=20260807-3',
     '/planet-hub/assets/andre-os-radar-home-v1.js?v=20260807-1',
     '/planet-hub/assets/planet-five-stars-v1.js?v=20260807-2',
+    '/planet-hub/assets/planet-five-stars-data-v1.js?v=20260807-1',
     '/planet-hub/assets/andre-os-desktop-shell-v2.js?v=20260807-3',
     '/planet-hub/assets/planet-notifications-v1.js?v=20260805-1',
   ];
