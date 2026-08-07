@@ -13,6 +13,7 @@
     inauguracoes: { label: 'Inaugurações', icon: '⚑', order: 14, group: 'operacao' },
     calendario: { label: 'Calendário', icon: '▦', order: 21, group: 'marketing' },
     conteudos: { label: 'Conteúdos', icon: '▤', order: 22, group: 'marketing' },
+    aquisicao: { label: 'Aquisição', icon: '↙', order: 23, group: 'marketing' },
   };
 
   const DRAWERS = [
@@ -30,7 +31,7 @@
     const hash = currentHash();
     if (hash.includes('expans')) return 'expansao';
     if (hash.includes('demanda') || hash.includes('radar') || hash.includes('cham') || hash.includes('inaug')) return 'operacao';
-    if (hash.includes('calend') || hash.includes('campanha') || hash.includes('conte')) return 'marketing';
+    if (hash.includes('calend') || hash.includes('campanha') || hash.includes('conte') || hash.includes('aquis')) return 'marketing';
     return '';
   };
 
@@ -160,6 +161,7 @@
     if (!hash || hash === 'inicio' || hash === 'hoje') heading.textContent = 'Hoje';
     if (hash.includes('demanda')) heading.textContent = 'Demandas';
     if (hash.includes('radar')) heading.textContent = 'Radar';
+    if (hash.includes('aquis')) heading.textContent = 'Aquisição · LP Franquias';
     if (hash.includes('expans')) heading.textContent = expansionSection() === 'caca-lead' ? 'Caça Leads' : 'Leads recebidos';
   };
 

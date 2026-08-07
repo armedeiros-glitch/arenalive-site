@@ -13,7 +13,7 @@ const [indexHtml, accessScript, drawersScript, drawersCss, pagesScript] = await 
 ]);
 
 assert.match(indexHtml, /andre-os-navigation-drawers-v1\.css\?v=20260806-1/);
-assert.match(accessScript, /andre-os-navigation-drawers-v1\.js\?v=20260806-2/);
+assert.match(accessScript, /andre-os-navigation-drawers-v1\.js\?v=20260807-3/);
 
 const hunterPosition = accessScript.indexOf('planet-lead-hunter-v1.js');
 const drawersPosition = accessScript.indexOf('andre-os-navigation-drawers-v1.js');
@@ -25,6 +25,8 @@ assert.ok(notificationsPosition > pagesPosition, 'As notificações devem contin
 
 assert.match(drawersScript, /Operação da rede/);
 assert.match(drawersScript, /Marketing/);
+assert.match(drawersScript, /Aquisição/);
+assert.match(drawersScript, /aquisicao/);
 assert.match(drawersScript, /Expansão/);
 assert.match(drawersScript, /Leads recebidos/);
 assert.match(drawersScript, /Caça Leads/);

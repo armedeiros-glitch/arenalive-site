@@ -19,16 +19,20 @@ assert.match(indexHtml, /hub-access-v1\.js\?v=/);
 
 const pagesIndex = access.indexOf('andre-os-home-pages-v1.js');
 const fiveStarsIndex = access.indexOf('planet-five-stars-v1.js');
+const acquisitionIndex = access.indexOf('planet-acquisition-v1.js');
 const shellIndex = access.indexOf('andre-os-desktop-shell-v2.js');
 const notificationsIndex = access.indexOf('planet-notifications-v1.js');
 assert.ok(pagesIndex >= 0, 'As páginas existentes devem continuar carregadas.');
 assert.ok(fiveStarsIndex > pagesIndex, 'Planet 5 Estrelas deve carregar depois das páginas base.');
-assert.ok(shellIndex > fiveStarsIndex, 'O shell desktop deve montar depois do módulo Planet 5 Estrelas.');
+assert.ok(acquisitionIndex > fiveStarsIndex, 'Aquisição deve carregar antes do shell desktop.');
+assert.ok(shellIndex > acquisitionIndex, 'O shell desktop deve montar depois dos módulos Planet.');
 assert.ok(notificationsIndex > shellIndex, 'Notificações devem continuar carregando depois do shell.');
 assert.match(access, /andre-os-home-pages-v1\.js\?v=/);
 assert.match(access, /planet-five-stars-v1\.js\?v=/);
+assert.match(access, /planet-acquisition-v1\.js\?v=/);
 assert.match(access, /andre-os-desktop-shell-v2\.js\?v=/);
 assert.match(access, /5-estrelas/);
+assert.match(access, /aquisicao/);
 
 assert.match(shell, /data-shell-hash="#inicio"/);
 assert.match(shell, /data-shell-environment="trabalho"/);
@@ -51,6 +55,8 @@ assert.match(shell, /hash === 'marketing' \|\| hash\.includes\('demanda'\) \|\| 
 assert.match(shell, /key: 'campanhas', label: 'Campanhas', hash: '#calendario'/);
 assert.match(shell, /key: 'inauguracoes', label: 'Inaugurações', hash: '#inauguracoes'/);
 assert.match(shell, /key: 'chamados', label: 'Chamados', hash: '#chamados'/);
+assert.match(shell, /key: 'aquisicao', label: 'Aquisição', hash: '#aquisicao'/);
+assert.match(shell, /hash\.includes\('aquis'\)/);
 assert.match(shell, /key: 'expansao', label: 'Expansão', hash: '#expansao'/);
 assert.match(shell, /key: 'cinco-estrelas', label: '5 Estrelas', hash: '#5-estrelas'/);
 assert.match(shell, /key: 'central', label: 'Central', hash: '#conteudos'/);
@@ -101,4 +107,4 @@ assert.match(styles, /html\.aos-shell-home-active \.aos-home-page-today/);
 assert.match(styles, /@media \(max-width: 820px\)/);
 assert.match(styles, /\.aos-shell-v2-root,[\s\S]*\.aos-planet-context-nav[\s\S]*display:\s*none !important/);
 
-console.log('Contrato do André OS Desktop Shell v2 e Planet 5 Estrelas v4 validado.');
+console.log('Contrato do André OS Desktop Shell v2, Planet 5 Estrelas e Aquisição validado.');
