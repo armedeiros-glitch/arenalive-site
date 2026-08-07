@@ -2,6 +2,7 @@
   'use strict';
 
   const API = '/api/sults/chamados?start=0&limit=100';
+  const CONTEXT_API = '/api/hub/radar-contextos';
   const MY_NAME = 'André Roberto Medeiros';
   const STATUS = {
     1: 'Novo chamado',
@@ -15,6 +16,8 @@
   const state = {
     tickets: null,
     loading: null,
+    contexts: new Map(),
+    contextsLoading: null,
     unit: '',
     responsible: '',
     subject: '',
@@ -62,6 +65,30 @@
     return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(date);
   };
 
+  const ticketId = (ticket) => String(ticket.sultsTicketId || ticket.id || '');
+  const ticketItemId = (ticket) => `ticket-${ticketId(ticket)}`;
+  const contextFor = (ticket) => state.contexts.get(ticketItemId(ticket)) || null;
+  const contextDefers = (ticket) => {
+    const context = contextFor(ticket);
+    if (!context || context.state === 'actionable') return false;
+    if (!context.followUpDate) return true;
+    const diff = dayDifference(context.followUpDate);
+    return diff != null && diff > 0;
+  };
+  const contextDueNow = (ticket) => {
+    const context = contextFor(ticket);
+    if (!context || context.state === 'actionable' || !context.followUpDate) return false;
+    const diff = dayDifference(context.followUpDate);
+    return diff != null && diff <= 0;
+  };
+  const contextLabel = (context) => ({
+    blocked: 'Bloqueado',
+    waiting_info: 'Aguardando informação',
+    waiting_approval: 'Aguardando aprovação',
+    scheduled: 'Retomar depois',
+    actionable: 'Posso agir agora',
+  }[context?.state] || 'Contexto registrado');
+
   const urgencyKey = (ticket) => {
     const diff = dayDifference(dueDate(ticket));
     if (diff == null) return 'no-date';
@@ -71,9 +98,10 @@
     return 'later';
   };
 
-  const waitingTicket = (ticket) => Number(ticket.situation) === 5 || Number(ticket.situation) === 6;
+  const waitingTicket = (ticket) => contextDefers(ticket) || Number(ticket.situation) === 5 || Number(ticket.situation) === 6;
 
   const groupKey = (ticket) => {
+    if (contextDefers(ticket)) return 'waiting';
     const situation = Number(ticket.situation);
     const urgency = urgencyKey(ticket);
     if (urgency === 'late' || urgency === 'today' || situation === 1 || situation === 6 || !ticket.responsible) {
@@ -106,6 +134,7 @@
 
   const matchesBaseFilters = (ticket) => {
     const query = searchQuery();
+    const context = contextFor(ticket);
     const haystack = normalize([
       ticket.title,
       ticket.unit,
@@ -114,6 +143,9 @@
       ticket.subject,
       ticket.department,
       ticket.sultsTicketId,
+      context?.reason,
+      context?.dependsOn,
+      context?.nextAction,
       ...supportNames(ticket),
     ].join(' '));
 
@@ -129,6 +161,7 @@
   const matchesUrgency = (ticket) => {
     if (state.urgency === 'all') return true;
     if (state.urgency === 'waiting') return waitingTicket(ticket);
+    if (contextDefers(ticket)) return false;
     return urgencyKey(ticket) === state.urgency;
   };
 
@@ -142,6 +175,11 @@
 
   const sortTickets = (group, tickets) => [...tickets].sort((a, b) => {
     if (group === 'waiting') {
+      const aContext = contextFor(a);
+      const bContext = contextFor(b);
+      const aFollow = aContext?.followUpDate || '9999-12-31';
+      const bFollow = bContext?.followUpDate || '9999-12-31';
+      if (aFollow !== bFollow) return aFollow.localeCompare(bFollow);
       return new Date(a.lastChangeAt || a.lastUpdatedAt || a.openedAt || 0).getTime()
         - new Date(b.lastChangeAt || b.lastUpdatedAt || b.openedAt || 0).getTime();
     }
@@ -158,17 +196,24 @@
     const deadline = deadlineLabel(ticket);
     const status = STATUS[Number(ticket.situation)] || 'Situação não informada';
     const subject = ticket.subject || ticket.department || 'Sem assunto';
-    const id = ticket.sultsTicketId || ticket.id || '';
+    const id = ticketId(ticket);
+    const context = contextFor(ticket);
+    const deferred = contextDefers(ticket);
+    const followUpNow = contextDueNow(ticket);
+    const contextStatus = context ? (followUpNow ? 'Contexto para revisar' : contextLabel(context)) : '';
 
-    return `<article class="pmh-ticket pmh-command-ticket ${deadline.tone === 'late' ? 'late' : ''}" data-ticket-id="${esc(id)}">
+    return `<article class="pmh-ticket pmh-command-ticket ${deadline.tone === 'late' ? 'late' : ''} ${deferred ? 'has-operational-context' : ''}" data-ticket-id="${esc(id)}">
       <small>#${esc(id)}</small>
       <div class="pmh-command-ticket-head">
         <div><h4>${esc(ticket.title || 'Chamado sem título')}</h4><p>${esc(ticket.unit || 'Unidade não informada')}</p></div>
         <div class="pmh-command-ticket-badges">
           <span class="status status-${esc(ticket.situation || 'none')}">${esc(status)}</span>
           <span class="deadline ${deadline.tone}">${esc(deadline.text)}</span>
+          ${context ? `<span class="context ${followUpNow ? 'due' : ''}">${esc(contextStatus)}</span>` : ''}
+          <button type="button" class="pmh-ticket-context-button" data-ticket-context="${esc(id)}">${context ? 'Editar contexto' : '+ Contexto'}</button>
         </div>
       </div>
+      ${context ? `<div class="pmh-ticket-context-line"><strong>${esc(contextLabel(context))}</strong><span>${esc(context.reason || 'Contexto operacional registrado.')}</span>${context.followUpDate ? `<em>Revisar ${esc(fmtDate(context.followUpDate))}</em>` : ''}</div>` : ''}
       <dl class="pmh-command-ticket-facts">
         <div><dt>Responsável</dt><dd>${esc(ticket.responsible || 'Não definido')}</dd></div>
         <div><dt>Assunto</dt><dd>${esc(subject)}</dd></div>
@@ -193,12 +238,13 @@
     if (!mount?.isConnected || !Array.isArray(state.tickets)) return;
 
     const base = state.tickets.filter(matchesBaseFilters);
+    const actionableBase = base.filter((ticket) => !contextDefers(ticket));
     const counts = {
-      late: base.filter((ticket) => urgencyKey(ticket) === 'late').length,
-      today: base.filter((ticket) => urgencyKey(ticket) === 'today').length,
-      week: base.filter((ticket) => urgencyKey(ticket) === 'week').length,
+      late: actionableBase.filter((ticket) => urgencyKey(ticket) === 'late').length,
+      today: actionableBase.filter((ticket) => urgencyKey(ticket) === 'today').length,
+      week: actionableBase.filter((ticket) => urgencyKey(ticket) === 'week').length,
       waiting: base.filter(waitingTicket).length,
-      'no-date': base.filter((ticket) => urgencyKey(ticket) === 'no-date').length,
+      'no-date': actionableBase.filter((ticket) => urgencyKey(ticket) === 'no-date').length,
     };
     const visible = base.filter(matchesUrgency);
     const groups = {
@@ -214,15 +260,15 @@
       .map((value) => ({ value, label: STATUS[Number(value)] || `Status ${value}` }));
 
     if (head) {
-      head.innerHTML = `<div><small>CENTRAL DE DECISÃO</small><h2>Chamados por urgência</h2><p>${visible.length} de ${base.length} chamados visíveis. O status continua vindo do SULTS, mas a ordem agora mostra o que precisa de ação primeiro.</p></div>`;
+      head.innerHTML = `<div><small>CENTRAL DE DECISÃO</small><h2>Chamados por urgência</h2><p>${visible.length} de ${base.length} chamados visíveis. Contexto operacional tira bloqueios do foco até a data de revisão.</p></div>`;
     }
 
     mount.innerHTML = `
       <section class="pmh-command-metrics">
-        ${metricButton('late', 'Atrasados', counts.late, 'Prazo já vencido', 'red')}
+        ${metricButton('late', 'Atrasados', counts.late, 'Pedem ação agora', 'red')}
         ${metricButton('today', 'Vencem hoje', counts.today, 'Ação imediata', 'orange')}
         ${metricButton('week', 'Esta semana', counts.week, 'Próximos 7 dias', 'blue')}
-        ${metricButton('waiting', 'Aguardando', counts.waiting, 'Resposta ou responsável', 'purple')}
+        ${metricButton('waiting', 'Aguardando', counts.waiting, 'SULTS ou contexto', 'purple')}
         ${metricButton('no-date', 'Sem prazo', counts['no-date'], 'Precisam de definição', 'gray')}
       </section>
 
@@ -242,7 +288,7 @@
       <section class="pmh-command-groups">
         ${renderGroup('action', 'Precisa de ação', 'Atrasados, vencendo hoje, novos ou aguardando responsável.', groups.action)}
         ${renderGroup('progress', 'Em andamento', 'Demandas em execução com prazo controlado.', groups.progress)}
-        ${renderGroup('waiting', 'Aguardando terceiros', 'Dependem de retorno do solicitante ou da unidade.', groups.waiting)}
+        ${renderGroup('waiting', 'Aguardando / contextualizados', 'Dependem de retorno ou têm contexto registrado para revisão.', groups.waiting)}
       </section>`;
   };
 
@@ -260,6 +306,42 @@
       .finally(() => { state.loading = null; });
 
     return state.loading;
+  };
+
+  const loadContexts = async (force = false) => {
+    if (state.contexts.size && !force) return state.contexts;
+    if (state.contextsLoading && !force) return state.contextsLoading;
+    state.contextsLoading = fetch(CONTEXT_API, { headers: { Accept: 'application/json' }, cache: 'no-store' })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
+        state.contexts = new Map((Array.isArray(payload.data) ? payload.data : [])
+          .filter((item) => String(item.itemId || '').startsWith('ticket-'))
+          .map((item) => [String(item.itemId), item]));
+        return state.contexts;
+      })
+      .catch(() => state.contexts)
+      .finally(() => { state.contextsLoading = null; });
+    return state.contextsLoading;
+  };
+
+  const contextsFromRadar = (snapshot) => {
+    const items = Array.isArray(snapshot?.items) ? snapshot.items : [];
+    const next = new Map();
+    items.filter((item) => item.origin === 'SULTS' && String(item.id || '').startsWith('ticket-')).forEach((item) => {
+      const hasContext = item.contextUpdatedAt || item.blockerReason || item.dependsOn || item.nextAction || item.followUpDate || item.operationalState !== 'actionable';
+      if (!hasContext) return;
+      next.set(String(item.id), {
+        itemId: String(item.id),
+        state: item.operationalState || 'actionable',
+        reason: item.blockerReason || '',
+        dependsOn: item.dependsOn || '',
+        nextAction: item.nextAction || '',
+        followUpDate: item.followUpDate || '',
+        updatedAt: item.contextUpdatedAt || '',
+      });
+    });
+    state.contexts = next;
   };
 
   const transform = async () => {
@@ -280,7 +362,7 @@
     kanban.replaceWith(mount);
 
     try {
-      await loadTickets();
+      await Promise.all([loadTickets(), loadContexts()]);
       render(mount, head);
     } catch (error) {
       mount.innerHTML = `<div class="pmh-command-error"><strong>Não foi possível organizar os chamados.</strong><span>${esc(error instanceof Error ? error.message : String(error))}</span></div>`;
@@ -323,8 +405,16 @@
     if (event.target.closest('[data-refresh]')) {
       state.tickets = null;
       state.loading = null;
+      state.contexts = new Map();
+      state.contextsLoading = null;
     }
   }, true);
+
+  window.addEventListener('pmh:radar-data', (event) => {
+    if (!document.querySelector('.pmh-ticket-command')) return;
+    contextsFromRadar(event.detail);
+    render(document.querySelector('.pmh-ticket-command'), document.querySelector('.pmh-section-head'));
+  });
 
   const observer = new MutationObserver(() => transform());
   observer.observe(document.documentElement, { childList: true, subtree: true });
