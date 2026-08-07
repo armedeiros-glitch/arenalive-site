@@ -70,7 +70,7 @@ assert.match(fiveStars, /data-p5-tab="criteria"/);
 assert.match(fiveStars, /data-p5-tab="actions"/);
 assert.match(fiveStars, /Base oficial ainda não conectada/);
 assert.match(fiveStars, /nenhuma nota, critério ou avaliação será criada por estimativa/i);
-assert.match(fiveStars, /data-shell-hash = '#5-estrelas'/);
+assert.match(fiveStars, /dataset\.shellHash = '#5-estrelas'/);
 assert.doesNotMatch(fiveStars, /fetch\(/);
 assert.doesNotMatch(fiveStars, /localStorage|sessionStorage|MutationObserver/);
 assert.match(fiveStarsStyles, /\.p5-page/);
