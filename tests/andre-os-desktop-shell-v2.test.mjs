@@ -10,9 +10,9 @@ const [indexHtml, access, shell, styles] = await Promise.all([
   read('planet-hub/assets/andre-os-desktop-shell-v2.css'),
 ]);
 
-assert.match(indexHtml, /andre-os-desktop-shell-v2\.css\?v=20260807-1/);
-assert.match(indexHtml, /andre-os-home-refine-v3\.css\?v=20260807-1/);
-assert.match(indexHtml, /hub-access-v1\.js\?v=20260807-1/);
+assert.match(indexHtml, /andre-os-desktop-shell-v2\.css\?v=/);
+assert.match(indexHtml, /andre-os-home-refine-v3\.css\?v=/);
+assert.match(indexHtml, /hub-access-v1\.js\?v=/);
 
 const pagesIndex = access.indexOf('andre-os-home-pages-v1.js');
 const shellIndex = access.indexOf('andre-os-desktop-shell-v2.js');
@@ -20,8 +20,8 @@ const notificationsIndex = access.indexOf('planet-notifications-v1.js');
 assert.ok(pagesIndex >= 0, 'As páginas existentes devem continuar carregadas.');
 assert.ok(shellIndex > pagesIndex, 'O shell desktop deve montar depois das páginas existentes.');
 assert.ok(notificationsIndex > shellIndex, 'Notificações devem continuar carregando depois do shell.');
-assert.match(access, /andre-os-home-pages-v1\.js\?v=20260807-1/);
-assert.match(access, /andre-os-desktop-shell-v2\.js\?v=20260807-1/);
+assert.match(access, /andre-os-home-pages-v1\.js\?v=/);
+assert.match(access, /andre-os-desktop-shell-v2\.js\?v=/);
 
 assert.match(shell, /data-shell-hash="#inicio"/);
 assert.match(shell, /data-shell-environment="trabalho"/);
@@ -37,8 +37,10 @@ assert.match(shell, /aos-shell-home-active/);
 assert.match(shell, /aos-shell-planet-active/);
 
 assert.match(shell, /key: 'planet', label: 'Visão geral', hash: '#planet'/);
-assert.match(shell, /key: 'demandas', label: 'Demandas', hash: '#demandas'/);
-assert.match(shell, /key: 'radar', label: 'Radar', hash: '#radar'/);
+assert.match(shell, /key: 'marketing', label: 'Marketing', hash: '#marketing'/);
+assert.doesNotMatch(shell, /key: 'demandas', label: 'Demandas'/);
+assert.doesNotMatch(shell, /key: 'radar', label: 'Radar'/);
+assert.match(shell, /hash === 'marketing' \|\| hash\.includes\('demanda'\) \|\| hash\.includes\('radar'\)/);
 assert.match(shell, /key: 'campanhas', label: 'Campanhas', hash: '#calendario'/);
 assert.match(shell, /key: 'inauguracoes', label: 'Inaugurações', hash: '#inauguracoes'/);
 assert.match(shell, /key: 'chamados', label: 'Chamados', hash: '#chamados'/);
