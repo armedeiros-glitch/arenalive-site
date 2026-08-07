@@ -51,10 +51,12 @@ jobs:
           ! grep -Eq "injectStyles|createElement\('style'\)|insertAdjacentElement|setTimeout\(activate" planet-hub/assets/planet-expansion-v1.js
           ! grep -Eq 'setInterval|MutationObserver|localStorage|sessionStorage' planet-hub/assets/planet-five-stars-data-v1.js
           ! grep -Eq 'setInterval|MutationObserver|localStorage|sessionStorage' planet-hub/assets/planet-five-stars-import-v1.js
+          ! grep -Eq 'setInterval|MutationObserver|localStorage|sessionStorage' planet-hub/assets/planet-five-stars-actions-v1.js
           ! grep -Eq 'setInterval|MutationObserver|localStorage|sessionStorage' planet-hub/assets/andre-os-home-mode-launcher-v1.js
           ! grep -q '!important' planet-hub/assets/planet-lead-hunter-v1.css
           ! grep -q '!important' planet-hub/assets/planet-expansion-v1.css
           ! grep -q '!important' planet-hub/assets/planet-five-stars-import-v1.css
+          ! grep -q '!important' planet-hub/assets/planet-five-stars-actions-v1.css
           ! grep -q '!important' planet-hub/assets/andre-os-home-mode-launcher-v1.css
           ! grep -q 'planet-expansion-exclusive-sections-v1' index.html
           ! grep -Eq 'promoteCandidate|upsertLead|promotedLeadId\s*:' functions/_lib/planet-lead-hunt.js
@@ -64,6 +66,7 @@ jobs:
           test "$(grep -RIl "planet-hub:planet-notifications:v1" functions | wc -l)" -eq 1
           test "$(grep -RIl "planet-hub:planet-lead-hunt-runs:v1" functions | wc -l)" -eq 1
           test "$(grep -RIl "planet-hub:planet-five-stars-evaluations:v1" functions | wc -l)" -eq 1
+          test "$(grep -RIl "planet-hub:planet-five-stars-action-plan:v1:" functions | wc -l)" -eq 1
           test "$(grep -RIl "andre-os:lab-project:v1:" functions | wc -l)" -eq 1
           test "$(grep -o "planet-expansion-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "planet-lead-hunter-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
@@ -71,11 +74,13 @@ jobs:
           test "$(grep -o "andre-os-home-pages-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "planet-five-stars-data-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "planet-five-stars-import-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
+          test "$(grep -o "planet-five-stars-actions-v1.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "andre-os-desktop-shell-v2.js" planet-hub/assets/hub-access-v1.js | wc -l)" -eq 1
           test "$(grep -o "planet-expansion-v1.css" index.html | wc -l)" -eq 1
           test "$(grep -o "planet-lead-hunter-v1.css" index.html | wc -l)" -eq 1
           test "$(grep -o "planet-five-stars-data-v1.css" index.html | wc -l)" -eq 1
           test "$(grep -o "planet-five-stars-import-v1.css" index.html | wc -l)" -eq 1
+          test "$(grep -o "planet-five-stars-actions-v1.css" index.html | wc -l)" -eq 1
           test "$(grep -o "andre-os-home-pages-v1.css" index.html | wc -l)" -eq 1
           test "$(grep -o "andre-os-home-mode-launcher-v1.css" index.html | wc -l)" -eq 1
           test "$(grep -o "andre-os-home-mode-launcher-v1.js" index.html | wc -l)" -eq 1
@@ -102,6 +107,7 @@ jobs:
             tests/planet-lead-hunt-ui-v1.test.mjs
             tests/planet-five-stars-data-v1.test.mjs
             tests/planet-five-stars-import-v1.test.mjs
+            tests/planet-five-stars-actions-v1.test.mjs
             tests/andre-os-navigation-drawers-v1.test.mjs
             tests/andre-os-home-pages-v1.test.mjs
             tests/andre-os-home-mode-launcher-v1.test.mjs
