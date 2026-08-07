@@ -1,5 +1,5 @@
 /* André OS · Desktop Shell v2
-   Primeira fundação da arquitetura por ambientes.
+   Fundação da arquitetura por ambientes.
    Escopo exclusivo de desktop: mobile preserva a navegação atual. */
 
 @media (min-width: 821px) {
@@ -128,32 +128,6 @@
     border-left-color: #917bff;
   }
 
-  .aos-shell-v2-future {
-    display: grid;
-    gap: 6px;
-    margin-top: 8px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, .06);
-  }
-
-  .aos-shell-v2-future > span {
-    display: grid;
-    grid-template-columns: 20px minmax(0, 1fr) auto;
-    align-items: center;
-    min-height: 34px;
-    padding: 0 11px;
-    color: rgba(255, 255, 255, .28);
-    font-size: 11px;
-    font-weight: 700;
-  }
-
-  .aos-shell-v2-future small {
-    font-size: 8px;
-    font-weight: 800;
-    letter-spacing: .05em;
-    text-transform: uppercase;
-  }
-
   .aos-planet-context-nav[hidden] {
     display: none !important;
   }
@@ -232,6 +206,133 @@
 
   html.aos-desktop-shell-v2-ready .pmh-main {
     min-width: 0;
+  }
+
+  /* Home global: menos painel, mais leitura rápida. */
+  html.aos-shell-home-active .aos-home-page-today {
+    grid-template-rows: auto auto;
+    align-content: start;
+  }
+
+  html.aos-shell-home-active .pmh-decision-cockpit {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(300px, .82fr);
+    gap: 16px 18px;
+    margin-bottom: 0;
+    padding: 18px;
+    overflow: visible;
+  }
+
+  html.aos-shell-home-active .pmh-decision-top {
+    grid-column: 1;
+    gap: 16px;
+  }
+
+  html.aos-shell-home-active .pmh-decision-main h2 {
+    max-width: 720px;
+    font-size: clamp(22px, 2.2vw, 29px);
+  }
+
+  html.aos-shell-home-active .pmh-decision-main > p {
+    margin-top: 7px;
+    font-size: 12px;
+  }
+
+  html.aos-shell-home-active .pmh-decision-next {
+    margin-top: 12px;
+    padding: 11px 13px;
+  }
+
+  html.aos-shell-home-active .pmh-decision-next strong {
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  html.aos-shell-home-active .pmh-decision-actions {
+    min-width: 146px;
+    align-content: start;
+  }
+
+  html.aos-shell-home-active .pmh-decision-actions button {
+    min-height: 36px;
+    padding: 0 11px;
+    font-size: 10px;
+  }
+
+  html.aos-shell-home-active .pmh-attention-queue {
+    grid-column: 2;
+    margin: 0;
+    padding: 0 0 0 18px;
+    border-top: 0;
+    border-left: 1px solid rgba(255, 255, 255, .1);
+  }
+
+  html.aos-shell-home-active .pmh-attention-queue > header {
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+
+  html.aos-shell-home-active .pmh-attention-queue > header span {
+    display: none;
+  }
+
+  html.aos-shell-home-active .pmh-attention-queue > div {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  html.aos-shell-home-active .pmh-attention-card {
+    min-height: 0;
+    padding: 10px 11px;
+    border-radius: 11px;
+  }
+
+  html.aos-shell-home-active .pmh-attention-card > strong {
+    margin-top: 5px;
+    font-size: 11.5px;
+    -webkit-line-clamp: 1;
+  }
+
+  html.aos-shell-home-active .pmh-attention-card > small {
+    margin-top: 4px;
+    font-size: 9px;
+    -webkit-line-clamp: 1;
+  }
+
+  html.aos-shell-home-active .pmh-attention-card footer {
+    padding-top: 7px;
+  }
+
+  html.aos-shell-home-active .pmh-decision-signals {
+    grid-column: 1 / -1;
+    margin-top: 0;
+    padding-top: 11px;
+  }
+
+  html.aos-shell-home-active .aos-home-page-shortcuts {
+    margin-top: 0;
+  }
+
+  html.aos-shell-home-active .aos-home-page-shortcuts button {
+    min-height: 56px;
+    box-shadow: none;
+  }
+}
+
+@media (min-width: 821px) and (max-width: 1180px) {
+  html.aos-shell-home-active .pmh-decision-cockpit {
+    grid-template-columns: 1fr;
+  }
+
+  html.aos-shell-home-active .pmh-attention-queue {
+    grid-column: 1;
+    padding: 14px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, .1);
+    border-left: 0;
+  }
+
+  html.aos-shell-home-active .pmh-attention-queue > div {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
