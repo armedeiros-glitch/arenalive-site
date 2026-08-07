@@ -13,6 +13,7 @@
     { key: 'inauguracoes', label: 'Inaugurações', hash: '#inauguracoes' },
     { key: 'chamados', label: 'Chamados', hash: '#chamados' },
     { key: 'expansao', label: 'Expansão', hash: '#expansao' },
+    { key: 'cinco-estrelas', label: '5 Estrelas', hash: '#5-estrelas' },
     { key: 'central', label: 'Central', hash: '#conteudos' },
   ];
 
@@ -26,6 +27,7 @@
     if (hash.includes('inaug')) return 'inauguracoes';
     if (hash.includes('cham')) return 'chamados';
     if (hash.includes('expans')) return 'expansao';
+    if (hash.includes('5-estrelas') || hash.includes('cinco-estrelas') || hash.includes('5estrelas')) return 'cinco-estrelas';
     if (hash.includes('conte')) return 'central';
     return '';
   };
