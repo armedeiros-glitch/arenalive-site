@@ -8,8 +8,7 @@
 
   const PLANET_DESTINATIONS = [
     { key: 'planet', label: 'Visão geral', hash: '#planet' },
-    { key: 'demandas', label: 'Demandas', hash: '#demandas' },
-    { key: 'radar', label: 'Radar', hash: '#radar' },
+    { key: 'marketing', label: 'Marketing', hash: '#marketing' },
     { key: 'campanhas', label: 'Campanhas', hash: '#calendario' },
     { key: 'inauguracoes', label: 'Inaugurações', hash: '#inauguracoes' },
     { key: 'chamados', label: 'Chamados', hash: '#chamados' },
@@ -22,8 +21,7 @@
   const planetDestinationFromHash = () => {
     const hash = normalizedHash();
     if (hash === 'planet') return 'planet';
-    if (hash.includes('demanda')) return 'demandas';
-    if (hash.includes('radar')) return 'radar';
+    if (hash === 'marketing' || hash.includes('demanda') || hash.includes('radar')) return 'marketing';
     if (hash.includes('calend') || hash.includes('campanha')) return 'campanhas';
     if (hash.includes('inaug')) return 'inauguracoes';
     if (hash.includes('cham')) return 'chamados';
