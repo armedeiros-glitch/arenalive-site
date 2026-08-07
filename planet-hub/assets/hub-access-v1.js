@@ -6,8 +6,8 @@
     '/planet-hub/assets/planet-expansion-v1.js?v=20260806-2',
     '/planet-hub/assets/planet-lead-hunter-v1.js?v=20260806-3',
     '/planet-hub/assets/andre-os-navigation-drawers-v1.js?v=20260806-2',
-    '/planet-hub/assets/andre-os-home-pages-v1.js?v=20260807-1',
-    '/planet-hub/assets/andre-os-desktop-shell-v2.js?v=20260807-1',
+    '/planet-hub/assets/andre-os-home-pages-v1.js?v=20260807-2',
+    '/planet-hub/assets/andre-os-desktop-shell-v2.js?v=20260807-2',
     '/planet-hub/assets/planet-notifications-v1.js?v=20260805-1',
   ];
 
@@ -22,6 +22,8 @@
 
   const currentView = () => {
     const value = String(location.hash || '#inicio').replace(/^#/, '').toLowerCase();
+    if (value === 'planet') return 'planet';
+    if (value === 'marketing') return 'marketing';
     if (value.includes('demanda')) return 'demandas';
     if (value.includes('radar')) return 'radar';
     if (value.includes('cham')) return 'chamados';
