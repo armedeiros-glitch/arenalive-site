@@ -99,71 +99,6 @@ html.aos-mobile .aos-marketing-door > span { gap: 0 !important; }
 html.aos-mobile .aos-marketing-door strong { overflow: hidden !important; font-size: 11.5px !important; line-height: 1.12 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 html.aos-mobile .aos-marketing-door em { overflow: hidden !important; font-size: 8.5px !important; line-height: 1.15 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 
-/* 5 Estrelas · leitura executiva no topo */
-html.aos-mobile .p5-page { gap: 7px !important; padding: 0 !important; }
-html.aos-mobile .p5-intro { display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; gap: 7px !important; padding: 9px !important; }
-html.aos-mobile .p5-intro p { display: none !important; }
-html.aos-mobile .p5-intro h2 { font-size: 21px !important; }
-html.aos-mobile .p5-source-status { padding: 5px 7px !important; font-size: 8px !important; }
-html.aos-mobile .p5-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px !important; }
-html.aos-mobile .p5-kpis > * { min-height: 57px !important; padding: 7px !important; }
-html.aos-mobile .p5-kpis small { font-size: 7px !important; }
-html.aos-mobile .p5-kpis strong { font-size: 18px !important; }
-html.aos-mobile .p5-tabs { gap: 4px !important; padding: 4px !important; overflow-x: auto !important; flex-wrap: nowrap !important; }
-html.aos-mobile .p5-tabs button { min-height: 31px !important; padding: 0 8px !important; font-size: 8.5px !important; white-space: nowrap !important; }
-html.aos-mobile .p5-overview-stack { gap: 7px !important; }
-html.aos-mobile .p5-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
-html.aos-mobile .p5-panel { padding: 9px !important; border-radius: 13px !important; }
-html.aos-mobile .p5-cycle,
-html.aos-mobile .p5-pillar-grid,
-html.aos-mobile .p5-requirement-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; }
-html.aos-mobile .p5-cycle-step { min-height: 58px !important; padding: 7px !important; }
-html.aos-mobile .p5-classification-strip { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 4px !important; }
-html.aos-mobile .p5-distinction-grid,
-html.aos-mobile .p5-source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; }
-html.aos-mobile .p5-data-actions { gap: 5px !important; }
-html.aos-mobile .p5-data-actions button { min-height: 34px !important; padding: 0 9px !important; }
-html.aos-mobile .p5-data-stack,
-html.aos-mobile .p5-action-stack { gap: 7px !important; }
-html.aos-mobile .p5-unit-row,
-html.aos-mobile .p5-evaluation-row,
-html.aos-mobile .p5-action-card { padding: 8px !important; border-radius: 12px !important; }
-html.aos-mobile .p5-evaluation-pillars { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 4px !important; }
-html.aos-mobile .p5-action-stats,
-html.aos-mobile .p5-action-meta { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 5px !important; }
-
-/* Central Planet · biblioteca densa, filtros acessíveis */
-html.aos-mobile .pmh-assets-library { margin-top: 7px !important; }
-html.aos-mobile .pmh-assets-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px !important; }
-html.aos-mobile .pmh-assets-metrics article { min-height: 58px !important; padding: 7px !important; border-radius: 11px !important; }
-html.aos-mobile .pmh-assets-metrics small { font-size: 7px !important; }
-html.aos-mobile .pmh-assets-metrics strong { margin-top: 3px !important; font-size: 18px !important; }
-html.aos-mobile .pmh-assets-metrics span { display: none !important; }
-html.aos-mobile .pmh-assets-filters { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; margin-top: 7px !important; padding: 7px !important; border-radius: 12px !important; }
-html.aos-mobile .pmh-assets-filters .search { grid-column: 1 / -1 !important; }
-html.aos-mobile .pmh-assets-filters label span { margin-bottom: 3px !important; font-size: 7px !important; }
-html.aos-mobile .pmh-assets-filters input,
-html.aos-mobile .pmh-assets-filters select,
-html.aos-mobile .pmh-assets-filters button { min-height: 36px !important; font-size: 11px !important; }
-html.aos-mobile .pmh-assets-list-head { flex-direction: row !important; align-items: end !important; gap: 7px !important; margin: 9px 2px 6px !important; }
-html.aos-mobile .pmh-assets-list-head h3 { margin-top: 2px !important; font-size: 16px !important; }
-html.aos-mobile .pmh-assets-list-head > span { font-size: 9px !important; text-align: right !important; }
-html.aos-mobile .pmh-assets-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
-html.aos-mobile .pmh-asset-card { padding: 9px !important; border-top-width: 3px !important; border-radius: 12px !important; }
-html.aos-mobile .pmh-asset-card > header small { font-size: 7px !important; }
-html.aos-mobile .pmh-asset-card h3 { margin-top: 3px !important; font-size: 12px !important; }
-html.aos-mobile .pmh-asset-card > header > span { padding: 4px 6px !important; font-size: 7px !important; }
-html.aos-mobile .pmh-asset-card > p { display: none !important; }
-html.aos-mobile .pmh-asset-card dl { gap: 4px !important; margin-top: 6px !important; }
-html.aos-mobile .pmh-asset-card dl > div { padding: 5px !important; }
-html.aos-mobile .pmh-asset-card dt { font-size: 7px !important; }
-html.aos-mobile .pmh-asset-card dd { margin-top: 2px !important; font-size: 8px !important; }
-html.aos-mobile .pmh-asset-tags { display: none !important; }
-html.aos-mobile .pmh-asset-card > footer { gap: 4px !important; padding-top: 7px !important; }
-html.aos-mobile .pmh-asset-card > footer button,
-html.aos-mobile .pmh-asset-card > footer a,
-html.aos-mobile .pmh-asset-no-link { min-height: 30px !important; padding: 0 7px !important; font-size: 8px !important; }
-
 /* Laboratório e Pessoal · ambiente operacional, não landing page */
 html.aos-mobile .aos-mode-page { gap: 7px !important; }
 html.aos-mobile .aos-mode-page-hero { display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; align-items: center !important; gap: 7px !important; padding: 9px !important; border-radius: 14px !important; }
@@ -241,15 +176,9 @@ html.aos-mobile svg { max-width: 100%; }
   html.aos-mobile .aos-home-page-shortcuts { grid-template-columns: minmax(0, 1fr) !important; }
   html.aos-mobile .aos-planet-drawers,
   html.aos-mobile .aos-marketing-doors,
-  html.aos-mobile .aos-lab-project-grid,
-  html.aos-mobile .pmh-assets-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  html.aos-mobile .aos-lab-project-grid { grid-template-columns: minmax(0, 1fr) !important; }
   html.aos-mobile .aos-planet-drawer-card:last-child:nth-child(odd),
   html.aos-mobile .aos-marketing-door:last-child:nth-child(odd) { grid-column: auto !important; }
-  html.aos-mobile .aos-marketing-kpis,
-  html.aos-mobile .p5-kpis,
-  html.aos-mobile .pmh-assets-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  html.aos-mobile .p5-classification-strip,
-  html.aos-mobile .p5-action-stats,
-  html.aos-mobile .p5-action-meta { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  html.aos-mobile .aos-marketing-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   html.aos-mobile .pmh-expansion-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 }
