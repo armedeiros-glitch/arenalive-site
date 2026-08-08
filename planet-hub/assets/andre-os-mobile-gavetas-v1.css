@@ -67,6 +67,38 @@ html.aos-mobile .aos-planet-drawer-card > span { gap: 0 !important; }
 html.aos-mobile .aos-planet-drawer-card strong { overflow: hidden !important; font-size: 11.5px !important; line-height: 1.12 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 html.aos-mobile .aos-planet-drawer-card em { overflow: hidden !important; font-size: 8.5px !important; line-height: 1.15 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 
+/* Marketing · mesma lógica de cockpit compacto */
+html.aos-mobile .aos-marketing-hub-page { gap: 7px !important; align-content: start !important; }
+html.aos-mobile .aos-marketing-hub-intro { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 7px !important; padding: 10px !important; border-radius: 15px !important; }
+html.aos-mobile .aos-marketing-hub-copy h2 { margin: 2px 0 0 !important; font-size: 22px !important; line-height: 1 !important; }
+html.aos-mobile .aos-marketing-hub-copy p { display: none !important; }
+html.aos-mobile .aos-marketing-hub-copy small,
+html.aos-mobile .aos-marketing-kpis small,
+html.aos-mobile .aos-marketing-queue-panel header small,
+html.aos-mobile .aos-marketing-door small { font-size: 7.5px !important; letter-spacing: .1em !important; }
+html.aos-mobile .aos-marketing-kpis { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .aos-marketing-kpis > span { min-height: 56px !important; gap: 0 !important; align-content: center !important; padding: 6px 7px !important; border-radius: 11px !important; background: var(--aos-mobile-surface-raised) !important; }
+html.aos-mobile .aos-marketing-kpis strong { color: var(--aos-mobile-text) !important; font-size: 20px !important; line-height: 1 !important; }
+html.aos-mobile .aos-marketing-kpis em { color: var(--aos-mobile-muted) !important; font-size: 7.5px !important; line-height: 1.1 !important; }
+html.aos-mobile .aos-marketing-hub-grid { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 7px !important; }
+html.aos-mobile .aos-marketing-queue-panel { padding: 9px !important; border-radius: 15px !important; }
+html.aos-mobile .aos-marketing-queue-panel > header { align-items: center !important; gap: 8px !important; margin-bottom: 6px !important; }
+html.aos-mobile .aos-marketing-queue-panel h3 { margin: 1px 0 0 !important; font-size: 16px !important; line-height: 1.05 !important; }
+html.aos-mobile .aos-marketing-queue-panel > header button { min-height: 30px !important; padding: 0 9px !important; border-radius: 9px !important; font-size: 9px !important; }
+html.aos-mobile .aos-marketing-queue { gap: 4px !important; }
+html.aos-mobile .aos-marketing-queue-item { min-height: 45px !important; gap: 8px !important; padding: 6px 8px !important; border-radius: 10px !important; }
+html.aos-mobile .aos-marketing-queue-item small { font-size: 7px !important; }
+html.aos-mobile .aos-marketing-queue-item strong { font-size: 11px !important; line-height: 1.15 !important; }
+html.aos-mobile .aos-marketing-queue-item em,
+html.aos-mobile .aos-marketing-queue-item time { font-size: 8px !important; }
+html.aos-mobile .aos-marketing-doors { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .aos-marketing-door { display: grid !important; grid-template-columns: 30px minmax(0, 1fr) !important; align-items: center !important; gap: 7px !important; min-height: 58px !important; padding: 6px 8px !important; border-radius: 12px !important; }
+html.aos-mobile .aos-marketing-door:last-child:nth-child(odd) { grid-column: 1 / -1 !important; }
+html.aos-mobile .aos-marketing-door > i { width: 30px !important; height: 30px !important; border-radius: 9px !important; font-size: 13px !important; }
+html.aos-mobile .aos-marketing-door > span { gap: 0 !important; }
+html.aos-mobile .aos-marketing-door strong { overflow: hidden !important; font-size: 11.5px !important; line-height: 1.12 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+html.aos-mobile .aos-marketing-door em { overflow: hidden !important; font-size: 8.5px !important; line-height: 1.15 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+
 /* Cabeçalhos de Demandas e Radar */
 html.aos-mobile .aos-home-page-header { padding: 16px !important; border: 1px solid var(--aos-mobile-line) !important; border-radius: var(--aos-mobile-card-radius) !important; background: radial-gradient(circle at 100% 0%, rgba(124, 99, 255, .14), transparent 45%), linear-gradient(145deg, var(--aos-mobile-surface-raised), var(--aos-mobile-surface)) !important; box-shadow: 0 14px 30px rgba(7, 5, 13, .19) !important; }
 html.aos-mobile .aos-home-page-header small { color: #9e8eff !important; font-size: 9px !important; }
@@ -121,8 +153,11 @@ html.aos-mobile svg { max-width: 100%; }
 
 @media (max-width: 380px) {
   html.aos-mobile .aos-home-page-shortcuts { grid-template-columns: minmax(0, 1fr) !important; }
-  html.aos-mobile .aos-planet-drawers { grid-template-columns: minmax(0, 1fr) !important; }
-  html.aos-mobile .aos-planet-drawer-card:last-child:nth-child(odd) { grid-column: auto !important; }
+  html.aos-mobile .aos-planet-drawers,
+  html.aos-mobile .aos-marketing-doors { grid-template-columns: minmax(0, 1fr) !important; }
+  html.aos-mobile .aos-planet-drawer-card:last-child:nth-child(odd),
+  html.aos-mobile .aos-marketing-door:last-child:nth-child(odd) { grid-column: auto !important; }
+  html.aos-mobile .aos-marketing-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   html.aos-mobile .pmh-expansion-metrics { grid-template-columns: minmax(0, 1fr) !important; }
   html.aos-mobile .pmh-expansion-metrics small { min-height: 0; }
 }
