@@ -126,14 +126,23 @@
         deleteButton.type = 'button';
         deleteButton.className = 'pmh-payment-delete-button';
         deleteButton.dataset.paymentDelete = paymentId;
-        deleteButton.textContent = 'Excluir';
-        deleteButton.title = 'Excluir este pagamento sem apagar o fornecedor';
+        deleteButton.textContent = '🗑';
+        deleteButton.title = 'Excluir este pagamento';
+        deleteButton.setAttribute('aria-label', 'Excluir este pagamento');
         actions.appendChild(deleteButton);
       }
     });
   };
 
+  const decorateFinancePanelSoon = () => {
+    [0, 60, 160].forEach((delay) => window.setTimeout(decorate, delay));
+  };
+
   document.addEventListener('click', async (event) => {
+    if (event.target.closest('[data-inauguration-finance-open]')) {
+      decorateFinancePanelSoon();
+    }
+
     const deleteButton = event.target.closest('[data-payment-delete]');
     if (deleteButton) {
       event.preventDefault();
@@ -148,7 +157,7 @@
 
       const originalText = deleteButton.textContent;
       deleteButton.disabled = true;
-      deleteButton.textContent = 'Excluindo…';
+      deleteButton.textContent = '…';
       try {
         await deletePayment(paymentId);
         row.remove();
