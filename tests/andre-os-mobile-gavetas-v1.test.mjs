@@ -10,7 +10,7 @@ const [index, pageStyles, navigationStyles, shell] = await Promise.all([
   read('planet-hub/assets/andre-os-mobile-shell-v2.js'),
 ]);
 
-const mobilePages = 'andre-os-mobile-gavetas-v1.css?v=20260807-3';
+const mobilePages = 'andre-os-mobile-gavetas-v1.css?v=20260807-7';
 const mobileNavigation = 'andre-os-mobile-navigation-v2.css?v=20260807-2';
 const mobileShell = 'andre-os-mobile-shell-v2.js?v=20260807-11';
 const darkDemandFix = 'andre-os-dark-demand-card-fix-v1.css?v=20260806-2';
@@ -46,7 +46,16 @@ assert.match(pageStyles, /html\.aos-mobile \.aos-home-page-shortcuts/);
 assert.match(pageStyles, /html\.aos-mobile \.aos-planet-overview-page/);
 assert.match(pageStyles, /html\.aos-mobile \.aos-planet-attention-item/);
 assert.match(pageStyles, /html\.aos-mobile \.aos-planet-drawer-card/);
-assert.match(pageStyles, /min-height:\s*70px\s*!important/);
+assert.match(pageStyles, /min-height:\s*57px\s*!important/);
+assert.match(pageStyles, /html\.aos-mobile \.aos-marketing-kpis/);
+assert.match(pageStyles, /html\.aos-mobile \.pmh-campaign-metrics/);
+assert.match(pageStyles, /html\.aos-mobile \.pmh-inauguration-summary-grid/);
+assert.match(pageStyles, /html\.aos-mobile \.pmh-ticket-compact-active \.pmh-command-metrics/);
+assert.match(pageStyles, /html\.aos-mobile \.pa-summary/);
+assert.match(pageStyles, /html\.aos-mobile \.p5-kpis/);
+assert.match(pageStyles, /html\.aos-mobile \.pmh-assets-metrics/);
+assert.match(pageStyles, /html\.aos-mobile \.aos-lab-project-grid/);
+assert.match(pageStyles, /html\.aos-mobile \.aos-personal-rule/);
 assert.match(pageStyles, /html\.aos-mobile \.pmh-internal-demands/);
 assert.match(pageStyles, /html\.aos-mobile \.aos-radar-workspace/);
 assert.match(pageStyles, /html\.aos-mobile \.pmh-expansion-tabs/);
@@ -58,4 +67,4 @@ assert.doesNotMatch(pageStyles, /html:not\(\.aos-mobile\)/);
 assert.doesNotMatch(pageStyles, /@media\s*\(min-width/);
 assert.doesNotMatch(pageStyles, /MutationObserver/);
 
-console.log('Contrato mobile por ambientes, gavetas e páginas validado.');
+console.log('Contrato mobile por ambientes, gavetas e densidade operacional validado.');
