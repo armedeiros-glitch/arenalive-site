@@ -66,15 +66,6 @@
     });
   };
 
-  const style = document.createElement('style');
-  style.textContent = `
-    .pmh-payment-actions{display:grid;gap:7px;min-width:150px}
-    .pmh-payment-actions button{width:100%}
-    .pmh-payment-request-button{min-height:38px;padding:0 10px;border:1px solid #ef651d!important;border-radius:9px!important;color:#fff!important;background:#ef651d!important;font-size:14px!important;font-weight:850!important}
-    @media(max-width:1050px){.pmh-payment-actions{justify-self:start;width:210px}}
-  `;
-  document.head.appendChild(style);
-
   document.addEventListener('click', (event) => {
     const button = event.target.closest('[data-payment-request]');
     if (!button) return;
@@ -93,7 +84,6 @@
     generateRequest(button.dataset.paymentRequest, popup);
   }, true);
 
-  const observer = new MutationObserver(decorate);
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener('pmh:view-rendered', decorate);
   decorate();
 })();
