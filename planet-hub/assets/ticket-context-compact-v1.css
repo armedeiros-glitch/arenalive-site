@@ -71,30 +71,39 @@
   .pmh-ticket-compact-active .pmh-ticket-context-line{grid-template-columns:1fr}
   .pmh-ticket-compact-active .pmh-ticket-context-line span{white-space:normal}
   .pmh-ticket-compact-active .pmh-ticket-drawer{background:rgba(5,4,9,.78)!important}
-  .pmh-ticket-compact-active .pmh-ticket-drawer-panel{width:100%;padding:14px;background:#0d0b12!important;color:#f7f5fb!important;box-shadow:none!important}
-  .pmh-ticket-compact-active .pmh-ticket-drawer-header{border-bottom-color:rgba(255,255,255,.09)!important}
+  .pmh-ticket-compact-active .pmh-ticket-drawer-panel{width:100%;padding:12px;background:#0d0b12!important;color:#f7f5fb!important;box-shadow:none!important}
+  .pmh-ticket-compact-active .pmh-ticket-drawer-header{gap:10px;padding-bottom:8px;border-bottom-color:rgba(255,255,255,.09)!important}
   .pmh-ticket-compact-active .pmh-ticket-drawer-header small{color:#9f8cff!important}
-  .pmh-ticket-compact-active .pmh-ticket-drawer-header h2{color:#f7f5fb!important}
-  .pmh-ticket-compact-active [data-ticket-close]{border-color:rgba(255,255,255,.10)!important;background:#25212e!important;color:#f7f5fb!important}
+  .pmh-ticket-compact-active .pmh-ticket-drawer-header h2{font-size:20px!important;color:#f7f5fb!important}
+  .pmh-ticket-compact-active [data-ticket-close]{flex-basis:32px;width:32px;height:32px;border-color:rgba(255,255,255,.10)!important;background:#25212e!important;color:#f7f5fb!important}
+  .pmh-ticket-compact-active .pmh-ticket-drawer-actions{gap:5px;margin:7px 0 8px!important}
   .pmh-ticket-compact-active .pmh-ticket-drawer-actions a,
   .pmh-ticket-compact-active .pmh-ticket-drawer-actions button,
-  .pmh-ticket-compact-active .pmh-ticket-drawer-panel button:not([data-ticket-close]){border-color:rgba(255,255,255,.10)!important;background:#25212e!important;color:#e9e5f1!important}
+  .pmh-ticket-compact-active .pmh-ticket-drawer-panel button:not([data-ticket-close]){min-height:29px!important;padding:0 9px!important;border-color:rgba(255,255,255,.10)!important;background:#25212e!important;color:#e9e5f1!important;font-size:9px!important}
   .pmh-ticket-compact-active .pmh-ticket-drawer-actions a{border-color:#7963ee!important;background:#7963ee!important;color:#fff!important}
-  .pmh-ticket-compact-active .pmh-ticket-status{border:1px solid rgba(255,255,255,.08)!important;background:#24202d!important;color:#d9d5e2!important}
-  .pmh-ticket-compact-active .pmh-ticket-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}
-  .pmh-ticket-compact-active .pmh-ticket-summary article{min-height:68px!important;padding:9px 10px!important;border-color:rgba(255,255,255,.08)!important;background:#1e1a26!important}
-  .pmh-ticket-compact-active .pmh-ticket-summary small{color:#8f8998!important}
-  .pmh-ticket-compact-active .pmh-ticket-summary strong{color:#f1eef6!important}
-  .pmh-ticket-compact-active .pmh-ticket-meta-row span{background:#24202d!important;color:#c8c3d0!important}
+  .pmh-ticket-compact-active .pmh-ticket-status{min-height:29px!important;padding:0 9px!important;border:1px solid rgba(255,255,255,.08)!important;background:#24202d!important;color:#d9d5e2!important;font-size:9px!important}
+  .pmh-ticket-compact-active .pmh-ticket-drawer-actions [data-ticket-remove],
+  .pmh-ticket-compact-active .pmh-ticket-drawer-panel [data-ticket-remove]{width:auto!important;min-width:0!important;opacity:.72!important}
+  .pmh-ticket-compact-active .pmh-ticket-context-drawer-button{min-height:29px!important;padding:0 9px!important;font-size:9px!important}
+  .pmh-ticket-compact-active .pmh-ticket-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important;margin-top:7px!important}
+  .pmh-ticket-compact-active .pmh-ticket-summary article{min-height:58px!important;padding:7px 8px!important;border-color:rgba(255,255,255,.08)!important;background:#1e1a26!important}
+  .pmh-ticket-compact-active .pmh-ticket-summary small{margin-bottom:3px!important;color:#8f8998!important;font-size:7px!important}
+  .pmh-ticket-compact-active .pmh-ticket-summary strong{margin-top:0!important;color:#f1eef6!important;font-size:10px!important;line-height:1.2!important}
+  .pmh-ticket-compact-active .pmh-ticket-meta-row{gap:4px!important;margin:6px 0!important}
+  .pmh-ticket-compact-active .pmh-ticket-meta-row span{padding:4px 7px!important;background:#24202d!important;color:#c8c3d0!important;font-size:8px!important}
   .pmh-ticket-compact-active .pmh-ticket-labels span{border-color:rgba(255,255,255,.08)!important;background:#1e1a26!important;color:#e6e2ec!important}
+  .pmh-ticket-compact-active [data-drawer-ticket-reading]{margin-bottom:8px!important}
+  .pmh-ticket-compact-active [data-drawer-ticket-reading] .pmh-ticket-reading-card{margin:0!important;padding:10px!important;gap:6px!important}
+  .pmh-ticket-compact-active .pmh-ticket-timeline{margin-top:5px!important}
+  .pmh-ticket-compact-active .pmh-ticket-timeline>header{margin-bottom:5px!important}
   .pmh-ticket-compact-active .pmh-ticket-timeline>header small{color:#9f8cff!important}
-  .pmh-ticket-compact-active .pmh-ticket-timeline>header h3{color:#f7f5fb!important}
-  .pmh-ticket-compact-active .pmh-ticket-timeline>header>span{color:#9b95a5!important}
-  .pmh-ticket-compact-active .pmh-ticket-event{border-color:rgba(255,255,255,.08)!important;background:#1e1a26!important;color:#e9e5f0!important}
+  .pmh-ticket-compact-active .pmh-ticket-timeline>header h3{color:#f7f5fb!important;font-size:16px!important}
+  .pmh-ticket-compact-active .pmh-ticket-timeline>header>span{color:#9b95a5!important;font-size:9px!important}
+  .pmh-ticket-compact-active .pmh-ticket-event{margin-bottom:6px!important;padding:8px 9px!important;border-color:rgba(255,255,255,.08)!important;background:#1e1a26!important;color:#e9e5f0!important}
   .pmh-ticket-compact-active .pmh-ticket-event.internal{border-color:rgba(126,101,255,.22)!important;background:#211b30!important}
   .pmh-ticket-compact-active .pmh-ticket-event header strong{color:#f5f2f8!important}
   .pmh-ticket-compact-active .pmh-ticket-event time{color:#8f8998!important}
-  .pmh-ticket-compact-active .pmh-ticket-event p{color:#c8c3d0!important}
+  .pmh-ticket-compact-active .pmh-ticket-event p{margin-top:6px!important;color:#c8c3d0!important;line-height:1.4!important}
   .pmh-ticket-compact-active .pmh-ticket-attachments a,
   .pmh-ticket-compact-active .pmh-ticket-attachments span{background:#292431!important;color:#d8d2e2!important}
   .pmh-ticket-compact-active .pmh-ticket-empty{border-color:rgba(255,255,255,.10)!important;background:#1b1822!important;color:#9f99a9!important}
