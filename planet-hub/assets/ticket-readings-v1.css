@@ -82,4 +82,28 @@
     flex-direction: column;
     gap: 5px;
   }
+
+  .pmh-ticket-compact-active [data-drawer-ticket-reading] .pmh-ticket-reading-card,
+  html.aos-mobile .pmh-ticket-reading-card {
+    gap: 6px;
+    margin: 8px 0;
+    padding: 10px 11px;
+    border-color: rgba(126,101,255,.20);
+    border-radius: 11px;
+    background: linear-gradient(145deg,#211b30,#1b1822);
+  }
+  .pmh-ticket-compact-active [data-drawer-ticket-reading] .pmh-ticket-reading-card header,
+  html.aos-mobile .pmh-ticket-reading-card header { gap: 3px; }
+  .pmh-ticket-compact-active [data-drawer-ticket-reading] .pmh-ticket-reading-card header small,
+  html.aos-mobile .pmh-ticket-reading-card header small { color:#a996ff; font-size:8px; }
+  .pmh-ticket-compact-active [data-drawer-ticket-reading] .pmh-ticket-reading-card header span,
+  html.aos-mobile .pmh-ticket-reading-card header span { color:#9b95a5; font-size:9px; }
+  .pmh-ticket-compact-active [data-drawer-ticket-reading] .pmh-ticket-reading-card p,
+  html.aos-mobile .pmh-ticket-reading-card p { color:#d8d3df; font-size:10.5px; line-height:1.42; }
+  .pmh-ticket-compact-active [data-drawer-ticket-reading] .pmh-ticket-reading-card footer,
+  html.aos-mobile .pmh-ticket-reading-card footer { padding-top:6px; border-top-color:rgba(255,255,255,.07); }
+  .pmh-ticket-compact-active [data-drawer-ticket-reading] .pmh-ticket-reading-card footer strong,
+  html.aos-mobile .pmh-ticket-reading-card footer strong { color:#b6a7ff; font-size:9.5px; }
+  .pmh-ticket-compact-active [data-drawer-ticket-reading] .pmh-ticket-reading-card footer span,
+  html.aos-mobile .pmh-ticket-reading-card footer span { color:#aaa4b3; font-size:9.5px; }
 }
