@@ -235,6 +235,59 @@
   grid-template-columns: minmax(0,1.2fr) minmax(0,.7fr) 135px minmax(120px,.6fr) auto;
 }
 
+/* Payment document actions and quick flow */
+.pmh-payment-actions {
+  display: grid;
+  gap: 7px;
+  min-width: 150px;
+}
+
+.pmh-payment-actions button {
+  width: 100%;
+}
+
+.pmh-payment-request-button {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid #ef651d !important;
+  border-radius: 9px !important;
+  color: #fff !important;
+  background: #ef651d !important;
+  font-size: 14px !important;
+  font-weight: 850 !important;
+}
+
+.pmh-quick-payment-dialog {
+  width: min(880px, 100%);
+}
+
+.pmh-quick-section {
+  padding: 12px 14px;
+  border-radius: 11px;
+  background: #fff3eb;
+}
+
+.pmh-quick-section strong,
+.pmh-quick-section span {
+  display: block;
+}
+
+.pmh-quick-section strong {
+  color: #572f1f;
+  font-size: 16px;
+}
+
+.pmh-quick-section span {
+  margin-top: 4px;
+  color: #806d64;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.pmh-pay-button {
+  min-width: 190px;
+}
+
 /* Project browser v3 */
 .pmh-inauguration-project-tabs {
   display: flex;
@@ -549,6 +602,13 @@
 
   .pmh-inauguration-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1050px) {
+  .pmh-payment-actions {
+    justify-self: start;
+    width: 210px;
   }
 }
 
