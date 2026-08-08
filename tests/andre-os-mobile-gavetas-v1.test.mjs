@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [index, mobileBase, pageStyles, navigationStyles, shell, ticketDetailsJs, ticketDetailsCss, ticketCompactStyles, darkThemeCss, calendarStyles, inaugurationStyles, acquisitionStyles] = await Promise.all([
+const [index, mobileBase, pageStyles, navigationStyles, shell, ticketDetailsJs, ticketDetailsCss, ticketCompactStyles, darkThemeCss, calendarStyles, inaugurationStyles, acquisitionStyles, fiveStarsStyles, centralStyles] = await Promise.all([
   read('index.html'),
   read('planet-hub/assets/andre-os-mobile-v1.css'),
   read('planet-hub/assets/andre-os-mobile-gavetas-v1.css'),
@@ -16,10 +16,12 @@ const [index, mobileBase, pageStyles, navigationStyles, shell, ticketDetailsJs, 
   read('planet-hub/assets/calendar-operations-v1.css'),
   read('planet-hub/assets/inauguration-workspace-v2.css'),
   read('planet-hub/assets/planet-acquisition-v1.css'),
+  read('planet-hub/assets/planet-five-stars-v1.css'),
+  read('planet-hub/assets/content-library-v1.css'),
 ]);
 
 const mobileBaseAsset = 'andre-os-mobile-v1.css?v=20260808-1';
-const mobilePages = 'andre-os-mobile-gavetas-v1.css?v=20260808-2';
+const mobilePages = 'andre-os-mobile-gavetas-v1.css?v=20260808-3';
 const mobileNavigation = 'andre-os-mobile-navigation-v2.css?v=20260807-2';
 const mobileShell = 'andre-os-mobile-shell-v2.js?v=20260807-11';
 const darkTheme = 'andre-os-dark-theme-v1.css?v=20260808-1';
@@ -29,6 +31,8 @@ const ticketCompactStylesAsset = 'ticket-context-compact-v1.css?v=20260808-1';
 const calendarStylesAsset = 'calendar-operations-v1.css?v=20260808-1';
 const inaugurationStylesAsset = 'inauguration-workspace-v2.css?v=20260808-1';
 const acquisitionStylesAsset = 'planet-acquisition-v1.css?v=20260808-1';
+const fiveStarsStylesAsset = 'planet-five-stars-v1.css?v=20260808-1';
+const centralStylesAsset = 'content-library-v1.css?v=20260808-1';
 
 assert.ok(index.includes(`/planet-hub/assets/${mobileBaseAsset}`));
 assert.ok(index.includes(`media="(max-width: 820px)" href="/planet-hub/assets/${mobilePages}"`));
@@ -41,6 +45,8 @@ assert.ok(index.includes(ticketCompactStylesAsset));
 assert.ok(index.includes(calendarStylesAsset));
 assert.ok(index.includes(inaugurationStylesAsset));
 assert.ok(index.includes(acquisitionStylesAsset));
+assert.ok(index.includes(fiveStarsStylesAsset));
+assert.ok(index.includes(centralStylesAsset));
 assert.ok(index.indexOf(ticketDetailsStyles) < index.indexOf(ticketDetailsScript), 'O CSS de detalhes deve estar disponível antes do comportamento do drawer.');
 assert.ok(index.indexOf(mobilePages) > index.indexOf(darkTheme), 'A camada de páginas mobile precisa continuar depois do tema escuro consolidado.');
 assert.doesNotMatch(index, /andre-os-mobile-polish-v1\.css/, 'Refinamentos estáveis devem pertencer ao mobile base, não a uma camada polish separada.');
@@ -80,6 +86,16 @@ assert.match(acquisitionStyles, /html\.aos-mobile \.pa-step/);
 assert.match(acquisitionStyles, /html\.aos-mobile \.pa-diagnostics/);
 assert.match(acquisitionStyles, /@media\(max-width:380px\)\{html\.aos-mobile \.pa-summary/);
 
+assert.match(fiveStarsStyles, /Mobile ownership · densidade aprovada do Planet 5 Estrelas/);
+assert.match(fiveStarsStyles, /html\.aos-mobile \.p5-kpis/);
+assert.match(fiveStarsStyles, /html\.aos-mobile \.p5-classification-strip/);
+assert.match(fiveStarsStyles, /@media\(max-width:380px\)/);
+
+assert.match(centralStyles, /Mobile ownership · densidade aprovada da Central Planet/);
+assert.match(centralStyles, /html\.aos-mobile \.pmh-assets-metrics/);
+assert.match(centralStyles, /html\.aos-mobile \.pmh-assets-grid/);
+assert.match(centralStyles, /html\.aos-mobile \.pmh-asset-card/);
+
 assert.match(shell, /PLANET_ROUTES/);
 assert.match(shell, /label: 'Visão Geral'/);
 assert.match(shell, /label: 'Marketing'/);
@@ -112,8 +128,8 @@ assert.doesNotMatch(pageStyles, /pmh-campaign-/, 'Campanhas deve pertencer ao ca
 assert.doesNotMatch(pageStyles, /pmh-inauguration-/, 'Inaugurações deve pertencer ao inauguration-workspace-v2.css, não ao mobile-gavetas.');
 assert.doesNotMatch(pageStyles, /pmh-ticket-compact-active|pmh-command-|pmh-ticket-context-line/, 'Chamados deve pertencer aos módulos ticket-*.css, não ao mobile-gavetas.');
 assert.doesNotMatch(pageStyles, /html\.aos-mobile \.pa-/, 'Aquisição deve pertencer ao planet-acquisition-v1.css, não ao mobile-gavetas.');
-assert.match(pageStyles, /html\.aos-mobile \.p5-kpis/);
-assert.match(pageStyles, /html\.aos-mobile \.pmh-assets-metrics/);
+assert.doesNotMatch(pageStyles, /html\.aos-mobile \.p5-/, 'Planet 5 Estrelas deve pertencer aos módulos planet-five-stars-*.css, não ao mobile-gavetas.');
+assert.doesNotMatch(pageStyles, /html\.aos-mobile \.pmh-assets-|html\.aos-mobile \.pmh-asset-/, 'Central Planet deve pertencer ao content-library-v1.css, não ao mobile-gavetas.');
 assert.match(pageStyles, /html\.aos-mobile \.aos-lab-project-grid/);
 assert.match(pageStyles, /html\.aos-mobile \.aos-personal-rule/);
 assert.match(pageStyles, /html\.aos-mobile \.pmh-internal-demands/);
