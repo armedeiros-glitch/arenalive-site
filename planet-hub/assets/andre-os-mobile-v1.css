@@ -1,5 +1,5 @@
-/* André OS · mobile shell v2
-   This layer is activated by andre-os-mobile-shell-v2.js and does not alter desktop. */
+/* André OS · mobile shell v3
+   Camada base e refinamentos compartilhados do mobile. Ativada por andre-os-mobile-shell-v2.js; não altera desktop. */
 
 .aos-mobile-nav-label { min-width: 0; }
 
@@ -47,8 +47,8 @@ html.aos-mobile .pmh-topbar {
   inset: 0 0 auto 0 !important;
   z-index: 55 !important;
   display: flex !important;
-  min-height: 72px !important;
-  padding: 11px var(--aos-mobile-pad) 10px !important;
+  min-height: 64px !important;
+  padding: 8px var(--aos-mobile-pad) !important;
   gap: 12px !important;
   border-bottom: 1px solid rgba(221, 220, 230, .9) !important;
   background: rgba(248, 248, 251, .93) !important;
@@ -80,7 +80,7 @@ html.aos-mobile .pmh-topbar h1 {
   margin: 0 !important;
   overflow: hidden;
   color: var(--aos-ink) !important;
-  font-size: clamp(22px, 6vw, 27px) !important;
+  font-size: clamp(21px, 5.7vw, 25px) !important;
   line-height: 1.08 !important;
   letter-spacing: -.045em !important;
   text-overflow: ellipsis;
@@ -89,7 +89,9 @@ html.aos-mobile .pmh-topbar h1 {
 
 html.aos-mobile .pmh-top-actions {
   flex: 0 0 auto;
-  gap: 7px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
 }
 
 html.aos-mobile .pmh-top-actions label {
@@ -97,15 +99,16 @@ html.aos-mobile .pmh-top-actions label {
 }
 
 html.aos-mobile .pmh-top-actions > button {
-  width: 44px !important;
-  height: 44px !important;
-  min-width: 44px !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
   border: 1px solid var(--aos-line) !important;
-  border-radius: 14px !important;
+  border-radius: 12px !important;
   color: var(--aos-accent) !important;
   background: #fff !important;
   box-shadow: 0 8px 20px rgba(31, 28, 52, .07);
-  font-size: 19px !important;
+  font-size: 17px !important;
 }
 
 html.aos-mobile .pmh-content {
@@ -122,7 +125,7 @@ html.aos-mobile .aos-mobile-dock {
   z-index: 100;
   display: block;
   min-height: calc(var(--aos-mobile-dock-h) + var(--aos-mobile-safe-bottom));
-  padding: 7px 8px calc(7px + var(--aos-mobile-safe-bottom));
+  padding: 7px 4px calc(7px + var(--aos-mobile-safe-bottom));
   border-top: 1px solid rgba(221, 220, 230, .94);
   background: rgba(255, 255, 255, .95);
   box-shadow: 0 -16px 42px rgba(24, 20, 42, .14);
@@ -132,8 +135,10 @@ html.aos-mobile .aos-mobile-dock {
 html.aos-mobile .aos-mobile-dock nav {
   display: grid !important;
   grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-  gap: 4px !important;
+  grid-auto-flow: column !important;
+  gap: 1px !important;
   width: 100% !important;
+  overflow: hidden !important;
 }
 
 html.aos-mobile .aos-mobile-dock nav button {
@@ -142,18 +147,21 @@ html.aos-mobile .aos-mobile-dock nav button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px !important;
+  width: 100% !important;
+  max-width: none !important;
   min-width: 0 !important;
   min-height: 58px !important;
-  padding: 6px 2px 5px !important;
+  gap: 2px !important;
+  padding: 5px 1px 4px !important;
   border: 0 !important;
   border-radius: 15px !important;
   color: #817f8d !important;
   background: transparent !important;
   box-shadow: none !important;
   text-align: center !important;
-  white-space: normal !important;
-  font-size: 10px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  font-size: 9px !important;
   font-weight: 800 !important;
   line-height: 1 !important;
 }
@@ -161,36 +169,37 @@ html.aos-mobile .aos-mobile-dock nav button {
 html.aos-mobile .aos-mobile-dock nav button i {
   display: grid !important;
   place-items: center;
-  width: 28px !important;
-  height: 25px !important;
+  width: 24px !important;
+  height: 22px !important;
   color: #7668d8 !important;
-  font-size: 19px !important;
+  font-size: 17px !important;
   font-style: normal !important;
   line-height: 1 !important;
 }
 
 html.aos-mobile .aos-mobile-dock .aos-mobile-nav-label {
   display: block;
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 html.aos-mobile .aos-mobile-dock nav button b {
   position: absolute !important;
-  top: 2px !important;
-  right: max(5px, calc(50% - 28px)) !important;
+  top: 1px !important;
+  right: max(2px, calc(50% - 25px)) !important;
   display: grid !important;
   place-items: center;
-  min-width: 18px !important;
-  height: 18px !important;
-  padding: 0 5px !important;
+  min-width: 17px !important;
+  height: 17px !important;
+  padding: 0 4px !important;
   border: 2px solid #fff !important;
   border-radius: 999px !important;
   color: #fff !important;
   background: var(--aos-coral) !important;
-  font-size: 9px !important;
+  font-size: 8px !important;
   font-weight: 900 !important;
   line-height: 1 !important;
 }
@@ -297,22 +306,21 @@ html.aos-mobile .pmh-decision-meta time {
 
 html.aos-mobile .pmh-decision-actions {
   grid-template-columns: 1fr 1fr !important;
-  gap: 8px !important;
+  gap: 7px !important;
   min-width: 0 !important;
 }
 
-html.aos-mobile .pmh-decision-actions button {
-  min-height: 44px !important;
-  padding: 0 10px !important;
-  border-radius: 12px !important;
-  font-size: 12px !important;
-  line-height: 1.2 !important;
+html.aos-mobile .pmh-decision-actions button,
+html.aos-mobile .pmh-decision-actions button.primary {
+  min-height: 39px !important;
+  padding: 0 9px !important;
+  border-radius: 10px !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
 }
 
 html.aos-mobile .pmh-decision-actions button.primary {
   grid-column: 1 / -1;
-  min-height: 48px !important;
-  font-size: 13px !important;
 }
 
 html.aos-mobile .pmh-decision-signals {
@@ -387,26 +395,26 @@ html.aos-mobile .pmh-shortcuts button:nth-child(2),
 html.aos-mobile .pmh-shortcuts button:nth-child(3),
 html.aos-mobile .pmh-shortcuts button:nth-child(4) {
   grid-column: span 1 !important;
-  grid-template-columns: 40px minmax(0, 1fr) !important;
-  gap: 2px 10px !important;
-  min-height: 82px !important;
-  padding: 13px !important;
+  grid-template-columns: 34px minmax(0, 1fr) !important;
+  gap: 2px 8px !important;
+  min-height: 70px !important;
+  padding: 10px !important;
   border-radius: 17px !important;
 }
 
 html.aos-mobile .pmh-shortcuts i {
-  width: 40px !important;
-  height: 40px !important;
-  border-radius: 13px !important;
-  font-size: 18px !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 11px !important;
+  font-size: 16px !important;
 }
 
 html.aos-mobile .pmh-shortcuts strong {
-  font-size: 13px !important;
+  font-size: 12px !important;
 }
 
 html.aos-mobile .pmh-shortcuts span {
-  font-size: 11px !important;
+  font-size: 10px !important;
   line-height: 1.25 !important;
 }
 
@@ -476,8 +484,12 @@ html.aos-mobile .pmh-hero p {
 
 html.aos-mobile .pmh-section-head button,
 html.aos-mobile .pmh-hero > button {
-  width: 100% !important;
-  min-height: 46px !important;
+  align-self: flex-start !important;
+  width: auto !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
+  border-radius: 11px !important;
+  font-size: 12px !important;
 }
 
 /* Active workstream becomes a card list */
@@ -594,7 +606,7 @@ html.aos-mobile .pmh-active-row time {
 
 html.aos-mobile .pmh-active-context {
   width: 100% !important;
-  min-height: 40px !important;
+  min-height: 34px !important;
   border: 0 !important;
   border-top: 1px solid var(--aos-line) !important;
   font-size: 10px !important;
@@ -809,20 +821,42 @@ html.aos-mobile .pmh-radar-context-dialog footer button {
 }
 
 /* Thinking assistant and toasts */
-html.aos-mobile .aos-thinking-trigger,
-html.aos-mobile .pmh-top-actions .aos-thinking-trigger,
+html.aos-mobile .aos-thinking-floating-trigger,
 html.aos-mobile .aos-thinking-trigger.floating {
-  right: 14px !important;
-  bottom: calc(var(--aos-mobile-dock-h) + var(--aos-mobile-safe-bottom) + 14px) !important;
-  width: 48px !important;
-  height: 48px !important;
-  min-height: 48px !important;
-  border-radius: 16px !important;
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
-html.aos-mobile .aos-thinking-trigger .aos-thinking-orb {
-  width: 34px !important;
-  height: 34px !important;
+html.aos-mobile .pmh-top-actions .aos-thinking-trigger,
+html.aos-mobile .aos-thinking-trigger:not(.floating) {
+  position: static !important;
+  inset: auto !important;
+  order: -1;
+  display: grid !important;
+  place-items: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 7px 18px rgba(31, 28, 52, .07) !important;
+  transform: none !important;
+}
+
+html.aos-mobile .pmh-top-actions .aos-thinking-trigger .aos-thinking-orb,
+html.aos-mobile .aos-thinking-trigger:not(.floating) .aos-thinking-orb {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 9px !important;
+  font-size: 15px !important;
+}
+
+html.aos-mobile .pmh-top-actions .aos-thinking-trigger > span:last-child:not(.aos-thinking-orb),
+html.aos-mobile .aos-thinking-trigger:not(.floating) > span:last-child:not(.aos-thinking-orb) {
+  display: none !important;
 }
 
 html.aos-mobile .aos-thinking-drawer,
@@ -835,6 +869,80 @@ html.aos-mobile .pmh-sults-toast,
 html.aos-mobile .pmh-ignore-toast {
   bottom: calc(var(--aos-mobile-dock-h) + var(--aos-mobile-safe-bottom) + 16px) !important;
   max-width: calc(100vw - 28px) !important;
+}
+
+/* Demand capture compact belongs to the mobile base until the module migration pass. */
+html.aos-mobile .pmh-internal-demands {
+  gap: 8px !important;
+  margin: 10px 0 !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+  padding: 12px !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 24px rgba(31, 28, 52, .05) !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact > div {
+  grid-column: 1 / -1 !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact h3,
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact p {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact small {
+  display: block !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  letter-spacing: .08em !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact textarea {
+  grid-column: 1 !important;
+  width: 100% !important;
+  min-height: 54px !important;
+  height: 54px !important;
+  max-height: 96px !important;
+  padding: 10px 11px !important;
+  border-radius: 11px !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  resize: vertical !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact footer {
+  grid-column: 2 !important;
+  align-self: stretch !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  justify-content: flex-end !important;
+  gap: 0 !important;
+  margin: 0 !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact footer > span,
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact [data-demand-manual] {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact [data-demand-organize] {
+  width: auto !important;
+  max-width: 112px !important;
+  min-height: 54px !important;
+  height: 54px !important;
+  padding: 0 12px !important;
+  border-radius: 11px !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+  white-space: normal !important;
 }
 
 /* Small phones */
