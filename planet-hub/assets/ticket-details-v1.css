@@ -1,0 +1,61 @@
+/* Chamados · detalhes e drawer
+   Aparência estática. O comportamento permanece em ticket-details-v1.js. */
+
+.pmh-ticket{cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.pmh-ticket:hover,.pmh-ticket:focus-visible{transform:translateY(-2px);border-color:#ef651d!important;box-shadow:0 12px 26px rgba(61,35,25,.12);outline:0}
+.pmh-ticket-open-hint{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid #eadbd4;color:#d85616;font-size:14px;font-weight:800}
+.pmh-ticket-filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-2px 0 18px;padding:12px 14px;border:1px solid #ead9d1;border-radius:14px;background:#fff}
+.pmh-ticket-filters span{margin-right:4px;color:#6f5a50;font-size:14px;font-weight:750}
+.pmh-ticket-filters button{min-height:38px;padding:0 13px;border:1px solid #e3d2ca;border-radius:9px;background:#fff;color:#4a352d;font-size:14px;font-weight:780;cursor:pointer}
+.pmh-ticket-filters button.active{border-color:#ef651d;color:#fff;background:#ef651d}
+.pmh-ticket-drawer-open{overflow:hidden}
+.pmh-ticket-drawer{position:fixed;inset:0;z-index:999999;display:flex;justify-content:flex-end;background:rgba(36,23,18,.56);backdrop-filter:blur(3px)}
+.pmh-ticket-drawer-panel{width:min(760px,94vw);height:100%;overflow:auto;padding:28px;background:#f8f3f0;box-shadow:-24px 0 70px rgba(35,20,14,.25)}
+.pmh-ticket-drawer-panel.loading{display:grid;place-items:center;position:relative}
+.pmh-ticket-drawer-panel.loading>button{position:absolute;top:18px;right:18px}
+.pmh-ticket-loading{font-size:18px;font-weight:800}
+.pmh-ticket-drawer-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding-bottom:20px;border-bottom:1px solid #ddcbc2}
+.pmh-ticket-drawer-header small{color:#ef651d;font-size:13px;font-weight:900;letter-spacing:.08em}
+.pmh-ticket-drawer-header h2{margin:7px 0 0;font-size:29px;line-height:1.12}
+[data-ticket-close]{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;border:1px solid #dbc8be;border-radius:12px;background:#fff;color:#3d2a22;font-size:27px;cursor:pointer}
+.pmh-ticket-drawer-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:18px 0}
+.pmh-ticket-drawer-actions a,.pmh-ticket-drawer-actions button{min-height:40px;padding:0 13px;border:1px solid #dfcfc7;border-radius:9px;background:#fff;color:#3d2a22;font-size:14px;font-weight:800;text-decoration:none;cursor:pointer}
+.pmh-ticket-drawer-actions a{display:flex;align-items:center;color:#fff;border-color:#ef651d;background:#ef651d}
+.pmh-ticket-status{display:inline-flex;align-items:center;min-height:40px;padding:0 13px;border-radius:999px;background:#eadfd9;color:#513b31;font-size:14px;font-weight:850}
+.pmh-ticket-status.status-4{background:#dff3e8;color:#16683d}
+.pmh-ticket-status.status-5,.pmh-ticket-status.status-6{background:#fff0c9;color:#805600}
+.pmh-ticket-status.status-2,.pmh-ticket-status.status-3{background:#e4eaf7;color:#344c87}
+.pmh-ticket-warning,.pmh-ticket-error{margin:14px 0;padding:15px;border:1px solid #efd49b;border-radius:12px;background:#fff8df;color:#6c4b00;font-size:14px}
+.pmh-ticket-error a{display:inline-block;margin-top:10px;color:#d85616;font-weight:800}
+.pmh-ticket-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pmh-ticket-summary article{min-height:82px;padding:14px;border:1px solid #e3d3cb;border-radius:12px;background:#fff}
+.pmh-ticket-summary small,.pmh-ticket-summary strong{display:block}
+.pmh-ticket-summary small{margin-bottom:7px;color:#8a7166;font-size:12px;font-weight:850;letter-spacing:.06em}
+.pmh-ticket-summary strong{font-size:15px;line-height:1.35}
+.pmh-ticket-meta-row{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0}
+.pmh-ticket-meta-row span{padding:7px 10px;border-radius:999px;background:#eadfd9;color:#5c453b;font-size:13px;font-weight:750}
+.pmh-ticket-labels{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 18px}
+.pmh-ticket-labels span{padding:7px 10px;border-left:4px solid var(--ticket-label);border-radius:7px;background:#fff;font-size:13px;font-weight:750}
+.pmh-ticket-timeline{margin-top:22px}
+.pmh-ticket-timeline>header{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:12px}
+.pmh-ticket-timeline>header small{color:#ef651d;font-size:12px;font-weight:900;letter-spacing:.08em}
+.pmh-ticket-timeline>header h3{margin:4px 0 0;font-size:22px}
+.pmh-ticket-timeline>header>span{color:#806b61;font-size:13px}
+.pmh-ticket-event{position:relative;margin-bottom:10px;padding:15px 16px;border:1px solid #e1d1c9;border-radius:12px;background:#fff}
+.pmh-ticket-event.internal{border-color:#d8ccef;background:#f8f3ff}
+.pmh-ticket-event header{display:flex;justify-content:space-between;gap:12px}
+.pmh-ticket-event header strong{font-size:14px}
+.pmh-ticket-event time{color:#87736a;font-size:12px}
+.pmh-ticket-event p{margin:9px 0 0;font-size:14px;line-height:1.55;white-space:pre-wrap}
+.pmh-ticket-event>small{display:inline-block;margin-top:9px;color:#705696;font-size:12px;font-weight:800}
+.pmh-ticket-attachments{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.pmh-ticket-attachments a,.pmh-ticket-attachments span{padding:7px 9px;border-radius:7px;background:#f2e9e5;color:#553b31;font-size:12px;font-weight:750;text-decoration:none}
+.pmh-ticket-empty{padding:22px;border:1px dashed #d7c4ba;border-radius:12px;background:#fff;text-align:center;color:#7d675d;font-size:14px}
+
+@media(max-width:650px){
+  .pmh-ticket-drawer-panel{width:100%;padding:20px}
+  .pmh-ticket-summary{grid-template-columns:1fr}
+  .pmh-ticket-drawer-header h2{font-size:24px}
+  .pmh-ticket-filters{align-items:stretch}
+  .pmh-ticket-filters span{width:100%}
+}
