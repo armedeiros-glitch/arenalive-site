@@ -1,5 +1,5 @@
-/* André OS · páginas mobile v2
-   Responsividade de conteúdo até 820px. A navegação pertence ao mobile-navigation-v2.css. */
+/* André OS · páginas mobile v3
+   Responsividade e densidade de conteúdo até 820px. A navegação pertence ao mobile-navigation-v2.css. */
 
 html.aos-mobile {
   --aos-mobile-page-gap: 12px;
@@ -38,7 +38,7 @@ html.aos-mobile .aos-home-page-shortcuts i { width: 38px !important; height: 38p
 html.aos-mobile .aos-home-page-shortcuts strong { color: var(--aos-mobile-text) !important; font-size: 12.5px !important; line-height: 1.15 !important; }
 html.aos-mobile .aos-home-page-shortcuts small { display: none !important; }
 
-/* Planet · visão geral densa: resumo crítico + portas em quase uma tela */
+/* Planet · visão geral densa */
 html.aos-mobile .aos-planet-overview-page { gap: 7px !important; align-content: start !important; }
 html.aos-mobile .aos-planet-overview-intro { display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; align-items: end !important; gap: 8px !important; padding: 0 2px 1px !important; }
 html.aos-mobile .aos-planet-overview-intro > div { min-width: 0 !important; }
@@ -67,7 +67,7 @@ html.aos-mobile .aos-planet-drawer-card > span { gap: 0 !important; }
 html.aos-mobile .aos-planet-drawer-card strong { overflow: hidden !important; font-size: 11.5px !important; line-height: 1.12 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 html.aos-mobile .aos-planet-drawer-card em { overflow: hidden !important; font-size: 8.5px !important; line-height: 1.15 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 
-/* Marketing · mesma lógica de cockpit compacto */
+/* Marketing · cockpit compacto */
 html.aos-mobile .aos-marketing-hub-page { gap: 7px !important; align-content: start !important; }
 html.aos-mobile .aos-marketing-hub-intro { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 7px !important; padding: 10px !important; border-radius: 15px !important; }
 html.aos-mobile .aos-marketing-hub-copy h2 { margin: 2px 0 0 !important; font-size: 22px !important; line-height: 1 !important; }
@@ -99,11 +99,204 @@ html.aos-mobile .aos-marketing-door > span { gap: 0 !important; }
 html.aos-mobile .aos-marketing-door strong { overflow: hidden !important; font-size: 11.5px !important; line-height: 1.12 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 html.aos-mobile .aos-marketing-door em { overflow: hidden !important; font-size: 8.5px !important; line-height: 1.15 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 
+/* Campanhas · resumo primeiro, calendário depois */
+html.aos-mobile .pmh-calendar-operations { margin-top: 8px !important; }
+html.aos-mobile .pmh-campaign-storage { min-height: 30px !important; padding: 0 9px !important; font-size: 9px !important; }
+html.aos-mobile .pmh-campaign-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .pmh-campaign-metric { grid-column: auto !important; min-height: 62px !important; padding: 8px !important; border-radius: 12px !important; }
+html.aos-mobile .pmh-campaign-metric::before { width: 3px !important; }
+html.aos-mobile .pmh-campaign-metric::after { display: none !important; }
+html.aos-mobile .pmh-campaign-metric small { font-size: 7px !important; letter-spacing: .04em !important; }
+html.aos-mobile .pmh-campaign-metric strong { margin-top: 4px !important; font-size: 19px !important; }
+html.aos-mobile .pmh-campaign-metric span { display: none !important; }
+html.aos-mobile .pmh-campaign-focus { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; margin-top: 7px !important; }
+html.aos-mobile .pmh-campaign-focus-card { min-height: 96px !important; padding: 10px !important; border-radius: 14px !important; }
+html.aos-mobile .pmh-campaign-focus-card::after { display: none !important; }
+html.aos-mobile .pmh-campaign-focus-card > small { font-size: 7px !important; }
+html.aos-mobile .pmh-campaign-focus-head { gap: 5px !important; margin-top: 5px !important; }
+html.aos-mobile .pmh-campaign-focus-card h3 { font-size: 14px !important; line-height: 1.08 !important; }
+html.aos-mobile .pmh-campaign-focus-card p { display: none !important; }
+html.aos-mobile .pmh-campaign-focus-card footer { margin-top: 8px !important; font-size: 8px !important; }
+html.aos-mobile .pmh-campaign-focus-card em { margin-top: 5px !important; font-size: 8px !important; }
+html.aos-mobile .pmh-campaign-status { min-height: 23px !important; padding: 0 7px !important; font-size: 8px !important; }
+html.aos-mobile .pmh-campaign-timeline,
+html.aos-mobile .pmh-campaign-annual { margin-top: 7px !important; border-radius: 14px !important; }
+html.aos-mobile .pmh-campaign-timeline { padding: 9px !important; }
+html.aos-mobile .pmh-campaign-timeline h3 { margin-top: 2px !important; font-size: 16px !important; }
+html.aos-mobile .pmh-campaign-timeline > header > span { font-size: 9px !important; }
+html.aos-mobile .pmh-campaign-timeline > div { gap: 5px !important; margin-top: 7px !important; }
+html.aos-mobile .pmh-campaign-timeline-card { grid-template-columns: 74px minmax(0, 1fr) !important; gap: 8px !important; min-height: 72px !important; padding: 7px !important; border-left-width: 3px !important; }
+html.aos-mobile .pmh-campaign-date-block { padding: 7px !important; }
+html.aos-mobile .pmh-campaign-date-block strong { font-size: 12px !important; }
+html.aos-mobile .pmh-campaign-date-block span { margin-top: 2px !important; font-size: 8px !important; }
+html.aos-mobile .pmh-campaign-timeline-main small { font-size: 7px !important; }
+html.aos-mobile .pmh-campaign-timeline-main h4 { margin: 2px 0 !important; font-size: 12px !important; }
+html.aos-mobile .pmh-campaign-timeline-main p { overflow: hidden !important; font-size: 9px !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+html.aos-mobile .pmh-campaign-timeline-meta { display: none !important; }
+html.aos-mobile .pmh-campaign-next-step { display: none !important; }
+html.aos-mobile .pmh-campaign-annual > summary { padding: 10px 11px !important; }
+html.aos-mobile .pmh-campaign-annual summary strong { margin-top: 2px !important; font-size: 14px !important; }
+html.aos-mobile .pmh-campaign-annual summary > span { font-size: 9px !important; }
+html.aos-mobile .pmh-campaign-months { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; padding: 0 8px 8px !important; }
+html.aos-mobile .pmh-campaign-months > section { padding: 8px !important; border-radius: 11px !important; }
+html.aos-mobile .pmh-campaign-months h3 { font-size: 12px !important; }
+html.aos-mobile .pmh-campaign-annual-card { padding: 7px !important; }
+html.aos-mobile .pmh-campaign-annual-card p { display: none !important; }
+
+/* Inaugurações · projetos como painel */
+html.aos-mobile .pmh-inauguration-workspace { gap: 7px !important; margin-top: 7px !important; padding-top: 7px !important; }
+html.aos-mobile .pmh-inauguration-workspace-bar { gap: 7px !important; }
+html.aos-mobile .pmh-inauguration-workspace-title > i { width: 30px !important; height: 30px !important; }
+html.aos-mobile .pmh-inauguration-workspace-title strong { font-size: 12px !important; }
+html.aos-mobile .pmh-inauguration-workspace-title small { font-size: 9px !important; }
+html.aos-mobile .pmh-inauguration-finance-access.aos-thinking-floating-trigger { width: 36px !important; height: 36px !important; min-width: 36px !important; min-height: 36px !important; }
+html.aos-mobile .pmh-inauguration-project-tabs { gap: 4px !important; margin-top: 7px !important; padding: 4px !important; }
+html.aos-mobile .pmh-inauguration-project-tabs button { flex: 1 1 0 !important; min-height: 31px !important; padding: 0 7px !important; font-size: 9px !important; }
+html.aos-mobile .pmh-inauguration-project-summary { gap: 6px !important; margin-top: 6px !important; }
+html.aos-mobile .pmh-inauguration-summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .pmh-inauguration-summary-grid article,
+html.aos-mobile .pmh-inauguration-summary-owner { min-height: 55px !important; padding: 7px !important; border-radius: 10px !important; }
+html.aos-mobile .pmh-inauguration-summary-grid small,
+html.aos-mobile .pmh-inauguration-summary-owner small { font-size: 7px !important; }
+html.aos-mobile .pmh-inauguration-summary-grid strong { margin-top: 3px !important; font-size: 14px !important; }
+html.aos-mobile .pmh-inauguration-summary-grid span,
+html.aos-mobile .pmh-inauguration-summary-owner strong { margin-top: 2px !important; font-size: 8px !important; }
+html.aos-mobile .pmh-inauguration-project-grid { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 6px !important; }
+html.aos-mobile .pmh-inauguration-project-row { min-height: 72px !important; padding: 9px !important; border-radius: 12px !important; }
+html.aos-mobile .pmh-inauguration-finance-summary,
+html.aos-mobile .pmh-inauguration-payment-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
+html.aos-mobile .pmh-inauguration-finance-summary > label,
+html.aos-mobile .pmh-inauguration-finance-summary > article,
+html.aos-mobile .pmh-inauguration-payment-kpis > article { min-height: 72px !important; padding: 9px !important; }
+
+/* Chamados · contexto continua visível, sem cartões gigantes */
+html.aos-mobile .pmh-ticket-compact-active .pmh-section-head { gap: 7px !important; margin-bottom: 7px !important; }
+html.aos-mobile .pmh-ticket-compact-active .pmh-section-head p { display: none !important; }
+html.aos-mobile .pmh-ticket-compact-active .pmh-command-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .pmh-ticket-compact-active .pmh-command-metric { min-height: 58px !important; padding: 7px !important; border-radius: 11px !important; }
+html.aos-mobile .pmh-ticket-compact-active .pmh-command-metric small { font-size: 7px !important; }
+html.aos-mobile .pmh-ticket-compact-active .pmh-command-metric strong { font-size: 18px !important; }
+html.aos-mobile .pmh-ticket-compact-active .pmh-command-filters { gap: 5px !important; padding: 7px !important; }
+html.aos-mobile .pmh-ticket-compact-active .pmh-command-groups { gap: 7px !important; }
+html.aos-mobile .pmh-ticket-compact-active .pmh-command-group { padding: 8px !important; border-radius: 13px !important; }
+html.aos-mobile .pmh-ticket-compact-active .pmh-command-list { gap: 5px !important; }
+html.aos-mobile .pmh-ticket-compact-active .pmh-command-ticket { min-height: 64px !important; padding: 8px !important; border-radius: 11px !important; }
+html.aos-mobile .pmh-ticket-compact-active .pmh-command-ticket-facts { gap: 5px !important; margin-top: 5px !important; }
+html.aos-mobile .pmh-ticket-compact-active .pmh-ticket-context-line { margin-top: 5px !important; padding-top: 5px !important; }
+
+/* Aquisição · métricas e funil compactos */
+html.aos-mobile .pa-page { gap: 7px !important; padding: 8px !important; }
+html.aos-mobile .pa-head { gap: 7px !important; padding: 9px !important; }
+html.aos-mobile .pa-head p { display: none !important; }
+html.aos-mobile .pa-periods { gap: 4px !important; overflow-x: auto !important; flex-wrap: nowrap !important; }
+html.aos-mobile .pa-periods button { min-height: 30px !important; padding: 0 9px !important; font-size: 9px !important; white-space: nowrap !important; }
+html.aos-mobile .pa-status { padding: 5px 8px !important; font-size: 8px !important; }
+html.aos-mobile .pa-summary { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .pa-kpi { min-height: 58px !important; padding: 7px !important; border-radius: 11px !important; }
+html.aos-mobile .pa-kpi small { font-size: 7px !important; }
+html.aos-mobile .pa-kpi strong { font-size: 18px !important; }
+html.aos-mobile .pa-kpi span { font-size: 8px !important; }
+html.aos-mobile .pa-grid { gap: 7px !important; }
+html.aos-mobile .pa-card { padding: 9px !important; border-radius: 13px !important; }
+html.aos-mobile .pa-section-title { margin-bottom: 6px !important; }
+html.aos-mobile .pa-funnel { gap: 4px !important; }
+html.aos-mobile .pa-step { grid-template-columns: 28px minmax(0, 1fr) 58px !important; gap: 6px !important; min-height: 48px !important; padding: 6px !important; }
+html.aos-mobile .pa-step-index { width: 28px !important; height: 28px !important; }
+html.aos-mobile .pa-step-count { font-size: 15px !important; }
+html.aos-mobile .pa-step-rates { grid-column: auto !important; font-size: 8px !important; }
+html.aos-mobile .pa-side { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .pa-row { min-height: 36px !important; padding: 5px 6px !important; }
+html.aos-mobile .pa-diagnostics { gap: 5px !important; }
+
+/* 5 Estrelas · leitura executiva no topo */
+html.aos-mobile .p5-page { gap: 7px !important; padding: 0 !important; }
+html.aos-mobile .p5-intro { display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; gap: 7px !important; padding: 9px !important; }
+html.aos-mobile .p5-intro p { display: none !important; }
+html.aos-mobile .p5-intro h2 { font-size: 21px !important; }
+html.aos-mobile .p5-source-status { padding: 5px 7px !important; font-size: 8px !important; }
+html.aos-mobile .p5-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .p5-kpis > * { min-height: 57px !important; padding: 7px !important; }
+html.aos-mobile .p5-kpis small { font-size: 7px !important; }
+html.aos-mobile .p5-kpis strong { font-size: 18px !important; }
+html.aos-mobile .p5-tabs { gap: 4px !important; padding: 4px !important; overflow-x: auto !important; flex-wrap: nowrap !important; }
+html.aos-mobile .p5-tabs button { min-height: 31px !important; padding: 0 8px !important; font-size: 8.5px !important; white-space: nowrap !important; }
+html.aos-mobile .p5-overview-stack { gap: 7px !important; }
+html.aos-mobile .p5-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
+html.aos-mobile .p5-panel { padding: 9px !important; border-radius: 13px !important; }
+html.aos-mobile .p5-cycle,
+html.aos-mobile .p5-pillar-grid,
+html.aos-mobile .p5-requirement-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .p5-cycle-step { min-height: 58px !important; padding: 7px !important; }
+html.aos-mobile .p5-classification-strip { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 4px !important; }
+html.aos-mobile .p5-distinction-grid,
+html.aos-mobile .p5-source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .p5-data-actions { gap: 5px !important; }
+html.aos-mobile .p5-data-actions button { min-height: 34px !important; padding: 0 9px !important; }
+html.aos-mobile .p5-data-stack,
+html.aos-mobile .p5-action-stack { gap: 7px !important; }
+html.aos-mobile .p5-unit-row,
+html.aos-mobile .p5-evaluation-row,
+html.aos-mobile .p5-action-card { padding: 8px !important; border-radius: 12px !important; }
+html.aos-mobile .p5-evaluation-pillars { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 4px !important; }
+html.aos-mobile .p5-action-stats,
+html.aos-mobile .p5-action-meta { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 5px !important; }
+
+/* Central Planet · biblioteca densa, filtros acessíveis */
+html.aos-mobile .pmh-assets-library { margin-top: 7px !important; }
+html.aos-mobile .pmh-assets-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .pmh-assets-metrics article { min-height: 58px !important; padding: 7px !important; border-radius: 11px !important; }
+html.aos-mobile .pmh-assets-metrics small { font-size: 7px !important; }
+html.aos-mobile .pmh-assets-metrics strong { margin-top: 3px !important; font-size: 18px !important; }
+html.aos-mobile .pmh-assets-metrics span { display: none !important; }
+html.aos-mobile .pmh-assets-filters { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; margin-top: 7px !important; padding: 7px !important; border-radius: 12px !important; }
+html.aos-mobile .pmh-assets-filters .search { grid-column: 1 / -1 !important; }
+html.aos-mobile .pmh-assets-filters label span { margin-bottom: 3px !important; font-size: 7px !important; }
+html.aos-mobile .pmh-assets-filters input,
+html.aos-mobile .pmh-assets-filters select,
+html.aos-mobile .pmh-assets-filters button { min-height: 36px !important; font-size: 11px !important; }
+html.aos-mobile .pmh-assets-list-head { flex-direction: row !important; align-items: end !important; gap: 7px !important; margin: 9px 2px 6px !important; }
+html.aos-mobile .pmh-assets-list-head h3 { margin-top: 2px !important; font-size: 16px !important; }
+html.aos-mobile .pmh-assets-list-head > span { font-size: 9px !important; text-align: right !important; }
+html.aos-mobile .pmh-assets-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
+html.aos-mobile .pmh-asset-card { padding: 9px !important; border-top-width: 3px !important; border-radius: 12px !important; }
+html.aos-mobile .pmh-asset-card > header small { font-size: 7px !important; }
+html.aos-mobile .pmh-asset-card h3 { margin-top: 3px !important; font-size: 12px !important; }
+html.aos-mobile .pmh-asset-card > header > span { padding: 4px 6px !important; font-size: 7px !important; }
+html.aos-mobile .pmh-asset-card > p { display: none !important; }
+html.aos-mobile .pmh-asset-card dl { gap: 4px !important; margin-top: 6px !important; }
+html.aos-mobile .pmh-asset-card dl > div { padding: 5px !important; }
+html.aos-mobile .pmh-asset-card dt { font-size: 7px !important; }
+html.aos-mobile .pmh-asset-card dd { margin-top: 2px !important; font-size: 8px !important; }
+html.aos-mobile .pmh-asset-tags { display: none !important; }
+html.aos-mobile .pmh-asset-card > footer { gap: 4px !important; padding-top: 7px !important; }
+html.aos-mobile .pmh-asset-card > footer button,
+html.aos-mobile .pmh-asset-card > footer a,
+html.aos-mobile .pmh-asset-no-link { min-height: 30px !important; padding: 0 7px !important; font-size: 8px !important; }
+
+/* Laboratório e Pessoal · ambiente operacional, não landing page */
+html.aos-mobile .aos-mode-page { gap: 7px !important; }
+html.aos-mobile .aos-mode-page-hero { display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; align-items: center !important; gap: 7px !important; padding: 9px !important; border-radius: 14px !important; }
+html.aos-mobile .aos-mode-page-hero p { display: none !important; }
+html.aos-mobile .aos-mode-page-hero h2 { margin-top: 2px !important; font-size: 20px !important; }
+html.aos-mobile .aos-mode-page-hero > button { width: auto !important; min-height: 34px !important; padding: 0 10px !important; font-size: 9px !important; }
+html.aos-mobile .aos-mode-workspace,
+html.aos-mobile .aos-personal-grid { gap: 6px !important; }
+html.aos-mobile .aos-lab-project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
+html.aos-mobile .aos-lab-project-card { min-height: 105px !important; padding: 9px !important; border-radius: 12px !important; }
+html.aos-mobile .aos-lab-project-card h3 { font-size: 13px !important; }
+html.aos-mobile .aos-lab-project-card > p { display: none !important; }
+html.aos-mobile .aos-lab-project-card footer { margin-top: 7px !important; }
+html.aos-mobile .aos-lab-project-card footer strong { overflow: hidden !important; font-size: 9px !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+html.aos-mobile .aos-mode-panel { padding: 9px !important; border-radius: 13px !important; }
+html.aos-mobile .aos-personal-task-list { gap: 5px !important; }
+html.aos-mobile .aos-personal-task { min-height: 50px !important; padding: 7px !important; }
+html.aos-mobile .aos-personal-rule { display: none !important; }
+
 /* Cabeçalhos de Demandas e Radar */
-html.aos-mobile .aos-home-page-header { padding: 16px !important; border: 1px solid var(--aos-mobile-line) !important; border-radius: var(--aos-mobile-card-radius) !important; background: radial-gradient(circle at 100% 0%, rgba(124, 99, 255, .14), transparent 45%), linear-gradient(145deg, var(--aos-mobile-surface-raised), var(--aos-mobile-surface)) !important; box-shadow: 0 14px 30px rgba(7, 5, 13, .19) !important; }
-html.aos-mobile .aos-home-page-header small { color: #9e8eff !important; font-size: 9px !important; }
-html.aos-mobile .aos-home-page-header h2 { color: var(--aos-mobile-text) !important; font-size: 25px !important; }
-html.aos-mobile .aos-home-page-header p { color: var(--aos-mobile-muted) !important; font-size: 12.5px !important; line-height: 1.45 !important; }
+html.aos-mobile .aos-home-page-header { padding: 10px !important; border: 1px solid var(--aos-mobile-line) !important; border-radius: 14px !important; background: radial-gradient(circle at 100% 0%, rgba(124, 99, 255, .14), transparent 45%), linear-gradient(145deg, var(--aos-mobile-surface-raised), var(--aos-mobile-surface)) !important; box-shadow: 0 14px 30px rgba(7, 5, 13, .19) !important; }
+html.aos-mobile .aos-home-page-header small { color: #9e8eff !important; font-size: 8px !important; }
+html.aos-mobile .aos-home-page-header h2 { color: var(--aos-mobile-text) !important; font-size: 21px !important; }
+html.aos-mobile .aos-home-page-header p { display: none !important; }
 html.aos-mobile .pmh-internal-demands,
 html.aos-mobile .aos-radar-workspace,
 html.aos-mobile [data-active-workstream] { width: 100% !important; min-width: 0 !important; overflow: visible !important; }
@@ -113,32 +306,34 @@ html.aos-mobile .pmh-internal-demands select,
 html.aos-mobile .aos-radar-workspace input,
 html.aos-mobile .aos-radar-workspace select { max-width: 100% !important; font-size: 16px !important; }
 
-/* Expansão */
-html.aos-mobile .pmh-expansion-shell { display: grid !important; gap: 12px !important; }
+/* Expansão e Caça Leads */
+html.aos-mobile .pmh-expansion-shell { display: grid !important; gap: 7px !important; }
 html.aos-mobile .pmh-expansion-shell > [hidden] { display: none !important; }
-html.aos-mobile .pmh-expansion-tabs { position: sticky !important; top: 70px !important; z-index: 24 !important; display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; width: 100% !important; padding: 5px !important; border: 1px solid var(--aos-mobile-line) !important; border-radius: 15px !important; background: rgba(25, 22, 33, .94) !important; box-shadow: 0 10px 24px rgba(7, 5, 13, .22) !important; backdrop-filter: blur(18px); }
-html.aos-mobile .pmh-expansion-tabs button { min-height: 42px !important; padding: 0 10px !important; border: 0 !important; border-radius: 11px !important; color: #aaa5b6 !important; background: transparent !important; font-size: 12px !important; font-weight: 850 !important; }
+html.aos-mobile .pmh-expansion-tabs { position: sticky !important; top: 70px !important; z-index: 24 !important; display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 4px !important; width: 100% !important; padding: 4px !important; border: 1px solid var(--aos-mobile-line) !important; border-radius: 13px !important; background: rgba(25, 22, 33, .94) !important; box-shadow: 0 10px 24px rgba(7, 5, 13, .22) !important; backdrop-filter: blur(18px); }
+html.aos-mobile .pmh-expansion-tabs button { min-height: 35px !important; padding: 0 8px !important; border: 0 !important; border-radius: 9px !important; color: #aaa5b6 !important; background: transparent !important; font-size: 10px !important; font-weight: 850 !important; }
 html.aos-mobile .pmh-expansion-tabs button.active { color: #fff !important; background: linear-gradient(145deg, #806cff, #6650e8) !important; box-shadow: 0 8px 18px rgba(101, 78, 232, .3) !important; }
 html.aos-mobile .pmh-expansion-panel,
-html.aos-mobile [data-lead-hunter-root] { display: grid !important; gap: 12px !important; }
-html.aos-mobile .pmh-expansion-head { padding: 16px !important; border-radius: 18px !important; }
-html.aos-mobile .pmh-expansion-head h2 { font-size: 24px !important; }
-html.aos-mobile .pmh-expansion-head-actions { width: 100% !important; align-items: stretch !important; }
-html.aos-mobile .pmh-expansion-refresh { width: 100% !important; min-height: 44px !important; }
-html.aos-mobile .pmh-expansion-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 7px !important; }
-html.aos-mobile .pmh-expansion-metrics article { min-width: 0 !important; padding: 12px 9px !important; border-radius: 14px !important; }
-html.aos-mobile .pmh-expansion-metrics small { min-height: 23px; font-size: 8px !important; line-height: 1.2 !important; }
-html.aos-mobile .pmh-expansion-metrics strong { font-size: 22px !important; }
-html.aos-mobile .pmh-expansion-list { gap: 9px !important; }
-html.aos-mobile .pmh-expansion-lead { border-radius: 16px !important; }
-html.aos-mobile .pmh-expansion-lead-main { grid-template-columns: minmax(0, 1fr) !important; gap: 8px !important; padding: 15px !important; }
-html.aos-mobile .pmh-expansion-status { justify-self: start !important; }
-html.aos-mobile .pmh-expansion-lead-details { grid-template-columns: minmax(0, 1fr) !important; padding: 14px !important; }
-html.aos-mobile .pmh-expansion-contact,
-html.aos-mobile .pmh-expansion-actions { grid-template-columns: minmax(0, 1fr) !important; }
-html.aos-mobile .pmh-expansion-actions { display: grid !important; }
+html.aos-mobile [data-lead-hunter-root] { display: grid !important; gap: 7px !important; }
+html.aos-mobile .pmh-expansion-head { display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; align-items: center !important; gap: 7px !important; padding: 9px !important; border-radius: 14px !important; }
+html.aos-mobile .pmh-expansion-head h2 { margin: 2px 0 0 !important; font-size: 21px !important; }
+html.aos-mobile .pmh-expansion-head p { display: none !important; }
+html.aos-mobile .pmh-expansion-head-actions { width: auto !important; align-items: flex-end !important; gap: 4px !important; }
+html.aos-mobile .pmh-expansion-head-actions small { font-size: 8px !important; }
+html.aos-mobile .pmh-expansion-refresh { width: auto !important; min-height: 34px !important; padding: 0 9px !important; font-size: 9px !important; }
+html.aos-mobile .pmh-expansion-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .pmh-expansion-metrics article { min-width: 0 !important; min-height: 57px !important; padding: 7px !important; border-radius: 11px !important; }
+html.aos-mobile .pmh-expansion-metrics small { min-height: 0 !important; font-size: 7px !important; line-height: 1.1 !important; }
+html.aos-mobile .pmh-expansion-metrics strong { margin-top: 3px !important; font-size: 19px !important; }
+html.aos-mobile .pmh-expansion-list { gap: 5px !important; }
+html.aos-mobile .pmh-expansion-lead { border-radius: 12px !important; }
+html.aos-mobile .pmh-expansion-lead-main { grid-template-columns: minmax(0, 1fr) auto !important; gap: 6px !important; padding: 9px !important; }
+html.aos-mobile .pmh-expansion-status { justify-self: end !important; padding: 5px 7px !important; font-size: 8px !important; }
+html.aos-mobile .pmh-expansion-lead-details { grid-template-columns: minmax(0, 1fr) !important; gap: 8px !important; padding: 9px !important; }
+html.aos-mobile .pmh-expansion-contact { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px 9px !important; }
+html.aos-mobile .pmh-expansion-actions { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; }
 html.aos-mobile .pmh-expansion-actions button,
-html.aos-mobile .pmh-expansion-actions a { width: 100% !important; min-height: 44px !important; }
+html.aos-mobile .pmh-expansion-actions a { width: 100% !important; min-height: 34px !important; padding: 0 7px !important; font-size: 9px !important; }
+html.aos-mobile .pmh-expansion-empty { padding: 20px 12px !important; }
 
 /* Proteções contra layout espremido */
 html.aos-mobile .pmh-panel,
@@ -154,10 +349,20 @@ html.aos-mobile svg { max-width: 100%; }
 @media (max-width: 380px) {
   html.aos-mobile .aos-home-page-shortcuts { grid-template-columns: minmax(0, 1fr) !important; }
   html.aos-mobile .aos-planet-drawers,
-  html.aos-mobile .aos-marketing-doors { grid-template-columns: minmax(0, 1fr) !important; }
+  html.aos-mobile .aos-marketing-doors,
+  html.aos-mobile .aos-lab-project-grid,
+  html.aos-mobile .pmh-assets-grid,
+  html.aos-mobile .pmh-campaign-focus { grid-template-columns: minmax(0, 1fr) !important; }
   html.aos-mobile .aos-planet-drawer-card:last-child:nth-child(odd),
   html.aos-mobile .aos-marketing-door:last-child:nth-child(odd) { grid-column: auto !important; }
-  html.aos-mobile .aos-marketing-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  html.aos-mobile .pmh-expansion-metrics { grid-template-columns: minmax(0, 1fr) !important; }
-  html.aos-mobile .pmh-expansion-metrics small { min-height: 0; }
+  html.aos-mobile .aos-marketing-kpis,
+  html.aos-mobile .pmh-campaign-metrics,
+  html.aos-mobile .p5-kpis,
+  html.aos-mobile .pmh-assets-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  html.aos-mobile .pmh-inauguration-summary-grid,
+  html.aos-mobile .pa-summary { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  html.aos-mobile .p5-classification-strip,
+  html.aos-mobile .p5-action-stats,
+  html.aos-mobile .p5-action-meta { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  html.aos-mobile .pmh-expansion-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 }
