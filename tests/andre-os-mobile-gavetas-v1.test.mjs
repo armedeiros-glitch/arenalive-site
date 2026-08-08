@@ -3,21 +3,20 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [index, pageStyles, navigationStyles, shell, ticketDetailsJs, ticketDetailsCss] = await Promise.all([
+const [index, pageStyles, navigationStyles, shell, ticketDetailsJs, ticketDetailsCss, darkThemeCss] = await Promise.all([
   read('index.html'),
   read('planet-hub/assets/andre-os-mobile-gavetas-v1.css'),
   read('planet-hub/assets/andre-os-mobile-navigation-v2.css'),
   read('planet-hub/assets/andre-os-mobile-shell-v2.js'),
   read('planet-hub/assets/ticket-details-v1.js'),
   read('planet-hub/assets/ticket-details-v1.css'),
+  read('planet-hub/assets/andre-os-dark-theme-v1.css'),
 ]);
 
 const mobilePages = 'andre-os-mobile-gavetas-v1.css?v=20260807-7';
 const mobileNavigation = 'andre-os-mobile-navigation-v2.css?v=20260807-2';
 const mobileShell = 'andre-os-mobile-shell-v2.js?v=20260807-11';
-const darkTheme = 'andre-os-dark-theme-v1.css?v=20260806-3';
-const darkSurfaces = 'andre-os-dark-surfaces-v2.css?v=20260806-2';
-const darkPalette = 'andre-os-dark-palette-polish-v1.css?v=20260808-1';
+const darkTheme = 'andre-os-dark-theme-v1.css?v=20260808-1';
 const ticketDetailsStyles = 'ticket-details-v1.css?v=20260808-1';
 const ticketDetailsScript = 'ticket-details-v1.js?v=20260808-1';
 
@@ -25,13 +24,18 @@ assert.ok(index.includes(`media="(max-width: 820px)" href="/planet-hub/assets/${
 assert.ok(index.includes(`/planet-hub/assets/${mobileNavigation}`));
 assert.ok(index.includes(`/planet-hub/assets/${mobileShell}`));
 assert.ok(index.includes(darkTheme));
-assert.ok(index.includes(darkSurfaces));
-assert.ok(index.includes(darkPalette));
 assert.ok(index.includes(ticketDetailsStyles));
 assert.ok(index.includes(ticketDetailsScript));
 assert.ok(index.indexOf(ticketDetailsStyles) < index.indexOf(ticketDetailsScript), 'O CSS de detalhes deve estar disponível antes do comportamento do drawer.');
-assert.ok(index.indexOf(mobilePages) > index.indexOf(darkPalette), 'A camada de páginas mobile precisa continuar depois da paleta escura.');
-assert.doesNotMatch(index, /andre-os-dark-demand-card-fix-v1\.css/, 'Correções temporárias devem ser absorvidas pelo dono da paleta, não permanecer no carregamento.');
+assert.ok(index.indexOf(mobilePages) > index.indexOf(darkTheme), 'A camada de páginas mobile precisa continuar depois do tema escuro consolidado.');
+assert.doesNotMatch(index, /andre-os-dark-demand-card-fix-v1\.css/, 'Correções temporárias devem ser absorvidas pelo dono do tema.');
+assert.doesNotMatch(index, /andre-os-dark-surfaces-v2\.css/, 'Superfícies escuras compartilhadas devem pertencer ao tema consolidado.');
+assert.doesNotMatch(index, /andre-os-dark-palette-polish-v1\.css/, 'Tokens finais de paleta devem pertencer ao tema consolidado.');
+
+assert.match(darkThemeCss, /--aos-page:\s*#0d0c11/);
+assert.match(darkThemeCss, /html\.aos-mobile \.pmh-command-metric/);
+assert.match(darkThemeCss, /html\.aos-mobile \.aos-mobile-menu-toggle/);
+assert.match(darkThemeCss, /html\.aos-mobile \.pmh-priority-focus/);
 
 assert.match(shell, /PLANET_ROUTES/);
 assert.match(shell, /label: 'Visão Geral'/);
