@@ -12,7 +12,7 @@ const [index, workspaceCss, requestPrint, quickFlow] = await Promise.all([
 
 assert.ok(index.includes('inauguration-workspace-v2.css?v=20260808-2'));
 assert.ok(index.includes('payment-request-print-v1.js?v=20260808-1'));
-assert.ok(index.includes('payment-quick-flow-v1.js?v=20260808-1'));
+assert.ok(index.includes('payment-quick-flow-v1.js?v=20260808-2'));
 assert.doesNotMatch(index, /payment-print-compact-v1\.js|payment-print-clean-v1\.js/);
 
 assert.match(workspaceCss, /Payment document actions and quick flow/);
@@ -29,4 +29,17 @@ for (const source of [requestPrint, quickFlow]) {
     'Fluxos financeiros devem usar o evento oficial pmh:view-rendered.');
 }
 
-console.log('Contrato de limpeza do fluxo financeiro validado.');
+assert.match(quickFlow, /const deletePayment = async \(paymentId\)/,
+  'O fluxo da unidade deve permitir excluir um pagamento já salvo.');
+assert.match(quickFlow, /data-delete-payment=/,
+  'O botão de exclusão deve existir somente no modal de pagamento existente.');
+assert.match(quickFlow, /const suppliers = \[\.\.\.\(document\.suppliers \|\| \[\]\)\]/,
+  'Excluir pagamento deve preservar o cadastro de fornecedores.');
+assert.match(quickFlow, /filter\(\(item\) => String\(item\.id\) !== String\(paymentId\)\)/,
+  'A exclusão deve remover somente o pagamento selecionado.');
+assert.match(quickFlow, /O lançamento será removido, mas o fornecedor continuará cadastrado/,
+  'A confirmação deve deixar claro que o fornecedor não será apagado.');
+assert.match(quickFlow, /error\.status === 409 && allowRetry/,
+  'A exclusão deve respeitar o controle de revisão do financeiro.');
+
+console.log('Contrato de limpeza e exclusão segura do fluxo financeiro validado.');
