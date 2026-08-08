@@ -19,7 +19,7 @@ const [index, mobileBase, pageStyles, navigationStyles, shell, ticketDetailsJs, 
 ]);
 
 const mobileBaseAsset = 'andre-os-mobile-v1.css?v=20260808-1';
-const mobilePages = 'andre-os-mobile-gavetas-v1.css?v=20260808-1';
+const mobilePages = 'andre-os-mobile-gavetas-v1.css?v=20260808-2';
 const mobileNavigation = 'andre-os-mobile-navigation-v2.css?v=20260807-2';
 const mobileShell = 'andre-os-mobile-shell-v2.js?v=20260807-11';
 const darkTheme = 'andre-os-dark-theme-v1.css?v=20260808-1';
@@ -78,6 +78,7 @@ assert.match(acquisitionStyles, /Mobile ownership · densidade aprovada de Aquis
 assert.match(acquisitionStyles, /html\.aos-mobile \.pa-summary/);
 assert.match(acquisitionStyles, /html\.aos-mobile \.pa-step/);
 assert.match(acquisitionStyles, /html\.aos-mobile \.pa-diagnostics/);
+assert.match(acquisitionStyles, /@media\(max-width:380px\)\{html\.aos-mobile \.pa-summary/);
 
 assert.match(shell, /PLANET_ROUTES/);
 assert.match(shell, /label: 'Visão Geral'/);
@@ -109,8 +110,8 @@ assert.match(pageStyles, /min-height:\s*57px\s*!important/);
 assert.match(pageStyles, /html\.aos-mobile \.aos-marketing-kpis/);
 assert.doesNotMatch(pageStyles, /pmh-campaign-/, 'Campanhas deve pertencer ao calendar-operations-v1.css, não ao mobile-gavetas.');
 assert.doesNotMatch(pageStyles, /pmh-inauguration-/, 'Inaugurações deve pertencer ao inauguration-workspace-v2.css, não ao mobile-gavetas.');
-assert.match(pageStyles, /html\.aos-mobile \.pmh-ticket-compact-active \.pmh-command-metrics/);
-assert.match(pageStyles, /html\.aos-mobile \.pa-summary/);
+assert.doesNotMatch(pageStyles, /pmh-ticket-compact-active|pmh-command-|pmh-ticket-context-line/, 'Chamados deve pertencer aos módulos ticket-*.css, não ao mobile-gavetas.');
+assert.doesNotMatch(pageStyles, /html\.aos-mobile \.pa-/, 'Aquisição deve pertencer ao planet-acquisition-v1.css, não ao mobile-gavetas.');
 assert.match(pageStyles, /html\.aos-mobile \.p5-kpis/);
 assert.match(pageStyles, /html\.aos-mobile \.pmh-assets-metrics/);
 assert.match(pageStyles, /html\.aos-mobile \.aos-lab-project-grid/);
