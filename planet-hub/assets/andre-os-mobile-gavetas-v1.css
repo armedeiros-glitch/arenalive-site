@@ -99,76 +99,6 @@ html.aos-mobile .aos-marketing-door > span { gap: 0 !important; }
 html.aos-mobile .aos-marketing-door strong { overflow: hidden !important; font-size: 11.5px !important; line-height: 1.12 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 html.aos-mobile .aos-marketing-door em { overflow: hidden !important; font-size: 8.5px !important; line-height: 1.15 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 
-/* Campanhas · resumo primeiro, calendário depois */
-html.aos-mobile .pmh-calendar-operations { margin-top: 8px !important; }
-html.aos-mobile .pmh-campaign-storage { min-height: 30px !important; padding: 0 9px !important; font-size: 9px !important; }
-html.aos-mobile .pmh-campaign-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px !important; }
-html.aos-mobile .pmh-campaign-metric { grid-column: auto !important; min-height: 62px !important; padding: 8px !important; border-radius: 12px !important; }
-html.aos-mobile .pmh-campaign-metric::before { width: 3px !important; }
-html.aos-mobile .pmh-campaign-metric::after { display: none !important; }
-html.aos-mobile .pmh-campaign-metric small { font-size: 7px !important; letter-spacing: .04em !important; }
-html.aos-mobile .pmh-campaign-metric strong { margin-top: 4px !important; font-size: 19px !important; }
-html.aos-mobile .pmh-campaign-metric span { display: none !important; }
-html.aos-mobile .pmh-campaign-focus { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; margin-top: 7px !important; }
-html.aos-mobile .pmh-campaign-focus-card { min-height: 96px !important; padding: 10px !important; border-radius: 14px !important; }
-html.aos-mobile .pmh-campaign-focus-card::after { display: none !important; }
-html.aos-mobile .pmh-campaign-focus-card > small { font-size: 7px !important; }
-html.aos-mobile .pmh-campaign-focus-head { gap: 5px !important; margin-top: 5px !important; }
-html.aos-mobile .pmh-campaign-focus-card h3 { font-size: 14px !important; line-height: 1.08 !important; }
-html.aos-mobile .pmh-campaign-focus-card p { display: none !important; }
-html.aos-mobile .pmh-campaign-focus-card footer { margin-top: 8px !important; font-size: 8px !important; }
-html.aos-mobile .pmh-campaign-focus-card em { margin-top: 5px !important; font-size: 8px !important; }
-html.aos-mobile .pmh-campaign-status { min-height: 23px !important; padding: 0 7px !important; font-size: 8px !important; }
-html.aos-mobile .pmh-campaign-timeline,
-html.aos-mobile .pmh-campaign-annual { margin-top: 7px !important; border-radius: 14px !important; }
-html.aos-mobile .pmh-campaign-timeline { padding: 9px !important; }
-html.aos-mobile .pmh-campaign-timeline h3 { margin-top: 2px !important; font-size: 16px !important; }
-html.aos-mobile .pmh-campaign-timeline > header > span { font-size: 9px !important; }
-html.aos-mobile .pmh-campaign-timeline > div { gap: 5px !important; margin-top: 7px !important; }
-html.aos-mobile .pmh-campaign-timeline-card { grid-template-columns: 74px minmax(0, 1fr) !important; gap: 8px !important; min-height: 72px !important; padding: 7px !important; border-left-width: 3px !important; }
-html.aos-mobile .pmh-campaign-date-block { padding: 7px !important; }
-html.aos-mobile .pmh-campaign-date-block strong { font-size: 12px !important; }
-html.aos-mobile .pmh-campaign-date-block span { margin-top: 2px !important; font-size: 8px !important; }
-html.aos-mobile .pmh-campaign-timeline-main small { font-size: 7px !important; }
-html.aos-mobile .pmh-campaign-timeline-main h4 { margin: 2px 0 !important; font-size: 12px !important; }
-html.aos-mobile .pmh-campaign-timeline-main p { overflow: hidden !important; font-size: 9px !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
-html.aos-mobile .pmh-campaign-timeline-meta { display: none !important; }
-html.aos-mobile .pmh-campaign-next-step { display: none !important; }
-html.aos-mobile .pmh-campaign-annual > summary { padding: 10px 11px !important; }
-html.aos-mobile .pmh-campaign-annual summary strong { margin-top: 2px !important; font-size: 14px !important; }
-html.aos-mobile .pmh-campaign-annual summary > span { font-size: 9px !important; }
-html.aos-mobile .pmh-campaign-months { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; padding: 0 8px 8px !important; }
-html.aos-mobile .pmh-campaign-months > section { padding: 8px !important; border-radius: 11px !important; }
-html.aos-mobile .pmh-campaign-months h3 { font-size: 12px !important; }
-html.aos-mobile .pmh-campaign-annual-card { padding: 7px !important; }
-html.aos-mobile .pmh-campaign-annual-card p { display: none !important; }
-
-/* Inaugurações · projetos como painel */
-html.aos-mobile .pmh-inauguration-workspace { gap: 7px !important; margin-top: 7px !important; padding-top: 7px !important; }
-html.aos-mobile .pmh-inauguration-workspace-bar { gap: 7px !important; }
-html.aos-mobile .pmh-inauguration-workspace-title > i { width: 30px !important; height: 30px !important; }
-html.aos-mobile .pmh-inauguration-workspace-title strong { font-size: 12px !important; }
-html.aos-mobile .pmh-inauguration-workspace-title small { font-size: 9px !important; }
-html.aos-mobile .pmh-inauguration-finance-access.aos-thinking-floating-trigger { width: 36px !important; height: 36px !important; min-width: 36px !important; min-height: 36px !important; }
-html.aos-mobile .pmh-inauguration-project-tabs { gap: 4px !important; margin-top: 7px !important; padding: 4px !important; }
-html.aos-mobile .pmh-inauguration-project-tabs button { flex: 1 1 0 !important; min-height: 31px !important; padding: 0 7px !important; font-size: 9px !important; }
-html.aos-mobile .pmh-inauguration-project-summary { gap: 6px !important; margin-top: 6px !important; }
-html.aos-mobile .pmh-inauguration-summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px !important; }
-html.aos-mobile .pmh-inauguration-summary-grid article,
-html.aos-mobile .pmh-inauguration-summary-owner { min-height: 55px !important; padding: 7px !important; border-radius: 10px !important; }
-html.aos-mobile .pmh-inauguration-summary-grid small,
-html.aos-mobile .pmh-inauguration-summary-owner small { font-size: 7px !important; }
-html.aos-mobile .pmh-inauguration-summary-grid strong { margin-top: 3px !important; font-size: 14px !important; }
-html.aos-mobile .pmh-inauguration-summary-grid span,
-html.aos-mobile .pmh-inauguration-summary-owner strong { margin-top: 2px !important; font-size: 8px !important; }
-html.aos-mobile .pmh-inauguration-project-grid { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 6px !important; }
-html.aos-mobile .pmh-inauguration-project-row { min-height: 72px !important; padding: 9px !important; border-radius: 12px !important; }
-html.aos-mobile .pmh-inauguration-finance-summary,
-html.aos-mobile .pmh-inauguration-payment-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
-html.aos-mobile .pmh-inauguration-finance-summary > label,
-html.aos-mobile .pmh-inauguration-finance-summary > article,
-html.aos-mobile .pmh-inauguration-payment-kpis > article { min-height: 72px !important; padding: 9px !important; }
-
 /* Chamados · contexto continua visível, sem cartões gigantes */
 html.aos-mobile .pmh-ticket-compact-active .pmh-section-head { gap: 7px !important; margin-bottom: 7px !important; }
 html.aos-mobile .pmh-ticket-compact-active .pmh-section-head p { display: none !important; }
@@ -351,15 +281,12 @@ html.aos-mobile svg { max-width: 100%; }
   html.aos-mobile .aos-planet-drawers,
   html.aos-mobile .aos-marketing-doors,
   html.aos-mobile .aos-lab-project-grid,
-  html.aos-mobile .pmh-assets-grid,
-  html.aos-mobile .pmh-campaign-focus { grid-template-columns: minmax(0, 1fr) !important; }
+  html.aos-mobile .pmh-assets-grid { grid-template-columns: minmax(0, 1fr) !important; }
   html.aos-mobile .aos-planet-drawer-card:last-child:nth-child(odd),
   html.aos-mobile .aos-marketing-door:last-child:nth-child(odd) { grid-column: auto !important; }
   html.aos-mobile .aos-marketing-kpis,
-  html.aos-mobile .pmh-campaign-metrics,
   html.aos-mobile .p5-kpis,
   html.aos-mobile .pmh-assets-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  html.aos-mobile .pmh-inauguration-summary-grid,
   html.aos-mobile .pa-summary { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   html.aos-mobile .p5-classification-strip,
   html.aos-mobile .p5-action-stats,
