@@ -46,12 +46,13 @@ Responsabilidade: montagem da navegação mobile, menu por ambientes/gavetas, ac
 ### Mobile layout base
 - `andre-os-mobile-v1.css`
 
-Responsabilidade alvo: shell visual mobile compartilhado e componentes genéricos. Não deve carregar uma interface clara para depois ser repintada por múltiplos overrides.
+Responsabilidade atual: shell visual mobile compartilhado, topbar, dock, componentes genéricos, bottom sheets e refinamentos estabilizados do antigo `andre-os-mobile-polish-v1.css`.
 
-### Mobile refinamentos transitórios
-- `andre-os-mobile-polish-v1.css`
+Consolidação concluída em 08/08/2026:
+- absorveu `andre-os-mobile-polish-v1.css`;
+- o arquivo `polish` foi removido do carregamento e do repositório.
 
-Status: candidato à absorção em `andre-os-mobile-v1.css` e módulos donos. Não adicionar novas responsabilidades aqui.
+Próxima etapa: devolver gradualmente regras específicas de Demandas, Radar e outros módulos aos seus donos, reduzindo o tamanho do mobile base sem recriar camadas paralelas.
 
 ### Tema escuro mobile
 - `andre-os-dark-theme-v1.css`
@@ -112,7 +113,7 @@ Consolidação concluída em 08/08/2026: `ticket-details-v1.js` não injeta mais
 ## Dívidas técnicas confirmadas
 
 1. Mobile base claro + tema dark posterior ainda gera overrides desnecessários.
-2. `andre-os-mobile-polish-v1.css` sobrepõe o mobile base e precisa ser absorvido.
+2. `andre-os-mobile-v1.css` ainda contém regras específicas de alguns módulos absorvidas durante a estabilização e deve ser enxugado gradualmente.
 3. `andre-os-mobile-gavetas-v1.css` acumula regras de muitos módulos.
 4. `index.html` ainda carrega muitos assets e a ordem precisa ficar mais auditável.
 5. Testes validam melhor a propriedade das camadas, mas ainda não detectam todos os conflitos de cascata.
@@ -122,6 +123,7 @@ Consolidação concluída em 08/08/2026: `ticket-details-v1.js` não injeta mais
 1. Remoção de `andre-os-dark-demand-card-fix-v1.css` do carregamento e absorção no tema.
 2. Separação de CSS e comportamento do `ticket-details-v1`.
 3. Fusão de `andre-os-dark-theme-v1.css`, `andre-os-dark-surfaces-v2.css` e `andre-os-dark-palette-polish-v1.css` em um único tema.
+4. Absorção de `andre-os-mobile-polish-v1.css` em `andre-os-mobile-v1.css` e remoção da camada `polish`.
 
 ## Plano de consolidação
 
@@ -133,7 +135,7 @@ Consolidação concluída em 08/08/2026: `ticket-details-v1.js` não injeta mais
 
 ### Fase 2 · mobile base
 - tornar o mobile base coerente com a paleta atual;
-- absorver `mobile-polish` onde fizer sentido;
+- devolver regras específicas aos módulos donos;
 - reduzir `!important` que só existe para vencer camadas antigas.
 
 ### Fase 3 · módulos
