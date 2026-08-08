@@ -19,7 +19,7 @@ Este documento define quem é dono de cada camada visual e comportamental do And
 3. Módulos funcionais
 4. Shell / navegação desktop
 5. Shell / navegação mobile
-6. Tema / paleta mobile
+6. Tema mobile
 7. Regras de páginas mobile
 8. Ajustes específicos de módulo estritamente necessários
 
@@ -56,17 +56,14 @@ Status: candidato à absorção em `andre-os-mobile-v1.css` e módulos donos. N�
 ### Tema escuro mobile
 - `andre-os-dark-theme-v1.css`
 
-Responsabilidade alvo: tokens e tema escuro compartilhado.
+Responsabilidade atual: dono único de tokens finais, paleta escura e superfícies compartilhadas do mobile.
 
-### Cobertura de superfícies escuras
-- `andre-os-dark-surfaces-v2.css`
+Consolidação concluída em 08/08/2026:
+- absorveu `andre-os-dark-surfaces-v2.css`;
+- absorveu `andre-os-dark-palette-polish-v1.css`;
+- absorveu o antigo `andre-os-dark-demand-card-fix-v1.css`.
 
-Status: candidato à absorção pelos módulos donos e pelo tema base. Não deve continuar crescendo.
-
-### Paleta escura
-- `andre-os-dark-palette-polish-v1.css`
-
-Responsabilidade atual: tokens finais de cor e superfícies prioritárias. Deve ser consolidado com `andre-os-dark-theme-v1.css` quando a migração estiver segura.
+Não criar novas camadas paralelas de tema escuro. Ajustes compartilhados devem entrar aqui; ajustes específicos devem ir para o módulo dono.
 
 ### Páginas mobile
 - `andre-os-mobile-gavetas-v1.css`
@@ -77,13 +74,13 @@ Status: grande demais. Deve ser dividido gradualmente entre sistema mobile compa
 
 ### Chamados
 - `ticket-command-v1.css/js`: central operacional e lista de chamados.
-- `ticket-details-v1.js`: carregamento e comportamento do drawer de detalhe.
+- `ticket-details-v1.css/js`: aparência e comportamento do drawer de detalhe, separados por responsabilidade.
 - `ticket-context-compact-v1.css/js`: contexto operacional complementar.
 - `ticket-readings-v1.css/js`: leitura da última interação.
 
 Regra: SULTS continua sendo fonte de verdade. Contexto e leitura complementam, não alteram o status oficial.
 
-`ticket-details-v1.js` ainda injeta CSS em runtime. Isso é dívida técnica mapeada e deve ser migrada para CSS estático do módulo.
+Consolidação concluída em 08/08/2026: `ticket-details-v1.js` não injeta mais CSS em runtime.
 
 ### Campanhas
 - `calendar-operations-v1.css/js`
@@ -114,13 +111,17 @@ Regra: SULTS continua sendo fonte de verdade. Contexto e leitura complementam, n
 
 ## Dívidas técnicas confirmadas
 
-1. Mobile base claro + repintura dark posterior.
-2. `andre-os-mobile-polish-v1.css` sobrepondo o mobile base.
-3. `andre-os-dark-theme-v1.css`, `andre-os-dark-surfaces-v2.css` e `andre-os-dark-palette-polish-v1.css` com sobreposição de responsabilidades.
-4. `andre-os-mobile-gavetas-v1.css` acumulando regras de muitos módulos.
-5. `ticket-details-v1.js` injetando grande bloco de CSS em runtime.
-6. `index.html` com muitos assets e ordem difícil de auditar.
-7. Testes atuais validam presença de seletores, mas ainda não detectam conflito de cascata.
+1. Mobile base claro + tema dark posterior ainda gera overrides desnecessários.
+2. `andre-os-mobile-polish-v1.css` sobrepõe o mobile base e precisa ser absorvido.
+3. `andre-os-mobile-gavetas-v1.css` acumula regras de muitos módulos.
+4. `index.html` ainda carrega muitos assets e a ordem precisa ficar mais auditável.
+5. Testes validam melhor a propriedade das camadas, mas ainda não detectam todos os conflitos de cascata.
+
+## Consolidações já concluídas
+
+1. Remoção de `andre-os-dark-demand-card-fix-v1.css` do carregamento e absorção no tema.
+2. Separação de CSS e comportamento do `ticket-details-v1`.
+3. Fusão de `andre-os-dark-theme-v1.css`, `andre-os-dark-surfaces-v2.css` e `andre-os-dark-palette-polish-v1.css` em um único tema.
 
 ## Plano de consolidação
 
@@ -130,15 +131,15 @@ Regra: SULTS continua sendo fonte de verdade. Contexto e leitura complementam, n
 - documentar propriedade;
 - adicionar contratos contra regressão arquitetural.
 
-### Fase 2 · tema mobile
+### Fase 2 · mobile base
 - tornar o mobile base coerente com a paleta atual;
 - absorver `mobile-polish` onde fizer sentido;
-- consolidar `dark-theme`, `dark-surfaces` e `dark-palette`.
+- reduzir `!important` que só existe para vencer camadas antigas.
 
 ### Fase 3 · módulos
 - mover regras específicas de páginas para seus donos;
-- começar por Chamados, Home/Planet e Marketing;
-- remover CSS injetado em runtime do drawer de Chamados.
+- começar por Home/Planet, Marketing, Campanhas e Inaugurações;
+- continuar removendo CSS runtime quando encontrado.
 
 ### Fase 4 · index e testes
 - reorganizar `index.html` por camadas claras;
