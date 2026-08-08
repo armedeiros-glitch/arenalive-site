@@ -65,6 +65,35 @@
     return attempt(latest, true);
   };
 
+  const deletePayment = async (paymentId) => {
+    const attempt = async (document, allowRetry) => {
+      const suppliers = [...(document.suppliers || [])];
+      const payments = (document.payments || []).filter((item) => String(item.id) !== String(paymentId));
+
+      try {
+        return await apiJson(API.finance, {
+          method: 'PUT',
+          body: JSON.stringify({
+            suppliers,
+            payments,
+            baseRevision: document.revision || null,
+          }),
+        });
+      } catch (error) {
+        if (error.status === 409 && allowRetry) {
+          const fresh = await apiJson(API.finance);
+          return attempt(fresh, false);
+        }
+        throw error;
+      }
+    };
+
+    const latest = await apiJson(API.finance);
+    const exists = (latest.payments || []).some((item) => String(item.id) === String(paymentId));
+    if (!exists) return latest;
+    return attempt(latest, true);
+  };
+
   const openCombinedModal = ({ finance, inauguration, action, originButton }) => {
     closeModal();
     const existingPayment = (finance.payments || []).find((item) =>
@@ -99,7 +128,11 @@
         <label class="wide">Responsável pela solicitação<input name="approvedBy" value="${esc(existingPayment?.approvedBy || 'André Medeiros')}"></label>
         <label class="wide">Observações<textarea name="notes">${esc(existingPayment?.notes || action.notes || '')}</textarea></label>
         <p class="pmh-finance-note wide">Ao clicar em <strong>Salvar e imprimir</strong>, o fornecedor e o pagamento serão gravados e a solicitação A4 abrirá pronta para assinatura.</p>
-        <footer><button type="button" data-quick-close>Cancelar</button><button class="primary" type="submit">Salvar e imprimir</button></footer>
+        <footer>
+          ${existingPayment ? `<button type="button" class="pmh-payment-delete-button" data-delete-payment="${esc(existingPayment.id)}">Excluir pagamento</button>` : ''}
+          <button type="button" data-quick-close>Cancelar</button>
+          <button class="primary" type="submit">Salvar e imprimir</button>
+        </footer>
       </form>
     </section>`;
     document.body.appendChild(modal);
@@ -119,8 +152,38 @@
       const selected = (finance.suppliers || []).find((item) => item.id === choice.value);
       fillSupplier(selected || null);
     });
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal || event.target.closest('[data-quick-close]')) closeModal();
+
+    modal.addEventListener('click', async (event) => {
+      if (event.target === modal || event.target.closest('[data-quick-close]')) {
+        closeModal();
+        return;
+      }
+
+      const deleteButton = event.target.closest('[data-delete-payment]');
+      if (!deleteButton) return;
+
+      const confirmed = window.confirm(
+        'Excluir este pagamento?\n\nO lançamento será removido, mas o fornecedor continuará cadastrado.',
+      );
+      if (!confirmed) return;
+
+      const originalText = deleteButton.textContent;
+      deleteButton.disabled = true;
+      deleteButton.textContent = 'Excluindo…';
+
+      try {
+        await deletePayment(deleteButton.dataset.deletePayment);
+        if (originButton) {
+          originButton.textContent = 'Preencher e imprimir';
+          originButton.title = 'Preencher fornecedor e pagamento, salvar tudo e imprimir a solicitação';
+        }
+        closeModal();
+        window.alert('Pagamento excluído. O fornecedor continua cadastrado.');
+      } catch (error) {
+        deleteButton.disabled = false;
+        deleteButton.textContent = originalText;
+        window.alert(error instanceof Error ? error.message : 'Não foi possível excluir o pagamento.');
+      }
     });
 
     form.addEventListener('submit', async (event) => {
