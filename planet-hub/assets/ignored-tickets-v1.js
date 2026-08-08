@@ -16,6 +16,70 @@
     }, 2600);
   };
 
+  const decreaseNumber = (selector) => {
+    const element = document.querySelector(selector);
+    if (!element) return;
+    const current = Number.parseInt(element.textContent || '0', 10);
+    if (Number.isFinite(current)) element.textContent = String(Math.max(0, current - 1));
+  };
+
+  const refreshVisibleLabels = () => {
+    const visible = document.querySelectorAll('.pmh-command-ticket').length;
+    const filterLabel = document.querySelector('.pmh-command-filter-title span');
+    if (filterLabel) filterLabel.textContent = `${visible} exibidos`;
+
+    const description = document.querySelector('.pmh-section-head p');
+    const match = description?.textContent?.match(/^(\d+) de (\d+) chamados visíveis\.(.*)$/);
+    if (description && match) {
+      const total = Math.max(visible, Number.parseInt(match[2], 10) - 1);
+      description.textContent = `${visible} de ${total} chamados visíveis.${match[3]}`;
+    }
+  };
+
+  const updateGroup = (card) => {
+    const group = card?.closest('.pmh-command-group');
+    if (!group) return;
+
+    const counter = group.querySelector(':scope > header b');
+    if (counter) {
+      const current = Number.parseInt(counter.textContent || '0', 10);
+      counter.textContent = String(Math.max(0, current - 1));
+    }
+
+    const list = group.querySelector('.pmh-command-list');
+    window.setTimeout(() => {
+      if (list && !list.querySelector('.pmh-command-ticket') && !list.querySelector('.pmh-command-empty')) {
+        list.innerHTML = '<div class="pmh-command-empty">Nenhum chamado neste grupo.</div>';
+      }
+    }, 0);
+  };
+
+  const updateMetrics = (card) => {
+    const deadline = card?.querySelector('.pmh-command-ticket-badges .deadline');
+    if (deadline?.classList.contains('late')) decreaseNumber('[data-command-urgency="late"] strong');
+    if (deadline?.classList.contains('today')) decreaseNumber('[data-command-urgency="today"] strong');
+    if (deadline?.classList.contains('week')) decreaseNumber('[data-command-urgency="week"] strong');
+    if (deadline?.classList.contains('no-date')) decreaseNumber('[data-command-urgency="no-date"] strong');
+
+    const status = card?.querySelector('.pmh-command-ticket-badges .status');
+    if (status?.classList.contains('status-5') || status?.classList.contains('status-6')) {
+      decreaseNumber('[data-command-urgency="waiting"] strong');
+    }
+
+    decreaseNumber('[data-badge="tickets"]');
+  };
+
+  const removeFromInterface = (id) => {
+    const card = document.querySelector(`.pmh-ticket[data-ticket-id="${CSS.escape(id)}"]`);
+    updateGroup(card);
+    updateMetrics(card);
+    card?.remove();
+
+    document.querySelector('.pmh-ticket-drawer')?.remove();
+    document.documentElement.classList.remove('pmh-ticket-drawer-open');
+    refreshVisibleLabels();
+  };
+
   const ticketDataFromDrawer = (panel) => {
     const headerText = panel.querySelector('.pmh-ticket-drawer-header small')?.textContent || '';
     const id = headerText.replace(/\D/g, '');
@@ -102,10 +166,8 @@
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
 
-      document.querySelector(`.pmh-ticket[data-ticket-id="${CSS.escape(id)}"]`)?.remove();
-      document.querySelector('[data-ticket-close]')?.click();
+      removeFromInterface(id);
       toast(`Chamado #${id} excluído do Hub.`, 'success');
-      window.setTimeout(() => window.location.reload(), 650);
     } catch (error) {
       button.disabled = false;
       button.textContent = originalText;
