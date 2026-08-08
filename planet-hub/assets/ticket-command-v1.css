@@ -311,13 +311,13 @@
     border-left-width: 3px;
     border-radius: 11px;
     color: #e8e5ee;
-    background: #24202d;
+    background: #24202d !important;
     box-shadow: none;
   }
-  .pmh-command-ticket > small { margin-bottom: 4px; color: #9f8cff; font-size: 8px; }
+  .pmh-command-ticket > small { margin-bottom: 4px; color: #9f8cff !important; font-size: 8px; }
   .pmh-command-ticket-head { display: grid; gap: 6px; }
-  .pmh-command-ticket h4 { margin-bottom: 3px; color: #f7f5fb; font-size: 12px; line-height: 1.2; }
-  .pmh-command-ticket p { color: #aaa5b4; font-size: 9px; }
+  .pmh-command-ticket h4 { margin-bottom: 3px; color: #f7f5fb !important; font-size: 12px; line-height: 1.2; }
+  .pmh-command-ticket p { color: #aaa5b4 !important; font-size: 9px; }
   .pmh-command-ticket-badges { justify-content: flex-start; gap: 4px; }
   .pmh-command-ticket-badges span,
   .pmh-command-ticket-badges .pmh-ticket-context-button {
@@ -365,6 +365,104 @@
   .pmh-command-empty,
   .pmh-command-loading,
   .pmh-command-error { padding: 14px; border-radius: 11px; font-size: 11px; }
+
+  /* Ticket detail drawer inherits the mobile OS palette, overriding legacy runtime styling. */
+  .pmh-ticket-drawer { background: rgba(8,7,12,.78) !important; backdrop-filter: blur(10px) !important; }
+  .pmh-ticket-drawer-panel {
+    width: 100% !important;
+    padding: 16px !important;
+    color: #f7f5fb !important;
+    background: #0e0c12 !important;
+    box-shadow: none !important;
+  }
+  .pmh-ticket-drawer-header {
+    gap: 12px !important;
+    padding-bottom: 13px !important;
+    border-bottom-color: rgba(255,255,255,.08) !important;
+  }
+  .pmh-ticket-drawer-header small { color: #9f8cff !important; font-size: 9px !important; }
+  .pmh-ticket-drawer-header h2 { margin-top: 5px !important; color: #f7f5fb !important; font-size: 22px !important; line-height: 1.06 !important; }
+  .pmh-ticket-drawer [data-ticket-close] {
+    flex-basis: 38px !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-color: rgba(255,255,255,.1) !important;
+    border-radius: 11px !important;
+    color: #c9c4d2 !important;
+    background: #211d2a !important;
+    font-size: 22px !important;
+  }
+  .pmh-ticket-drawer-actions { gap: 6px !important; margin: 11px 0 !important; }
+  .pmh-ticket-drawer-actions a,
+  .pmh-ticket-drawer-actions button,
+  .pmh-ticket-status {
+    min-height: 33px !important;
+    padding: 0 10px !important;
+    border-color: rgba(255,255,255,.09) !important;
+    border-radius: 999px !important;
+    color: #d9d5e2 !important;
+    background: #211d2a !important;
+    font-size: 10px !important;
+  }
+  .pmh-ticket-drawer-actions a { color: #fff !important; border-color: #735cff !important; background: #735cff !important; }
+  .pmh-ticket-status.status-4 { color: #9ecbff !important; background: rgba(63,143,226,.15) !important; }
+  .pmh-ticket-status.status-5,
+  .pmh-ticket-status.status-6 { color: #f0c878 !important; background: rgba(230,168,57,.15) !important; }
+  .pmh-ticket-status.status-2,
+  .pmh-ticket-status.status-3 { color: #aebeff !important; background: rgba(77,103,210,.15) !important; }
+  .pmh-ticket-warning,
+  .pmh-ticket-error {
+    margin: 9px 0 !important;
+    padding: 10px !important;
+    border-color: rgba(230,168,57,.2) !important;
+    border-radius: 10px !important;
+    color: #e5c47f !important;
+    background: rgba(230,168,57,.08) !important;
+    font-size: 10px !important;
+  }
+  .pmh-ticket-summary {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    gap: 6px !important;
+  }
+  .pmh-ticket-summary article {
+    min-height: 62px !important;
+    padding: 9px 10px !important;
+    border-color: rgba(255,255,255,.08) !important;
+    border-radius: 10px !important;
+    background: #1d1a25 !important;
+  }
+  .pmh-ticket-summary small { margin-bottom: 4px !important; color: #8d8796 !important; font-size: 7.5px !important; }
+  .pmh-ticket-summary strong { color: #e9e6ef !important; font-size: 11px !important; line-height: 1.25 !important; }
+  .pmh-ticket-meta-row { gap: 5px !important; margin: 8px 0 !important; }
+  .pmh-ticket-meta-row span {
+    padding: 5px 7px !important;
+    color: #bcb6c7 !important;
+    background: #211d2a !important;
+    font-size: 8px !important;
+  }
+  .pmh-ticket-labels { gap: 5px !important; margin: 7px 0 10px !important; }
+  .pmh-ticket-labels span { padding: 5px 7px !important; color: #d9d5e2 !important; background: #211d2a !important; font-size: 8px !important; }
+  .pmh-ticket-timeline { margin-top: 12px !important; }
+  .pmh-ticket-timeline > header { gap: 8px !important; margin-bottom: 7px !important; }
+  .pmh-ticket-timeline > header small { color: #9f8cff !important; font-size: 8px !important; }
+  .pmh-ticket-timeline > header h3 { margin-top: 2px !important; color: #f7f5fb !important; font-size: 16px !important; }
+  .pmh-ticket-timeline > header > span { color: #8d8796 !important; font-size: 9px !important; }
+  .pmh-ticket-event {
+    margin-bottom: 6px !important;
+    padding: 9px 10px !important;
+    border-color: rgba(255,255,255,.08) !important;
+    border-radius: 10px !important;
+    color: #ddd9e3 !important;
+    background: #1d1a25 !important;
+  }
+  .pmh-ticket-event.internal { border-color: rgba(126,101,255,.18) !important; background: #211b31 !important; }
+  .pmh-ticket-event header strong { color: #f0edf4 !important; font-size: 10px !important; }
+  .pmh-ticket-event time { color: #8d8796 !important; font-size: 8px !important; }
+  .pmh-ticket-event p { margin-top: 6px !important; color: #bcb6c7 !important; font-size: 10px !important; line-height: 1.4 !important; }
+  .pmh-ticket-event > small { margin-top: 6px !important; color: #b8a9ff !important; font-size: 8px !important; }
+  .pmh-ticket-attachments a,
+  .pmh-ticket-attachments span { color: #cfc9d8 !important; background: #292431 !important; font-size: 8px !important; }
+  .pmh-ticket-empty { padding: 14px !important; border-color: rgba(255,255,255,.09) !important; color: #9d97a6 !important; background: #1d1a25 !important; font-size: 10px !important; }
 }
 
 @media (max-width: 560px) {
