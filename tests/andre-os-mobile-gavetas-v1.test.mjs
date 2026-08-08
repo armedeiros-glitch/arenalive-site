@@ -13,12 +13,18 @@ const [index, pageStyles, navigationStyles, shell] = await Promise.all([
 const mobilePages = 'andre-os-mobile-gavetas-v1.css?v=20260807-7';
 const mobileNavigation = 'andre-os-mobile-navigation-v2.css?v=20260807-2';
 const mobileShell = 'andre-os-mobile-shell-v2.js?v=20260807-11';
-const darkDemandFix = 'andre-os-dark-demand-card-fix-v1.css?v=20260806-2';
+const darkTheme = 'andre-os-dark-theme-v1.css?v=20260806-3';
+const darkSurfaces = 'andre-os-dark-surfaces-v2.css?v=20260806-2';
+const darkPalette = 'andre-os-dark-palette-polish-v1.css?v=20260808-1';
 
 assert.ok(index.includes(`media="(max-width: 820px)" href="/planet-hub/assets/${mobilePages}"`));
 assert.ok(index.includes(`/planet-hub/assets/${mobileNavigation}`));
 assert.ok(index.includes(`/planet-hub/assets/${mobileShell}`));
-assert.ok(index.indexOf(mobilePages) > index.indexOf(darkDemandFix), 'A camada de páginas mobile precisa continuar depois do tema escuro.');
+assert.ok(index.includes(darkTheme));
+assert.ok(index.includes(darkSurfaces));
+assert.ok(index.includes(darkPalette));
+assert.ok(index.indexOf(mobilePages) > index.indexOf(darkPalette), 'A camada de páginas mobile precisa continuar depois da paleta escura.');
+assert.doesNotMatch(index, /andre-os-dark-demand-card-fix-v1\.css/, 'Correções temporárias devem ser absorvidas pelo dono da paleta, não permanecer no carregamento.');
 
 assert.match(shell, /PLANET_ROUTES/);
 assert.match(shell, /label: 'Visão Geral'/);
@@ -67,4 +73,4 @@ assert.doesNotMatch(pageStyles, /html:not\(\.aos-mobile\)/);
 assert.doesNotMatch(pageStyles, /@media\s*\(min-width/);
 assert.doesNotMatch(pageStyles, /MutationObserver/);
 
-console.log('Contrato mobile por ambientes, gavetas e densidade operacional validado.');
+console.log('Contrato mobile por ambientes, gavetas, densidade e propriedade de camadas validado.');
