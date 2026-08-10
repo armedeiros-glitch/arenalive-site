@@ -21,6 +21,13 @@
     inaugurations: '/api/hub/inauguracoes',
   };
 
+  const P5_AREA_LABELS = {
+    marketing: 'Marketing',
+    campanhas: 'Campanhas',
+    chamados: 'Chamados',
+    unidade: 'Unidade / Franqueado',
+  };
+
   let frame = 0;
   let requestId = 0;
 
@@ -276,7 +283,10 @@
   const expansionStep = async () => {
     const payload = await fetchJson(API.expansion);
     const leads = Array.isArray(payload?.data) ? payload.data : [];
-    const news = leads.filter((lead) => !lead.viewedAt || lead.status === 'new');
+    const news = leads
+      .filter((lead) => !lead.viewedAt || lead.status === 'new')
+      .sort((a, b) => Date.parse(a.createdAt || 0) - Date.parse(b.createdAt || 0));
+
     if (!news.length) return {
       eyebrow: 'PRÓXIMO PASSO',
       title: 'Nenhum lead novo aguardando revisão',
@@ -284,10 +294,16 @@
       badge: 'Fila revisada',
       tone: 'empty',
     };
+
+    const lead = news[0];
+    const location = [lead.city, lead.state].filter(Boolean).join(' · ');
+    const origin = lead.rdStage || lead.origin || lead.source || '';
+    const age = lead.createdAt ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(lead.createdAt)) : '';
+
     return {
-      eyebrow: 'PRÓXIMO PASSO',
-      title: `Revisar ${news.length} lead${news.length === 1 ? '' : 's'} novo${news.length === 1 ? '' : 's'}`,
-      meta: 'Abrir a fila e qualificar os candidatos ainda não visualizados.',
+      eyebrow: 'PRÓXIMO PASSO · EXPANSÃO',
+      title: `Revisar ${lead.name || 'lead sem nome'}`,
+      meta: [location, origin, age && `Recebido em ${age}`, news.length > 1 && `+ ${news.length - 1} novo${news.length - 1 === 1 ? '' : 's'} na fila`].filter(Boolean).join(' · '),
       badge: `${news.length} novo${news.length === 1 ? '' : 's'}`,
       tone: '',
     };
@@ -303,18 +319,25 @@
       badge: 'Sem ação agora',
       tone: 'empty',
     };
+
     plans.sort((a, b) => {
-      const lateA = a.deadline && a.deadline < today() ? 0 : 1;
-      const lateB = b.deadline && b.deadline < today() ? 0 : 1;
-      if (lateA !== lateB) return lateA - lateB;
-      return String(a.deadline || '9999-12-31').localeCompare(String(b.deadline || '9999-12-31'));
+      const dueA = due(a.deadline);
+      const dueB = due(b.deadline);
+      if (dueA.weight !== dueB.weight) return dueA.weight - dueB.weight;
+      const progressA = a.status === 'em_andamento' ? 0 : 1;
+      const progressB = b.status === 'em_andamento' ? 0 : 1;
+      return progressA - progressB;
     });
+
     const plan = plans[0];
     const dueInfo = due(plan.deadline);
+    const owner = P5_AREA_LABELS[plan.ownerArea] || plan.ownerArea || '';
+    const status = plan.status === 'em_andamento' ? 'Em andamento' : 'Aberto';
+
     return {
-      eyebrow: 'PRÓXIMO PASSO',
+      eyebrow: dueInfo.bucket === 'late' ? 'PRÓXIMO PASSO · PLANO ATRASADO' : 'PRÓXIMO PASSO · 5 ESTRELAS',
       title: plan.title || 'Plano de ação sem título',
-      meta: [plan.unit, plan.ownerArea && `Responsável: ${plan.ownerArea}`, plan.notes].filter(Boolean).join(' · '),
+      meta: [plan.unit, status, owner && `Responsável: ${owner}`, plan.notes].filter(Boolean).join(' · '),
       badge: dueInfo.label,
       tone: dueInfo.bucket === 'late' ? 'late' : '',
     };
