@@ -9,7 +9,7 @@ const [index, script, styles] = await Promise.all([
 ]);
 
 assert.ok(index.includes('planet-next-step-v1.css?v=20260810-1'));
-assert.ok(index.includes('planet-next-step-v1.js?v=20260810-2'));
+assert.ok(index.includes('planet-next-step-v1.js?v=20260810-3'));
 assert.match(styles, /@media \(min-width: 821px\)/);
 assert.doesNotMatch(styles, /max-width:\s*820px/);
 
@@ -33,5 +33,12 @@ assert.match(script, /\/api\/hub\/planet\/leads/);
 assert.match(script, /\/api\/hub\/planet\/acquisition\/lp-franquias\?period=7d/);
 assert.match(script, /Sem ação operacional pendente/);
 assert.doesNotMatch(script, /conversion\s*[<>]=?\s*\d/, 'Aquisição não pode inventar ação a partir de um limiar de conversão.');
+
+assert.match(script, /Date\.parse\(a\.createdAt \|\| 0\) - Date\.parse\(b\.createdAt \|\| 0\)/);
+assert.match(script, /PRÓXIMO PASSO · EXPANSÃO/);
+assert.match(script, /Revisar \$\{lead\.name \|\| 'lead sem nome'\}/);
+assert.match(script, /P5_AREA_LABELS/);
+assert.match(script, /PRÓXIMO PASSO · PLANO ATRASADO/);
+assert.match(script, /dueA\.weight !== dueB\.weight/);
 
 console.log('Próximos passos operacionais desktop da Planet validados.');
