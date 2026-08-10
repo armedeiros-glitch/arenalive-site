@@ -11,6 +11,10 @@
     padding-bottom: 2px !important;
   }
 
+  .aos-planet-overview-page .aos-planet-overview-status {
+    display: none !important;
+  }
+
   .aos-planet-desktop-cockpit {
     display: grid;
     grid-template-columns: 1fr;
