@@ -1,0 +1,210 @@
+/* Planet overview desktop cockpit · somente desktop */
+@media (min-width: 821px) {
+  .aos-planet-desktop-cockpit {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(360px, .65fr);
+    gap: 14px;
+    margin-top: 14px;
+    min-width: 0;
+  }
+
+  .aos-op-summary,
+  .aos-op-milestones-panel {
+    min-width: 0;
+    padding: 15px;
+    border: 1px solid var(--os-border);
+    border-radius: var(--os-radius-xl);
+    background: var(--os-surface);
+    box-shadow: var(--os-shadow-sm);
+  }
+
+  .aos-op-summary > header,
+  .aos-op-milestones-panel > header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+
+  .aos-op-summary header small,
+  .aos-op-milestones-panel header small,
+  .aos-op-metric small,
+  .aos-op-milestone small {
+    color: var(--os-accent);
+    font-size: 8.5px;
+    font-weight: 900;
+    letter-spacing: .1em;
+  }
+
+  .aos-op-summary h3,
+  .aos-op-milestones-panel h3 {
+    margin: 3px 0 0;
+    color: var(--os-text-strong);
+    font-size: 16px;
+    letter-spacing: -.025em;
+  }
+
+  .aos-op-summary > header > span {
+    color: var(--os-text-faint);
+    font-size: 9px;
+    font-weight: 750;
+  }
+
+  .aos-op-milestones-panel > header button {
+    min-height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--os-border);
+    border-radius: 8px;
+    color: var(--os-text-muted);
+    background: var(--os-surface-subtle);
+    font-size: 9.5px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .aos-op-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .aos-op-metric {
+    display: grid;
+    align-content: center;
+    gap: 3px;
+    min-width: 0;
+    min-height: 82px;
+    padding: 10px 11px;
+    border: 1px solid var(--os-border);
+    border-radius: 12px;
+    color: var(--os-text);
+    background: var(--os-surface-subtle);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .16s ease, background .16s ease, transform .16s ease;
+  }
+
+  .aos-op-metric:hover {
+    border-color: color-mix(in srgb, var(--os-accent) 30%, var(--os-border));
+    background: var(--os-surface-raised);
+    transform: translateY(-1px);
+  }
+
+  .aos-op-metric strong {
+    overflow: hidden;
+    color: var(--os-text-strong);
+    font-size: 22px;
+    line-height: 1;
+    letter-spacing: -.04em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .aos-op-metric span {
+    overflow: hidden;
+    color: var(--os-text-muted);
+    font-size: 9.5px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .aos-op-metric.danger {
+    border-color: color-mix(in srgb, var(--os-danger) 26%, var(--os-border));
+    background: color-mix(in srgb, var(--os-danger) 7%, var(--os-surface-subtle));
+  }
+
+  .aos-op-metric.danger strong { color: var(--os-danger); }
+
+  .aos-op-metric.attention {
+    border-color: color-mix(in srgb, var(--os-accent) 28%, var(--os-border));
+    background: color-mix(in srgb, var(--os-accent) 7%, var(--os-surface-subtle));
+  }
+
+  .aos-op-milestones {
+    display: grid;
+    gap: 6px;
+  }
+
+  .aos-op-milestone {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 9px 10px;
+    border: 1px solid var(--os-border);
+    border-radius: 10px;
+    color: var(--os-text);
+    background: var(--os-surface-subtle);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .aos-op-milestone:hover {
+    border-color: color-mix(in srgb, var(--os-accent) 28%, var(--os-border));
+    background: var(--os-accent-soft);
+  }
+
+  .aos-op-milestone > div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .aos-op-milestone strong,
+  .aos-op-milestone span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .aos-op-milestone strong {
+    color: var(--os-text-strong);
+    font-size: 11.5px;
+  }
+
+  .aos-op-milestone span {
+    color: var(--os-text-muted);
+    font-size: 9px;
+  }
+
+  .aos-op-milestone time {
+    flex: 0 0 auto;
+    padding: 5px 7px;
+    border-radius: 999px;
+    color: var(--os-text-muted);
+    background: var(--os-surface);
+    font-size: 8.5px;
+    font-weight: 850;
+  }
+
+  .aos-op-milestone.late time {
+    color: var(--os-danger);
+    background: color-mix(in srgb, var(--os-danger) 9%, var(--os-surface));
+  }
+
+  .aos-op-milestone.today time {
+    color: #aa6c16;
+    background: rgba(240, 182, 92, .12);
+  }
+
+  .aos-op-empty {
+    padding: 14px;
+    border: 1px dashed var(--os-border);
+    border-radius: 10px;
+    color: var(--os-text-muted);
+    font-size: 10px;
+  }
+
+  @media (max-width: 1180px) {
+    .aos-planet-desktop-cockpit {
+      grid-template-columns: 1fr;
+    }
+
+    .aos-op-metrics {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+}
