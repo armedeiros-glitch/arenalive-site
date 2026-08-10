@@ -12,6 +12,8 @@
     ['5-estrelas', '5-estrelas'],
     ['cinco-estrelas', '5-estrelas'],
     ['5estrelas', '5-estrelas'],
+    ['conteudos', 'conteudos'],
+    ['central', 'conteudos'],
   ]);
 
   const API = {
@@ -19,6 +21,7 @@
     expansion: '/api/hub/planet/leads',
     fiveStars: '/api/hub/planet/five-stars/action-plans',
     inaugurations: '/api/hub/inauguracoes',
+    contents: '/api/hub/conteudos',
   };
 
   const P5_AREA_LABELS = {
@@ -50,7 +53,7 @@
   };
 
   const radarActions = {
-    marketing: new Set(['demand', 'conteudos']),
+    marketing: new Set(['demand']),
     calendario: new Set(['calendario']),
     inauguracoes: new Set(['inauguracoes']),
     chamados: new Set(['chamados']),
@@ -97,6 +100,30 @@
     return {
       eyebrow: 'PRIORIDADE AGORA',
       title: item.title || 'Item operacional',
+      meta: [item.status, item.context, item.responsible && `Responsável: ${item.responsible}`].filter(Boolean).join(' · '),
+      badge: dueInfo.label,
+      tone: dueInfo.bucket === 'late' ? 'late' : '',
+    };
+  };
+
+  const marketingStep = async () => {
+    const items = await collectRadarItems('marketing');
+    if (!items.length) return {
+      eyebrow: 'PRÓXIMO PASSO',
+      title: 'Nenhuma demanda ativa no Marketing',
+      meta: 'O fluxo criativo não possui demanda interna aberta agora.',
+      badge: 'Sem ação agora',
+      tone: 'empty',
+    };
+
+    const action = actionModelForItem(items);
+    if (action) return action;
+
+    const item = items[0];
+    const dueInfo = due(item.followUpDate || item.dueDate);
+    return {
+      eyebrow: 'PRÓXIMO PASSO · MARKETING',
+      title: `Definir o próximo passo de ${item.title || 'demanda sem título'}`,
       meta: [item.status, item.context, item.responsible && `Responsável: ${item.responsible}`].filter(Boolean).join(' · '),
       badge: dueInfo.label,
       tone: dueInfo.bucket === 'late' ? 'late' : '',
@@ -343,13 +370,53 @@
     };
   };
 
+  const contentStep = async () => {
+    const payload = await fetchJson(API.contents);
+    const items = Array.isArray(payload?.data) ? payload.data.filter((item) => item.status !== 'arquivado') : [];
+
+    if (!items.length) return {
+      eyebrow: 'PRÓXIMO PASSO · CENTRAL PLANET',
+      title: 'Cadastrar o primeiro material da Central Planet',
+      meta: 'Nenhum conteúdo ativo foi encontrado no acervo.',
+      badge: 'Acervo vazio',
+      tone: 'empty',
+    };
+
+    const rank = { aprovacao: 0, producao: 1, planejamento: 2, publicado: 3 };
+    items.sort((a, b) => {
+      const rankA = rank[a.status] ?? 9;
+      const rankB = rank[b.status] ?? 9;
+      if (rankA !== rankB) return rankA - rankB;
+      return Date.parse(a.updatedAt || 0) - Date.parse(b.updatedAt || 0);
+    });
+
+    const item = items[0];
+    const action = item.status === 'aprovacao'
+      ? `Revisar aprovação de ${item.title || 'material sem título'}`
+      : item.status === 'producao'
+        ? `Continuar produção de ${item.title || 'material sem título'}`
+        : item.status === 'planejamento'
+          ? `Avançar planejamento de ${item.title || 'material sem título'}`
+          : `Revisar ${item.title || 'material sem título'}`;
+
+    return {
+      eyebrow: 'PRÓXIMO PASSO · CENTRAL PLANET',
+      title: action,
+      meta: [item.category, item.campaign, item.unit, item.responsible && `Responsável: ${item.responsible}`].filter(Boolean).join(' · '),
+      badge: item.status === 'aprovacao' ? 'Em aprovação' : item.status === 'producao' ? 'Em produção' : item.status === 'planejamento' ? 'Planejamento' : 'Publicado',
+      tone: '',
+    };
+  };
+
   const stepFor = async (area) => {
+    if (area === 'marketing') return marketingStep();
     if (area === 'calendario') return campaignStep();
     if (area === 'inauguracoes') return inaugurationStep();
     if (radarActions[area]) return radarStep(area);
     if (area === 'aquisicao') return acquisitionStep();
     if (area === 'expansao') return expansionStep();
     if (area === '5-estrelas') return fiveStarsStep();
+    if (area === 'conteudos') return contentStep();
     return null;
   };
 
