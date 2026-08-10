@@ -9,13 +9,19 @@ const [index, script, styles] = await Promise.all([
 ]);
 
 assert.ok(index.includes('planet-next-step-v1.css?v=20260810-1'));
-assert.ok(index.includes('planet-next-step-v1.js?v=20260810-3'));
+assert.ok(index.includes('planet-next-step-v1.js?v=20260810-4'));
 assert.match(styles, /@media \(min-width: 821px\)/);
 assert.doesNotMatch(styles, /max-width:\s*820px/);
 
-for (const route of ['marketing', 'calendario', 'inauguracoes', 'chamados', 'aquisicao', 'expansao', '5-estrelas']) {
+for (const route of ['marketing', 'calendario', 'inauguracoes', 'chamados', 'aquisicao', 'expansao', '5-estrelas', 'conteudos']) {
   assert.match(script, new RegExp(`['\"]${route}['\"]`));
 }
+
+assert.match(script, /marketing: new Set\(\['demand'\]\)/);
+assert.match(script, /marketingStep/);
+assert.match(script, /Definir o próximo passo de \$\{item\.title \|\| 'demanda sem título'\}/);
+assert.doesNotMatch(script, /marketing: new Set\(\['demand', 'conteudos'\]\)/,
+  'Marketing não pode voltar a misturar demandas e Central Planet na mesma regra.');
 
 assert.match(script, /item\.nextAction/);
 assert.match(script, /contextSuggestion\?\.nextAction/);
@@ -40,5 +46,11 @@ assert.match(script, /Revisar \$\{lead\.name \|\| 'lead sem nome'\}/);
 assert.match(script, /P5_AREA_LABELS/);
 assert.match(script, /PRÓXIMO PASSO · PLANO ATRASADO/);
 assert.match(script, /dueA\.weight !== dueB\.weight/);
+
+assert.match(script, /contents: '\/api\/hub\/conteudos'/);
+assert.match(script, /contentStep/);
+assert.match(script, /Cadastrar o primeiro material da Central Planet/);
+assert.match(script, /PRÓXIMO PASSO · CENTRAL PLANET/);
+assert.match(script, /if \(area === 'conteudos'\) return contentStep\(\)/);
 
 console.log('Próximos passos operacionais desktop da Planet validados.');
