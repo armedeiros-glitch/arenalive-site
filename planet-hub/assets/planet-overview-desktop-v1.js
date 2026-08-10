@@ -9,6 +9,31 @@
     campaigns: '/api/hub/campanhas',
   };
   const CAMPAIGN_LOCAL_KEY = 'planet-hub-campaign-operations-v1';
+  const BASE_CAMPAIGNS_2026 = [
+    ['2026-02-14', 'Valentine’s Day', 'apoio'],
+    ['2026-02-24', 'Aniversário Planet', 'principal'],
+    ['2026-03-15', 'Dia do Consumidor', 'data'],
+    ['2026-03-20', 'Dia da Felicidade', 'data'],
+    ['2026-03-28', 'Hora do Planeta', 'data'],
+    ['2026-04-05', 'Páscoa Planet', 'principal'],
+    ['2026-04-14', 'Café', 'data'],
+    ['2026-05-10', 'Dia das Mães', 'apoio'],
+    ['2026-06-12', 'Dia dos Namorados', 'apoio'],
+    ['2026-07-07', 'Dia Mundial do Chocolate', 'apoio'],
+    ['2026-07-20', 'Dia do Amigo', 'data'],
+    ['2026-08-09', 'Mês dos Pais Planet', 'principal'],
+    ['2026-08-11', 'Dia do Estudante', 'data'],
+    ['2026-09-15', 'Dia do Cliente', 'data'],
+    ['2026-09-21', 'Dia da Árvore', 'data'],
+    ['2026-09-22', 'Primavera Planet', 'principal'],
+    ['2026-09-23', 'Dia do Sorvete', 'apoio'],
+    ['2026-10-01', 'Dia Internacional do Café', 'data'],
+    ['2026-10-01', 'Semana das Crianças', 'principal'],
+    ['2026-10-31', 'Halloween Planet', 'principal'],
+    ['2026-11-27', 'Black Planet', 'principal'],
+    ['2026-12-25', 'Natal Planet', 'principal'],
+    ['2026-12-31', 'Réveillon', 'data'],
+  ];
 
   let radarSnapshot = null;
   let extraSnapshot = null;
@@ -22,11 +47,15 @@
   const pct = (value) => `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(Number(value) || 0)}%`;
   const dueMeta = (item) => window.PMHRadarData?.dueMeta?.(item?.dueDate) || { label: item?.status || 'Em acompanhamento', bucket: 'none', weight: 99999 };
   const cleanDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '').slice(0, 10)) ? String(value).slice(0, 10) : '';
+  const normalize = (value) => String(value || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   const campaignStart = (id) => cleanDate(String(id || '').split('__')[0] || '');
   const campaignName = (id) => {
     const slug = String(id || '').split('__')[1] || 'campanha';
     return slug.split('-').filter(Boolean).map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
+  const campaignId = (date, name) => `${date}__${normalize(name)}`;
 
   const fetchJson = async (url) => {
     const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
@@ -56,11 +85,12 @@
       const remoteCampaigns = campaigns.status === 'fulfilled' && Array.isArray(campaigns.value?.data)
         ? campaigns.value.data
         : [];
+      const localCampaigns = readLocalCampaigns();
       extraSnapshot = {
         acquisition: acquisition.status === 'fulfilled' ? acquisition.value : null,
         expansion: expansion.status === 'fulfilled' ? expansion.value : null,
         fiveStars: fiveStars.status === 'fulfilled' ? fiveStars.value : null,
-        campaigns: remoteCampaigns.length ? remoteCampaigns : readLocalCampaigns(),
+        campaigns: remoteCampaigns.length ? remoteCampaigns : localCampaigns,
       };
       return extraSnapshot;
     }).finally(() => { extraLoading = null; });
@@ -78,10 +108,10 @@
     return [...map.values()];
   };
 
-  const campaignItems = (operations) => (Array.isArray(operations) ? operations : [])
+  const operationCampaignItems = (operations) => (Array.isArray(operations) ? operations : [])
     .filter((item) => item?.id && item.status !== 'concluida')
     .map((item) => ({
-      id: `overview-campaign-${item.id}`,
+      id: String(item.id),
       origin: 'Campanha',
       title: campaignName(item.id),
       context: item.nextMilestone || 'Início da campanha',
@@ -89,7 +119,35 @@
       dueDate: cleanDate(item.milestoneDate) || campaignStart(item.id),
       action: 'calendario',
       priority: item.status === 'ativa' ? 0 : item.status === 'aprovacao' ? 1 : 2,
+      operational: Boolean(item.nextMilestone || item.milestoneDate || item.responsible),
     }));
+
+  const baseCampaignItems = () => BASE_CAMPAIGNS_2026.map(([date, name, type]) => ({
+    id: campaignId(date, name),
+    origin: 'Campanha',
+    title: name,
+    context: type === 'principal' ? 'Campanha principal da rede' : type === 'apoio' ? 'Campanha de apoio' : 'Data de conteúdo e relacionamento',
+    status: 'Calendário 2026',
+    dueDate: date,
+    action: 'calendario',
+    priority: type === 'principal' ? 1 : type === 'apoio' ? 2 : 3,
+    operational: false,
+  }));
+
+  const mergedCampaignItems = (operations) => {
+    const base = new Map(baseCampaignItems().map((item) => [item.id, item]));
+    operationCampaignItems(operations).forEach((operation) => {
+      const current = base.get(operation.id);
+      base.set(operation.id, current ? {
+        ...current,
+        ...operation,
+        title: current.title || operation.title,
+        context: operation.context || current.context,
+        dueDate: operation.dueDate || current.dueDate,
+      } : operation);
+    });
+    return [...base.values()];
+  };
 
   const metricCard = ({ tone = '', eyebrow, value, label, destination }) => `
     <button type="button" class="aos-op-metric ${tone}" data-overview-destination="${esc(destination)}">
@@ -113,16 +171,21 @@
   const buildViewModel = (snapshot, extras) => {
     const items = Array.isArray(snapshot?.items) ? snapshot.items : [];
     const marketing = items.filter((item) => ['demand', 'conteudos'].includes(item.action));
+    const contentDeliveries = items.filter((item) => item.action === 'conteudos');
     const radarCampaigns = items.filter((item) => item.action === 'calendario');
-    const directCampaigns = campaignItems(extras?.campaigns);
+    const directCampaigns = mergedCampaignItems(extras?.campaigns);
     const campaigns = directCampaigns.length ? directCampaigns : radarCampaigns;
     const inaugurations = items.filter((item) => item.action === 'inauguracoes');
     const tickets = items.filter((item) => item.action === 'chamados');
 
     const lateTickets = tickets.filter((item) => dueMeta(item).bucket === 'late').length;
     const todayTickets = tickets.filter((item) => dueMeta(item).bucket === 'today').length;
-    const nextCampaign = [...campaigns].filter((item) => item.dueDate).sort((a, b) => dueMeta(a).weight - dueMeta(b).weight).find((item) => dueMeta(item).weight >= 0) || campaigns[0] || null;
-    const nextOpening = [...inaugurations].filter((item) => dueMeta(item).weight >= 0).sort((a, b) => dueMeta(a).weight - dueMeta(b).weight)[0] || inaugurations[0] || null;
+    const nextCampaign = [...campaigns]
+      .filter((item) => dueMeta(item).weight >= 0)
+      .sort((a, b) => dueMeta(a).weight - dueMeta(b).weight || Number(a.priority ?? 3) - Number(b.priority ?? 3))[0] || null;
+    const nextOpening = [...inaugurations]
+      .filter((item) => dueMeta(item).weight >= 0)
+      .sort((a, b) => dueMeta(a).weight - dueMeta(b).weight)[0] || inaugurations[0] || null;
 
     const acquisition = extras?.acquisition?.current || {};
     const funnelSteps = acquisition.funnel?.steps || [];
@@ -138,7 +201,8 @@
     const units = latestByUnit(evaluations);
     const p5Average = units.length ? units.reduce((sum, item) => sum + (Number(item.total) || 0), 0) / units.length : null;
 
-    const milestones = [...campaigns, ...inaugurations, ...marketing]
+    const upcomingCampaigns = campaigns.filter((item) => dueMeta(item).weight >= 0);
+    const milestones = [...campaigns, ...inaugurations, ...contentDeliveries]
       .filter((item) => isUpcoming(item, 30))
       .sort((a, b) => dueMeta(a).weight - dueMeta(b).weight || Number(a.priority ?? 3) - Number(b.priority ?? 3))
       .slice(0, 9);
@@ -146,7 +210,7 @@
     return {
       metrics: [
         { eyebrow: 'MARKETING', value: String(marketing.length), label: marketing.length === 1 ? 'item em fluxo' : 'itens em fluxo', destination: 'marketing' },
-        { eyebrow: 'CAMPANHAS', value: String(campaigns.length), label: nextCampaign ? `${nextCampaign.title} · ${dueMeta(nextCampaign).label}` : 'sem marco cadastrado', destination: 'calendario' },
+        { eyebrow: 'CAMPANHAS', value: String(upcomingCampaigns.length), label: nextCampaign ? `${nextCampaign.title} · ${dueMeta(nextCampaign).label}` : 'sem próxima data', destination: 'calendario' },
         { eyebrow: 'INAUGURAÇÕES', value: String(inaugurations.length), label: nextOpening ? `${nextOpening.title} · ${dueMeta(nextOpening).label}` : 'nenhum projeto ativo', destination: 'inauguracoes' },
         { eyebrow: 'CHAMADOS', value: String(tickets.length), label: lateTickets ? `${lateTickets} atrasado${lateTickets === 1 ? '' : 's'}` : todayTickets ? `${todayTickets} vence${todayTickets === 1 ? '' : 'm'} hoje` : 'sem atraso crítico', destination: 'chamados', tone: lateTickets ? 'danger' : '' },
         { eyebrow: 'AQUISIÇÃO · 7D', value: num(visitors), label: visitors ? `${pct(acquisitionConversion)} até WhatsApp` : 'sem visitas medidas', destination: 'aquisicao' },
@@ -180,7 +244,7 @@
         <header><div><small>AGENDA DA OPERAÇÃO · 30 DIAS</small><h3>O que vem pela frente</h3></div><button type="button" data-overview-destination="radar">Abrir Radar</button></header>
         <div class="aos-op-milestones">${model.milestones.length
           ? model.milestones.map(milestone).join('')
-          : '<div class="aos-op-empty">Nenhuma campanha, inauguração ou entrega de Marketing com data nos próximos 30 dias.</div>'}</div>
+          : '<div class="aos-op-empty">Nenhuma campanha, inauguração ou entrega de conteúdo com data nos próximos 30 dias.</div>'}</div>
       </section>`;
   };
 
