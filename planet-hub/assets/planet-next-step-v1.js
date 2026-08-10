@@ -18,6 +18,7 @@
     acquisition: '/api/hub/planet/acquisition/lp-franquias?period=7d',
     expansion: '/api/hub/planet/leads',
     fiveStars: '/api/hub/planet/five-stars/action-plans',
+    inaugurations: '/api/hub/inauguracoes',
   };
 
   let frame = 0;
@@ -48,11 +49,31 @@
     chamados: new Set(['chamados']),
   };
 
-  const radarStep = async (area) => {
+  const collectRadarItems = async (area) => {
     const actions = radarActions[area];
-    if (!actions || !window.PMHRadarData?.collect) return null;
+    if (!actions || !window.PMHRadarData?.collect) return [];
     const snapshot = await window.PMHRadarData.collect({ maxAgeMs: 15000 });
-    const items = (Array.isArray(snapshot?.items) ? snapshot.items : []).filter((item) => actions.has(item.action));
+    return (Array.isArray(snapshot?.items) ? snapshot.items : []).filter((item) => actions.has(item.action));
+  };
+
+  const actionModelForItem = (items) => {
+    const explicit = items.find((item) => String(item.nextAction || '').trim());
+    const suggested = items.find((item) => String(item.contextSuggestion?.nextAction || '').trim());
+    const item = explicit || suggested;
+    if (!item) return null;
+    const nextAction = String(item.nextAction || item.contextSuggestion?.nextAction || '').trim();
+    const dueInfo = due(item.followUpDate || item.dueDate);
+    return {
+      eyebrow: explicit ? 'PRÓXIMO PASSO' : 'PRÓXIMO PASSO · RADAR',
+      title: nextAction,
+      meta: [item.title, item.context, item.responsible && `Responsável: ${item.responsible}`].filter(Boolean).join(' · '),
+      badge: dueInfo.label,
+      tone: dueInfo.bucket === 'late' ? 'late' : '',
+    };
+  };
+
+  const radarStep = async (area) => {
+    const items = await collectRadarItems(area);
     if (!items.length) return {
       eyebrow: 'PRÓXIMO PASSO',
       title: 'Nenhuma ação imediata registrada',
@@ -61,38 +82,178 @@
       tone: 'empty',
     };
 
-    const explicit = items.find((item) => String(item.nextAction || '').trim());
-    const suggested = items.find((item) => String(item.contextSuggestion?.nextAction || '').trim());
-    const item = explicit || suggested || items[0];
-    const nextAction = String(item.nextAction || item.contextSuggestion?.nextAction || '').trim();
+    const action = actionModelForItem(items);
+    if (action) return action;
+
+    const item = items[0];
     const dueInfo = due(item.followUpDate || item.dueDate);
-
-    if (nextAction) {
-      return {
-        eyebrow: explicit ? 'PRÓXIMO PASSO' : 'PRÓXIMO PASSO · RADAR',
-        title: nextAction,
-        meta: [item.title, item.context, item.responsible && `Responsável: ${item.responsible}`].filter(Boolean).join(' · '),
-        badge: dueInfo.label,
-        tone: dueInfo.bucket === 'late' ? 'late' : '',
-      };
-    }
-
-    if (area === 'calendario' && item.context) {
-      return {
-        eyebrow: 'PRÓXIMO MARCO',
-        title: item.context,
-        meta: item.title,
-        badge: dueInfo.label,
-        tone: dueInfo.bucket === 'late' ? 'late' : '',
-      };
-    }
-
     return {
       eyebrow: 'PRIORIDADE AGORA',
       title: item.title || 'Item operacional',
       meta: [item.status, item.context, item.responsible && `Responsável: ${item.responsible}`].filter(Boolean).join(' · '),
       badge: dueInfo.label,
       tone: dueInfo.bucket === 'late' ? 'late' : '',
+    };
+  };
+
+  const campaignStep = async () => {
+    const items = await collectRadarItems('calendario');
+    const action = actionModelForItem(items);
+    if (action) return action;
+
+    const focusCards = [...document.querySelectorAll('.pmh-campaign-focus-card[data-edit-campaign]')];
+    const card = focusCards.find((entry) => /próxima campanha/i.test(entry.querySelector(':scope > small')?.textContent || ''))
+      || focusCards[0]
+      || null;
+
+    if (card) {
+      const id = String(card.dataset.editCampaign || '');
+      const title = card.querySelector('h3')?.textContent?.trim() || 'Próxima campanha';
+      const role = card.querySelector(':scope > small')?.textContent?.trim() || 'Campanha';
+      const timing = card.querySelector('footer b')?.textContent?.trim() || '';
+      const ownerText = card.querySelector(':scope > em')?.textContent?.trim() || '';
+      const sameCampaign = id ? [...document.querySelectorAll('[data-edit-campaign]')].filter((entry) => entry.dataset.editCampaign === id) : [];
+      const milestoneNode = sameCampaign.map((entry) => entry.querySelector('.pmh-campaign-next-step strong')).find(Boolean);
+      const milestoneDateNode = sameCampaign.map((entry) => entry.querySelector('.pmh-campaign-next-step span')).find(Boolean);
+      const milestone = milestoneNode?.textContent?.trim() || '';
+      const milestoneDate = milestoneDateNode?.textContent?.trim() || '';
+
+      if (milestone && !/ainda não definido/i.test(milestone)) {
+        return {
+          eyebrow: 'PRÓXIMO PASSO · CAMPANHA',
+          title: milestone,
+          meta: [title, ownerText].filter(Boolean).join(' · '),
+          badge: milestoneDate || timing || role,
+          tone: '',
+        };
+      }
+
+      if (/ainda não definido|sem responsável/i.test(ownerText)) {
+        return {
+          eyebrow: 'PRÓXIMO PASSO · CAMPANHA',
+          title: `Definir responsável para ${title}`,
+          meta: [role, timing, 'Depois, registrar o próximo marco operacional'].filter(Boolean).join(' · '),
+          badge: timing || 'Planejamento',
+          tone: '',
+        };
+      }
+
+      return {
+        eyebrow: 'PRÓXIMO PASSO · CAMPANHA',
+        title: `Definir o próximo marco de ${title}`,
+        meta: [ownerText, timing].filter(Boolean).join(' · '),
+        badge: timing || 'Planejamento',
+        tone: '',
+      };
+    }
+
+    if (items.length) {
+      const item = items[0];
+      const dueInfo = due(item.followUpDate || item.dueDate);
+      return {
+        eyebrow: 'PRÓXIMO MARCO',
+        title: item.context || item.title || 'Campanha em acompanhamento',
+        meta: item.title || 'Calendário de campanhas',
+        badge: dueInfo.label,
+        tone: dueInfo.bucket === 'late' ? 'late' : '',
+      };
+    }
+
+    return {
+      eyebrow: 'PRÓXIMO PASSO',
+      title: 'Nenhuma campanha operacional encontrada',
+      meta: 'Abra o calendário para revisar o próximo período.',
+      badge: 'Sem ação agora',
+      tone: 'empty',
+    };
+  };
+
+  const cleanStepTitle = (step) => String(step?.label || step?.title || step?.name || step?.task || '').trim();
+  const stepDueDate = (step) => String(step?.dueDate || step?.deadline || step?.date || '').slice(0, 10);
+  const stepIsDone = (step) => Boolean(step?.done || step?.completed || step?.status === 'concluido' || step?.status === 'done');
+  const stepIsLate = (step) => {
+    const date = stepDueDate(step);
+    return !stepIsDone(step) && /^\d{4}-\d{2}-\d{2}$/.test(date) && date < today();
+  };
+
+  const domChecklistStep = (unit) => {
+    const cards = [...document.querySelectorAll('.pmh-inauguration-card')];
+    const normalizedUnit = String(unit || '').toLowerCase().trim();
+    const card = cards.find((entry) => String(entry.querySelector(':scope > header h3')?.textContent || '').toLowerCase().trim() === normalizedUnit)
+      || cards[0]
+      || null;
+    if (!card) return null;
+
+    const pending = [...card.querySelectorAll('.pmh-checklist label')].filter((label) => !label.classList.contains('done'));
+    if (!pending.length) return null;
+    const late = pending.find((label) => {
+      if (/late|overdue|atras/i.test(label.className)) return true;
+      const text = label.textContent || '';
+      const match = text.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+      if (!match) return false;
+      return `${match[3]}-${match[2]}-${match[1]}` < today();
+    });
+    const target = late || pending[0];
+    const title = target.querySelector('strong')?.textContent?.trim()
+      || target.querySelector('span')?.textContent?.trim()
+      || target.textContent?.replace(/\s+/g, ' ').trim()
+      || '';
+    return title ? { title, late: Boolean(late) } : null;
+  };
+
+  const apiChecklistStep = async (unit) => {
+    try {
+      const payload = await fetchJson(API.inaugurations);
+      const projects = Array.isArray(payload?.data) ? payload.data : [];
+      const normalizedUnit = String(unit || '').toLowerCase().trim();
+      const project = projects.find((entry) => String(entry.unit || '').toLowerCase().trim() === normalizedUnit) || projects[0] || null;
+      if (!project) return null;
+      const checklist = Array.isArray(project.checklist) ? project.checklist.filter((step) => !stepIsDone(step)) : [];
+      const target = checklist.find(stepIsLate) || checklist[0] || null;
+      const title = cleanStepTitle(target);
+      return title ? { title, late: stepIsLate(target), project } : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const inaugurationStep = async () => {
+    const items = await collectRadarItems('inauguracoes');
+    const action = actionModelForItem(items);
+    if (action) return action;
+
+    const item = items[0] || null;
+    const unit = item?.title || document.querySelector('.pmh-inauguration-project-row-main strong')?.textContent?.trim() || '';
+    const domStep = domChecklistStep(unit);
+    const apiStep = domStep || await apiChecklistStep(unit);
+    const dueInfo = due(item?.dueDate);
+
+    if (apiStep) {
+      return {
+        eyebrow: apiStep.late ? 'PRÓXIMO PASSO · ETAPA ATRASADA' : 'PRÓXIMO PASSO · CHECKLIST',
+        title: `Concluir ${apiStep.title}`,
+        meta: [unit || apiStep.project?.unit, item?.context, item?.responsible && `Responsável: ${item.responsible}`].filter(Boolean).join(' · '),
+        badge: apiStep.late ? 'Etapa atrasada' : dueInfo.label,
+        tone: apiStep.late ? 'late' : '',
+      };
+    }
+
+    if (item) {
+      return {
+        eyebrow: 'PRÓXIMO PASSO · CHECKLIST',
+        title: `Abrir ${item.title} e concluir a próxima etapa pendente`,
+        meta: [item.status, item.context, item.responsible && `Responsável: ${item.responsible}`].filter(Boolean).join(' · '),
+        badge: dueInfo.label,
+        tone: dueInfo.bucket === 'late' ? 'late' : '',
+      };
+    }
+
+    return {
+      eyebrow: 'PRÓXIMO PASSO',
+      title: 'Nenhuma implantação ativa encontrada',
+      meta: 'Não há checklist operacional aberto nesta área.',
+      badge: 'Sem ação agora',
+      tone: 'empty',
     };
   };
 
@@ -104,8 +265,8 @@
     const whatsapp = Number(steps.find((step) => step.event === 'whatsapp_click')?.count || 0);
     const conversion = visitors ? ((whatsapp / visitors) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) : '0';
     return {
-      eyebrow: 'PRÓXIMO PASSO',
-      title: 'Nenhuma ação operacional registrada para Aquisição',
+      eyebrow: 'LEITURA OPERACIONAL',
+      title: 'Sem ação operacional pendente',
       meta: `${visitors.toLocaleString('pt-BR')} visita${visitors === 1 ? '' : 's'} em 7 dias · ${conversion}% chegaram ao WhatsApp`,
       badge: 'Leitura do funil',
       tone: 'empty',
@@ -160,6 +321,8 @@
   };
 
   const stepFor = async (area) => {
+    if (area === 'calendario') return campaignStep();
+    if (area === 'inauguracoes') return inaugurationStep();
     if (radarActions[area]) return radarStep(area);
     if (area === 'aquisicao') return acquisitionStep();
     if (area === 'expansao') return expansionStep();
