@@ -112,7 +112,7 @@
     .filter((item) => item?.id && item.status !== 'concluida')
     .map((item) => ({
       id: String(item.id),
-      origin: 'Campanha',
+      origin: 'Campanha · Marco',
       title: campaignName(item.id),
       context: item.nextMilestone || 'Início da campanha',
       status: item.status || 'Planejamento',
@@ -168,6 +168,8 @@
     return Number.isFinite(weight) && weight >= 0 && weight <= horizon;
   };
 
+  const sortUpcoming = (a, b) => dueMeta(a).weight - dueMeta(b).weight || Number(a.priority ?? 3) - Number(b.priority ?? 3);
+
   const buildViewModel = (snapshot, extras) => {
     const items = Array.isArray(snapshot?.items) ? snapshot.items : [];
     const marketing = items.filter((item) => ['demand', 'conteudos'].includes(item.action));
@@ -180,9 +182,9 @@
 
     const lateTickets = tickets.filter((item) => dueMeta(item).bucket === 'late').length;
     const todayTickets = tickets.filter((item) => dueMeta(item).bucket === 'today').length;
-    const nextCampaign = [...campaigns]
-      .filter((item) => dueMeta(item).weight >= 0)
-      .sort((a, b) => dueMeta(a).weight - dueMeta(b).weight || Number(a.priority ?? 3) - Number(b.priority ?? 3))[0] || null;
+    const upcomingCampaigns = campaigns.filter((item) => dueMeta(item).weight >= 0).sort(sortUpcoming);
+    const upcomingOperationalCampaigns = upcomingCampaigns.filter((item) => item.operational);
+    const nextCampaign = upcomingOperationalCampaigns[0] || upcomingCampaigns[0] || null;
     const nextOpening = [...inaugurations]
       .filter((item) => dueMeta(item).weight >= 0)
       .sort((a, b) => dueMeta(a).weight - dueMeta(b).weight)[0] || inaugurations[0] || null;
@@ -201,16 +203,19 @@
     const units = latestByUnit(evaluations);
     const p5Average = units.length ? units.reduce((sum, item) => sum + (Number(item.total) || 0), 0) / units.length : null;
 
-    const upcomingCampaigns = campaigns.filter((item) => dueMeta(item).weight >= 0);
     const milestones = [...campaigns, ...inaugurations, ...contentDeliveries]
       .filter((item) => isUpcoming(item, 30))
-      .sort((a, b) => dueMeta(a).weight - dueMeta(b).weight || Number(a.priority ?? 3) - Number(b.priority ?? 3))
+      .sort(sortUpcoming)
       .slice(0, 9);
+
+    const campaignMetricLabel = nextCampaign
+      ? `${nextCampaign.operational ? nextCampaign.context : nextCampaign.title} · ${dueMeta(nextCampaign).label}`
+      : 'sem próxima data';
 
     return {
       metrics: [
         { eyebrow: 'MARKETING', value: String(marketing.length), label: marketing.length === 1 ? 'item em fluxo' : 'itens em fluxo', destination: 'marketing' },
-        { eyebrow: 'CAMPANHAS', value: String(upcomingCampaigns.length), label: nextCampaign ? `${nextCampaign.title} · ${dueMeta(nextCampaign).label}` : 'sem próxima data', destination: 'calendario' },
+        { eyebrow: 'CAMPANHAS', value: String(upcomingCampaigns.length), label: campaignMetricLabel, destination: 'calendario' },
         { eyebrow: 'INAUGURAÇÕES', value: String(inaugurations.length), label: nextOpening ? `${nextOpening.title} · ${dueMeta(nextOpening).label}` : 'nenhum projeto ativo', destination: 'inauguracoes' },
         { eyebrow: 'CHAMADOS', value: String(tickets.length), label: lateTickets ? `${lateTickets} atrasado${lateTickets === 1 ? '' : 's'}` : todayTickets ? `${todayTickets} vence${todayTickets === 1 ? '' : 'm'} hoje` : 'sem atraso crítico', destination: 'chamados', tone: lateTickets ? 'danger' : '' },
         { eyebrow: 'AQUISIÇÃO · 7D', value: num(visitors), label: visitors ? `${pct(acquisitionConversion)} até WhatsApp` : 'sem visitas medidas', destination: 'aquisicao' },
