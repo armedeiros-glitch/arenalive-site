@@ -8,8 +8,8 @@ const [index, script, styles] = await Promise.all([
   read('planet-hub/assets/planet-overview-desktop-v1.css'),
 ]);
 
-assert.ok(index.includes('planet-overview-desktop-v1.css?v=20260810-2'));
-assert.ok(index.includes('planet-overview-desktop-v1.js?v=20260810-3'));
+assert.ok(index.includes('planet-overview-desktop-v1.css?v=20260810-3'));
+assert.ok(index.includes('planet-overview-desktop-v1.js?v=20260810-4'));
 
 assert.match(script, /PMHRadarData\.collect/);
 assert.match(script, /\/api\/hub\/planet\/acquisition\/lp-franquias\?period=7d/);
@@ -24,6 +24,10 @@ assert.match(script, /Black Planet/);
 assert.match(script, /mergedCampaignItems/);
 assert.match(script, /nextMilestone/);
 assert.match(script, /milestoneDate/);
+assert.match(script, /Campanha · Marco/);
+assert.match(script, /upcomingOperationalCampaigns/);
+assert.match(script, /nextCampaign = upcomingOperationalCampaigns\[0\] \|\| upcomingCampaigns\[0\]/);
+assert.match(script, /nextCampaign\.operational \? nextCampaign\.context : nextCampaign\.title/);
 assert.match(script, /contentDeliveries = items\.filter\(\(item\) => item\.action === 'conteudos'\)/);
 assert.doesNotMatch(script, /milestones = \[\.\.\.campaigns, \.\.\.inaugurations, \.\.\.marketing\]/,
   'Agenda não pode voltar a misturar demandas internas genéricas.');
@@ -40,8 +44,9 @@ assert.match(script, /5 ESTRELAS/);
 assert.match(styles, /@media \(min-width: 821px\)/);
 assert.doesNotMatch(styles, /max-width:\s*820px/);
 assert.match(styles, /\.aos-planet-desktop-cockpit/);
+assert.match(styles, /\.aos-planet-overview-status[\s\S]*display:\s*none !important/);
 assert.match(styles, /grid-template-columns:\s*repeat\(7/);
 assert.match(styles, /\.aos-planet-drawers[\s\S]*display:\s*none/);
 assert.match(styles, /\.aos-planet-attention-list[\s\S]*repeat\(3/);
 
-console.log('Cockpit, calendário-base e agenda desktop da Visão Geral Planet validados.');
+console.log('Cockpit, marcos de campanhas e agenda desktop da Visão Geral Planet validados.');
