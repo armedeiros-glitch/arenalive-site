@@ -1,17 +1,28 @@
 /* Planet overview desktop cockpit · somente desktop */
 @media (min-width: 821px) {
+  .aos-planet-overview-page {
+    display: grid !important;
+    gap: 10px !important;
+    align-content: start !important;
+  }
+
+  .aos-planet-overview-intro {
+    margin: 0 !important;
+    padding-bottom: 2px !important;
+  }
+
   .aos-planet-desktop-cockpit {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(360px, .65fr);
-    gap: 14px;
-    margin-top: 14px;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 4px;
     min-width: 0;
   }
 
   .aos-op-summary,
   .aos-op-milestones-panel {
     min-width: 0;
-    padding: 15px;
+    padding: 14px;
     border: 1px solid var(--os-border);
     border-radius: var(--os-radius-xl);
     background: var(--os-surface);
@@ -24,7 +35,7 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 14px;
-    margin-bottom: 10px;
+    margin-bottom: 9px;
   }
 
   .aos-op-summary header small,
@@ -65,7 +76,7 @@
 
   .aos-op-metrics {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 7px;
   }
 
@@ -74,8 +85,8 @@
     align-content: center;
     gap: 3px;
     min-width: 0;
-    min-height: 82px;
-    padding: 10px 11px;
+    min-height: 78px;
+    padding: 9px 10px;
     border: 1px solid var(--os-border);
     border-radius: 12px;
     color: var(--os-text);
@@ -94,7 +105,7 @@
   .aos-op-metric strong {
     overflow: hidden;
     color: var(--os-text-strong);
-    font-size: 22px;
+    font-size: 21px;
     line-height: 1;
     letter-spacing: -.04em;
     text-overflow: ellipsis;
@@ -104,7 +115,7 @@
   .aos-op-metric span {
     overflow: hidden;
     color: var(--os-text-muted);
-    font-size: 9.5px;
+    font-size: 9.2px;
     line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -124,15 +135,17 @@
 
   .aos-op-milestones {
     display: grid;
-    gap: 6px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
   }
 
   .aos-op-milestone {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     min-width: 0;
+    min-height: 64px;
     padding: 9px 10px;
     border: 1px solid var(--os-border);
     border-radius: 10px;
@@ -180,17 +193,13 @@
     font-weight: 850;
   }
 
-  .aos-op-milestone.late time {
-    color: var(--os-danger);
-    background: color-mix(in srgb, var(--os-danger) 9%, var(--os-surface));
-  }
-
   .aos-op-milestone.today time {
     color: #aa6c16;
     background: rgba(240, 182, 92, .12);
   }
 
   .aos-op-empty {
+    grid-column: 1 / -1;
     padding: 14px;
     border: 1px dashed var(--os-border);
     border-radius: 10px;
@@ -198,13 +207,34 @@
     font-size: 10px;
   }
 
-  @media (max-width: 1180px) {
-    .aos-planet-desktop-cockpit {
-      grid-template-columns: 1fr;
-    }
+  /* A navegação superior já é o acesso às áreas; a Visão Geral não precisa repetir gavetas. */
+  .aos-planet-overview-page > .aos-planet-overview-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
 
+  .aos-planet-overview-page .aos-planet-drawers {
+    display: none !important;
+  }
+
+  .aos-planet-overview-page .aos-planet-attention-panel {
+    width: 100%;
+    min-height: 0;
+    padding: 14px !important;
+  }
+
+  .aos-planet-overview-page .aos-planet-attention-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 1320px) {
     .aos-op-metrics {
       grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .aos-op-milestones,
+    .aos-planet-overview-page .aos-planet-attention-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 }
