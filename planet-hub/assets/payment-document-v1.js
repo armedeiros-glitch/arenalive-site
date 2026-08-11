@@ -68,6 +68,7 @@
     }).format(new Date());
     const status = STATUS_LABELS[payment.status] || payment.status || 'Rascunho';
     const metaClass = isQuick ? 'meta' : 'doc-meta';
+    const checksClass = isQuick ? 'checks' : 'checkline';
     const statusLine = isQuick ? '' : `<span>Status: ${escapeHtml(status)}</span>`;
     const h1LetterSpacing = isQuick ? '' : 'letter-spacing:.03em;';
 
@@ -92,7 +93,9 @@
     .section{margin-top:15px;border:1px solid #d9cec8;border-radius:10px;overflow:hidden;break-inside:avoid}.section h2{margin:0;padding:9px 12px;color:#fff;background:#3a2922;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
     .grid{display:grid;grid-template-columns:1fr 1fr}.field{min-height:62px;padding:10px 12px;border-right:1px solid #e6ddd8;border-bottom:1px solid #e6ddd8}.field:nth-child(2n){border-right:0}.field.full{grid-column:1/-1;border-right:0}.field label,.field strong,.field span{display:block}.field label{margin-bottom:5px;color:#7d6c63;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.field strong{font-size:13px}.field span{color:#44342d}
     .amount{padding:18px;border:2px solid #f26419;background:#fff8f3;text-align:center}.amount label{display:block;color:#91502d;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.amount strong{display:block;margin-top:6px;font-size:29px}
+    .declaration{margin-top:12px;padding:10px 12px;border:1px solid #d9cec8;border-radius:9px;break-inside:avoid}.declaration p{margin:0;color:#44342d;font-size:10.5px;line-height:1.4}.checks,.checkline{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:9.5px}.checks span::before,.checkline span::before{content:'☐';margin-right:5px;font-size:12px}
     .signatures{display:grid;grid-template-columns:1fr 1fr;gap:35px;margin-top:22px;break-inside:avoid}.signature{padding-top:8px;border-top:1px solid #3b2c26;text-align:center}.signature strong,.signature span{display:block}.signature strong{font-size:12px}.signature span{margin-top:3px;color:#74635a;font-size:10px}
+    .receipt{margin-top:14px;padding-top:9px;border-top:1px dashed #a99489;break-inside:avoid}.receipt h3{margin:0 0 8px;font-size:10px;text-align:center;text-transform:uppercase}.receipt-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.receipt-line{min-height:28px;padding-top:12px;border-bottom:1px solid #514139;color:#7b6960;font-size:9px}
     @media print{
       html,body{width:210mm!important;margin:0!important;font-size:9.5px!important;line-height:1.24!important}
       body{background:#fff!important}
@@ -110,10 +113,12 @@
       .field:nth-child(2n){border-right:0!important}.field.full{grid-column:1/-1!important;border-right:0!important}
       .field label{margin-bottom:1px!important;font-size:7px!important}.field strong{font-size:9.5px!important}.field span{font-size:8.5px!important;line-height:1.22!important}
       .amount{padding:6px!important;border-width:1.5px!important}.amount label{font-size:7.5px!important}.amount strong{margin-top:1px!important;font-size:18px!important}
-      .signatures{display:grid!important;grid-template-columns:1fr 1fr!important;gap:22px!important;margin-top:18px!important;break-inside:avoid!important}
+      .declaration{margin-top:5px!important;padding:5px 7px!important;border-radius:6px!important}.declaration p{font-size:7.5px!important;line-height:1.25!important}.checks,.checkline{gap:10px!important;margin-top:4px!important;font-size:7px!important}.checks span::before,.checkline span::before{font-size:9px!important}
+      .signatures{display:grid!important;grid-template-columns:1fr 1fr!important;gap:22px!important;margin-top:12px!important;break-inside:avoid!important}
       .signature{padding-top:3px!important}.signature strong{font-size:8.5px!important}.signature span{margin-top:1px!important;font-size:7px!important}
+      .receipt{margin-top:7px!important;padding-top:5px!important}.receipt h3{margin-bottom:4px!important;font-size:7.5px!important}.receipt-grid{grid-template-columns:1fr 1fr!important;gap:12px!important}.receipt-line{min-height:18px!important;padding-top:7px!important;font-size:7px!important}
     }
-    @media screen and (max-width:850px){.page{width:100%;min-height:0;margin:0;padding:24px}.grid,.signatures{grid-template-columns:1fr}.field{border-right:0}.toolbar{position:static}}
+    @media screen and (max-width:850px){.page{width:100%;min-height:0;margin:0;padding:24px}.grid,.signatures,.receipt-grid{grid-template-columns:1fr}.field{border-right:0}.toolbar{position:static}}
   </style>
 </head>
 <body>
@@ -152,7 +157,9 @@
 
     <section class="section"><h2>Justificativa e observações</h2><div class="field full"><span>${multiline(payment.notes || `Pagamento referente à ação “${payment.actionName || 'inaugural'}” da unidade ${payment.unit || 'Planet Chocolate'}.`)}</span></div></section>
 
+    <div class="declaration"><p>Solicito o pagamento acima descrito, declarando que os dados do fornecedor foram conferidos e que o serviço está relacionado à ação de inauguração informada neste documento.</p><div class="${checksClass}"><span>Serviço executado</span><span>Documento fiscal conferido</span><span>Dados de pagamento conferidos</span></div></div>
     <section class="signatures"><div class="signature"><strong>${escapeHtml(payment.approvedBy || 'Responsável pelo Marketing')}</strong><span>Solicitante / aprovação</span></div><div class="signature"><strong>Financeiro</strong><span>Recebimento e conferência</span></div></section>
+    <section class="receipt"><h3>Protocolo de recebimento pelo financeiro</h3><div class="receipt-grid"><div class="receipt-line">Recebido por</div><div class="receipt-line">Data e horário</div></div></section>
   </main>
 </body>
 </html>`;
