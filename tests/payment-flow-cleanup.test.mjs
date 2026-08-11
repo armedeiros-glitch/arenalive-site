@@ -11,7 +11,7 @@ const [index, workspaceCss, requestPrint, quickFlow] = await Promise.all([
 ]);
 
 assert.ok(index.includes('inauguration-workspace-v2.css?v=20260808-2'));
-assert.ok(index.includes('payment-request-print-v1.js?v=20260808-1'));
+assert.ok(index.includes('payment-request-print-v1.js?v=20260808-3'));
 assert.ok(index.includes('payment-quick-flow-v1.js?v=20260808-2'));
 assert.doesNotMatch(index, /payment-print-compact-v1\.js|payment-print-clean-v1\.js/);
 
