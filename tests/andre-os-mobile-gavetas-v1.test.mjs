@@ -29,7 +29,7 @@ const ticketDetailsStyles = 'ticket-details-v1.css?v=20260808-1';
 const ticketDetailsScript = 'ticket-details-v1.js?v=20260808-1';
 const ticketCompactStylesAsset = 'ticket-context-compact-v1.css?v=20260808-1';
 const calendarStylesAsset = 'calendar-operations-v1.css?v=20260808-1';
-const inaugurationStylesAsset = 'inauguration-workspace-v2.css?v=20260808-1';
+const inaugurationStylesAsset = 'inauguration-workspace-v2.css?v=20260808-2';
 const acquisitionStylesAsset = 'planet-acquisition-v1.css?v=20260808-1';
 const fiveStarsStylesAsset = 'planet-five-stars-v1.css?v=20260808-1';
 const centralStylesAsset = 'content-library-v1.css?v=20260808-1';
