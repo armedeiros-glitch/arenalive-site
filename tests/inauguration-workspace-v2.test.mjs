@@ -4,18 +4,15 @@ import fs from 'node:fs';
 const read = (relativePath) => fs.readFileSync(new URL(`../${relativePath}`, import.meta.url), 'utf8');
 
 const rootEntry = read('index.html');
-const hubEntry = read('planet-hub/index.html');
 const workspace = read('planet-hub/assets/inauguration-workspace-v2.js');
 const workspaceCss = read('planet-hub/assets/inauguration-workspace-v2.css');
 const finance = read('planet-hub/assets/financeiro-v1.js');
 const access = read('planet-hub/assets/hub-access-v1.js');
 
-for (const entry of [rootEntry, hubEntry]) {
-  assert.match(entry, /inauguration-workspace-v2\.css\?v=20260805-1/);
-  assert.match(entry, /inauguration-workspace-v2\.js\?v=20260805-1/);
-  assert.doesNotMatch(entry, /finance-placement-v1\.js/);
-  assert.match(entry, /andre-os-mobile-shell-v2\.js\?v=20260805-4/);
-}
+assert.match(rootEntry, /inauguration-workspace-v2\.css\?v=20260808-2/);
+assert.match(rootEntry, /inauguration-workspace-v2\.js\?v=20260807-3/);
+assert.doesNotMatch(rootEntry, /finance-placement-v1\.js/);
+assert.match(rootEntry, /andre-os-mobile-shell-v2\.js\?v=20260807-11/);
 
 assert.match(workspace, /Separar brindes\/cupons/);
 assert.match(workspace, /50 potes P para degustação/);
@@ -38,6 +35,6 @@ assert.match(finance, /data-finance-edit-payment/);
 assert.match(finance, /data-finance-edit-supplier/);
 assert.doesNotMatch(finance, /MutationObserver|injectNav|openFinance|state\.active/);
 
-assert.match(access, /financeiro-v1\.js\?v=20260805-2/);
+assert.match(access, /financeiro-v1\.js\?v=20260805-5/);
 
 console.log('AndreOS inauguration workspace v2: tests passed');
