@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'planet-hub:chamados-ignorados:v1';
+const STORAGE_PREFIX = 'planet-hub:chamado-ignorado:v2:';
 const MAX_ITEMS = 1000;
 
 const headers = {
@@ -9,6 +10,7 @@ const headers = {
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers });
 const cleanText = (value, max = 240) => String(value ?? '').trim().slice(0, max);
 const cleanId = (value) => cleanText(value, 80).replace(/[^0-9A-Za-z_-]/g, '');
+const itemKey = (id) => `${STORAGE_PREFIX}${cleanId(id)}`;
 
 const normalizeEntry = (item = {}) => ({
   id: cleanId(item.id),
@@ -18,7 +20,7 @@ const normalizeEntry = (item = {}) => ({
   source: 'hub',
 });
 
-const readLog = async (store) => {
+const readLegacyLog = async (store) => {
   const stored = await store.get(STORAGE_KEY, { type: 'json' });
   return {
     revision: stored?.revision || null,
@@ -29,14 +31,78 @@ const readLog = async (store) => {
   };
 };
 
-const writeLog = async (store, data) => {
-  const document = {
-    revision: crypto.randomUUID(),
-    updatedAt: new Date().toISOString(),
-    data: data.slice(0, MAX_ITEMS).map(normalizeEntry),
+const listItemKeys = async (store) => {
+  const keys = [];
+  let cursor;
+  do {
+    const page = await store.list({ prefix: STORAGE_PREFIX, cursor, limit: 1000 });
+    keys.push(...(page.keys || []).map((item) => item.name).filter(Boolean));
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor && keys.length < MAX_ITEMS * 2);
+  return keys.slice(0, MAX_ITEMS * 2);
+};
+
+const readItemRecords = async (store, keys) => {
+  const records = [];
+  for (let index = 0; index < keys.length; index += 100) {
+    const batch = keys.slice(index, index + 100);
+    const values = await Promise.all(batch.map((key) => store.get(key, { type: 'json' })));
+    values.forEach((record) => {
+      if (record?.id) records.push(record);
+    });
+  }
+  return records;
+};
+
+const readLog = async (store) => {
+  const [legacy, keys] = await Promise.all([readLegacyLog(store), listItemKeys(store)]);
+  const records = await readItemRecords(store, keys);
+  const merged = new Map(legacy.data.map((item) => [item.id, item]));
+  let updatedAt = legacy.updatedAt || null;
+
+  records
+    .sort((a, b) => Date.parse(a.updatedAt || a.ignoredAt || 0) - Date.parse(b.updatedAt || b.ignoredAt || 0))
+    .forEach((record) => {
+      const id = cleanId(record.id);
+      if (!id) return;
+      const recordUpdatedAt = cleanText(record.updatedAt || record.ignoredAt, 40);
+      if (recordUpdatedAt && Date.parse(recordUpdatedAt) > Date.parse(updatedAt || 0)) updatedAt = recordUpdatedAt;
+      if (record.state === 'restored') {
+        merged.delete(id);
+        return;
+      }
+      merged.set(id, normalizeEntry(record));
+    });
+
+  const data = [...merged.values()]
+    .sort((a, b) => Date.parse(b.ignoredAt || 0) - Date.parse(a.ignoredAt || 0))
+    .slice(0, MAX_ITEMS);
+
+  return {
+    revision: 'per-ticket-v2',
+    updatedAt: updatedAt || data[0]?.ignoredAt || null,
+    data,
   };
-  await store.put(STORAGE_KEY, JSON.stringify(document));
-  return document;
+};
+
+const writeIgnored = async (store, entry) => {
+  const record = {
+    ...normalizeEntry(entry),
+    state: 'ignored',
+    updatedAt: new Date().toISOString(),
+  };
+  await store.put(itemKey(record.id), JSON.stringify(record));
+  return record;
+};
+
+const writeRestored = async (store, id) => {
+  const record = {
+    id: cleanId(id),
+    state: 'restored',
+    updatedAt: new Date().toISOString(),
+  };
+  await store.put(itemKey(record.id), JSON.stringify(record));
+  return record;
 };
 
 export async function onRequestGet({ env }) {
@@ -58,9 +124,8 @@ export async function onRequestPost({ env, request }) {
   if (!entry.id) return json({ error: 'ID do chamado não informado.' }, 400);
 
   try {
-    const current = await readLog(env.PLANET_HUB_DATA);
-    const next = [entry, ...current.data.filter((item) => item.id !== entry.id)];
-    return json({ ...(await writeLog(env.PLANET_HUB_DATA, next)), ignored: entry, storage: 'shared' });
+    await writeIgnored(env.PLANET_HUB_DATA, entry);
+    return json({ ...(await readLog(env.PLANET_HUB_DATA)), ignored: entry, storage: 'shared' });
   } catch (error) {
     return json({ error: 'Falha ao ignorar chamado.', details: String(error) }, 500);
   }
@@ -76,9 +141,8 @@ export async function onRequestDelete({ env, request }) {
   if (!id) return json({ error: 'ID do chamado não informado.' }, 400);
 
   try {
-    const current = await readLog(env.PLANET_HUB_DATA);
-    const next = current.data.filter((item) => item.id !== id);
-    return json({ ...(await writeLog(env.PLANET_HUB_DATA, next)), restoredId: id, storage: 'shared' });
+    await writeRestored(env.PLANET_HUB_DATA, id);
+    return json({ ...(await readLog(env.PLANET_HUB_DATA)), restoredId: id, storage: 'shared' });
   } catch (error) {
     return json({ error: 'Falha ao restaurar chamado.', details: String(error) }, 500);
   }
