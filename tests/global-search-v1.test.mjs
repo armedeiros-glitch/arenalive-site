@@ -19,6 +19,6 @@ assert.ok(css.includes('@media (max-width: 820px)'), 'must position results safe
 assert.ok(index.includes('global-search-v1.css?v=20260806-1'), 'official entry must load global search CSS');
 assert.ok(index.includes('global-search-v1.js?v=20260806-1'), 'official entry must load global search JS');
 assert.ok(index.includes('mobile-priority-carousel-v1.css?v=20260805-3'), 'approved mobile priorities must remain loaded');
-assert.ok(index.includes('andre-os-mobile-shell-v2.js?v=20260805-9'), 'approved mobile shell must remain loaded');
+assert.ok(index.includes('andre-os-mobile-shell-v2.js?v=20260807-11'), 'approved mobile shell must remain loaded');
 
 console.log('global search checks passed');
