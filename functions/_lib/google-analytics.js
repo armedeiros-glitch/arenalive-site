@@ -46,6 +46,15 @@ const createAssertion = async ({ clientEmail, privateKey }) => {
   return `${unsigned}.${base64Url(signature)}`;
 };
 
+export const validateBatchReports = (payload, expectedCount) => {
+  const reports = Array.isArray(payload?.reports) ? payload.reports : null;
+  if (!reports || reports.length !== expectedCount) {
+    const received = reports?.length ?? 0;
+    throw new Error(`Google Analytics Data API retornou lote incompleto: ${received}/${expectedCount} relatório(s).`);
+  }
+  return reports;
+};
+
 export const getGoogleAnalyticsAccessToken = async (env) => {
   const clientEmail = String(env.GOOGLE_ANALYTICS_CLIENT_EMAIL || '').trim();
   const privateKey = String(env.GOOGLE_ANALYTICS_PRIVATE_KEY || '').trim();
@@ -85,5 +94,5 @@ export const batchRunReports = async ({ env, propertyId, requests }) => {
     const detail = payload?.error?.message || `HTTP ${response.status}`;
     throw new Error(`Google Analytics Data API respondeu com erro: ${detail}`);
   }
-  return Array.isArray(payload.reports) ? payload.reports : [];
+  return validateBatchReports(payload, requests.length);
 };
