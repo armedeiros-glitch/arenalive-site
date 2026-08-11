@@ -2,11 +2,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [expansion, expansionStyles, hunter, huntApi, index, access, webhook, leadsApi, leadCore, notificationCore] = await Promise.all([
+const [expansion, expansionStyles, index, access, webhook, leadsApi, leadCore, notificationCore] = await Promise.all([
   read('planet-hub/assets/planet-expansion-v1.js'),
   read('planet-hub/assets/planet-expansion-v1.css'),
-  read('planet-hub/assets/planet-lead-hunter-v1.js'),
-  read('functions/api/hub/planet/expansion/hunt.js'),
   read('index.html'),
   read('planet-hub/assets/hub-access-v1.js'),
   read('functions/_lib/planet-rd-webhook.js'),
@@ -27,24 +25,20 @@ assert.ok(expansion.includes('data-lead-whatsapp'));
 assert.ok(expansion.includes('data-lead-status'));
 assert.ok(expansion.includes("events.on('notifications.updated'"));
 assert.ok(expansion.includes('payload.updatedAt'));
-assert.ok(expansion.includes('data-lead-hunter-root'));
-assert.ok(expansion.includes('planet:expansion-section-rendered'));
+assert.ok(expansion.includes('planet:open-lead'));
+assert.ok(!expansion.includes('data-lead-hunter-root'));
+assert.ok(!expansion.includes('planet:open-candidate'));
 assert.match(expansionStyles, /\.pmh-expansion-shell/);
-assert.match(expansionStyles, /pmh-expansion-panel\[hidden\]/);
 assert.doesNotMatch(expansionStyles, /!important/);
-assert.doesNotMatch(hunter, /setInterval|MutationObserver|insertAdjacentElement|data-hunter-hidden/);
-assert.match(hunter, /data-hunter-hunt/);
-assert.match(hunter, /requestJson\(HUNT_API/);
-assert.match(huntApi, /runLeadHunt/);
 
 const baseStyleIndex = index.indexOf('planet-expansion-v1.css?v=20260806-1');
 const operationsStyleIndex = index.indexOf('andre-os-operations-v1.css');
-const accessScriptIndex = index.indexOf('hub-access-v1.js?v=');
+const accessScriptIndex = index.indexOf('hub-access-v1.js?v=20260811-1');
 assert.ok(baseStyleIndex >= 0 && operationsStyleIndex > baseStyleIndex);
 assert.ok(accessScriptIndex >= 0);
-assert.ok(!index.includes('planet-expansion-exclusive-sections'));
-assert.ok(/planet-expansion-v1\.js\?v=/.test(access));
-assert.ok(/planet-lead-hunter-v1\.js\?v=/.test(access));
+assert.ok(!index.includes('planet-lead-hunter'));
+assert.ok(/planet-expansion-v1\.js\?v=20260811-1/.test(access));
+assert.ok(!access.includes('planet-lead-hunter'));
 assert.ok(leadsApi.includes('upsertLead'));
 assert.ok(webhook.includes('upsertLead'));
 assert.ok(webhook.includes('readNotificationDocument'));
@@ -52,4 +46,4 @@ assert.equal([leadCore, leadsApi, webhook].filter((source) => source.includes('p
 assert.equal([notificationCore, webhook].filter((source) => source.includes('planet-hub:planet-notifications:v1')).length, 1);
 assert.ok(webhook.includes('root.contact'));
 
-console.log('Fluxo integrado e sem camadas paralelas validado.');
+console.log('Fluxo RD -> lead da Expansão validado sem Caça Leads.');
