@@ -250,7 +250,10 @@
     const page = pageFromHash();
     if (!['planet', 'marketing'].includes(page) || !window.PMHRadarData?.collect) return;
     try {
-      const snapshot = await window.PMHRadarData.collect({ maxAgeMs: 15000 });
+      const options = page === 'marketing'
+        ? { maxAgeMs: 15000, sources: ['demands', 'contents'] }
+        : { maxAgeMs: 15000 };
+      const snapshot = await window.PMHRadarData.collect(options);
       if (pageFromHash() !== page) return;
       if (page === 'planet') renderPlanetSnapshot(snapshot);
       if (page === 'marketing') renderMarketingSnapshot(snapshot);
