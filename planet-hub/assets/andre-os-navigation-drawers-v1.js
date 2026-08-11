@@ -1,7 +1,6 @@
 (() => {
   'use strict';
 
-  const SECTION_KEY = 'planet-expansion-section';
   const OPEN_DRAWER_KEY = 'andre-os-open-navigation-drawer';
   const READY_CLASS = 'aos-navigation-drawers-ready';
 
@@ -25,7 +24,6 @@
   const nav = () => document.querySelector('.pmh-sidebar nav');
   const title = () => document.querySelector('[data-title]');
   const currentHash = () => String(location.hash || '#inicio').replace(/^#/, '').toLowerCase();
-  const expansionSection = () => sessionStorage.getItem(SECTION_KEY) === 'caca-lead' ? 'caca-lead' : 'leads';
 
   const activeDrawer = () => {
     const hash = currentHash();
@@ -78,10 +76,8 @@
     return button;
   };
 
-  const ensureExpansionItems = (target) => {
-    let leads = target.querySelector(':scope > [data-expansion-section-destination="leads"]')
-      || target.querySelector(':scope > [data-expansion-nav]:not([data-expansion-section-destination="caca-lead"])');
-
+  const ensureExpansionItem = (target) => {
+    let leads = target.querySelector(':scope > [data-expansion-nav]');
     if (!leads) {
       leads = document.createElement('button');
       leads.type = 'button';
@@ -89,20 +85,7 @@
       leads.innerHTML = '<b data-expansion-badge hidden>0</b>';
       target.appendChild(leads);
     }
-
-    leads.dataset.expansionSectionDestination = 'leads';
-    decorateItem(leads, { label: 'Leads recebidos', icon: '◎', order: 31, group: 'expansao' });
-
-    let hunter = target.querySelector(':scope > [data-expansion-section-destination="caca-lead"]');
-    if (!hunter) {
-      hunter = document.createElement('button');
-      hunter.type = 'button';
-      hunter.dataset.expansionNav = 'secondary';
-      hunter.dataset.expansionSectionDestination = 'caca-lead';
-      target.appendChild(hunter);
-    }
-    decorateItem(hunter, { label: 'Caça Leads', icon: '⌖', order: 32, group: 'expansao' });
-    return { leads, hunter };
+    return decorateItem(leads, { label: 'Leads recebidos', icon: '◎', order: 31, group: 'expansao' });
   };
 
   const setDrawerOpen = (drawerId, open) => {
@@ -128,11 +111,8 @@
   const syncExpansionActiveState = () => {
     const target = nav();
     if (!target) return;
-    const section = expansionSection();
     const expansionOpen = currentHash().includes('expans');
-    target.querySelectorAll(':scope > [data-expansion-section-destination]').forEach((button) => {
-      button.classList.toggle('active', expansionOpen && button.dataset.expansionSectionDestination === section);
-    });
+    target.querySelector(':scope > [data-expansion-nav]')?.classList.toggle('active', expansionOpen);
   };
 
   const syncDrawerState = ({ forceActive = false } = {}) => {
@@ -162,7 +142,7 @@
     if (hash.includes('demanda')) heading.textContent = 'Demandas';
     if (hash.includes('radar')) heading.textContent = 'Radar';
     if (hash.includes('aquis')) heading.textContent = 'Aquisição · LP Franquias';
-    if (hash.includes('expans')) heading.textContent = expansionSection() === 'caca-lead' ? 'Caça Leads' : 'Leads recebidos';
+    if (hash.includes('expans')) heading.textContent = 'Expansão';
   };
 
   const mount = ({ forceActive = false } = {}) => {
@@ -174,7 +154,7 @@
 
     Object.entries(ITEMS).forEach(([view, config]) => ensureViewItem(target, view, config));
     DRAWERS.forEach((drawer) => ensureToggle(target, drawer));
-    ensureExpansionItems(target);
+    ensureExpansionItem(target);
     syncDrawerState({ forceActive });
     syncTitle();
     return true;
@@ -198,18 +178,8 @@
     openOnly(open ? '' : drawerId);
   });
 
-  window.addEventListener('click', (event) => {
-    const destination = event.target.closest?.('[data-expansion-section-destination]');
-    if (!destination) return;
-    sessionStorage.setItem(
-      SECTION_KEY,
-      destination.dataset.expansionSectionDestination === 'caca-lead' ? 'caca-lead' : 'leads',
-    );
-  }, true);
-
   window.addEventListener('pmh:view-rendered', () => scheduleMount({ forceActive: true }));
   window.addEventListener('andre-os:home-page-rendered', () => scheduleMount({ forceActive: true }));
-  window.addEventListener('planet:expansion-section-rendered', () => scheduleMount({ forceActive: true }));
   window.addEventListener('pmh:access-ready', () => scheduleMount({ forceActive: true }));
   window.addEventListener('hashchange', () => scheduleMount({ forceActive: true }));
 
