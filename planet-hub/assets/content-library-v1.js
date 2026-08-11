@@ -42,6 +42,7 @@
     loading: null,
     mount: null,
     head: null,
+    deletedIds: new Set(),
     filters: {
       search: '',
       category: '',
@@ -93,7 +94,7 @@
     const map = new Map();
     [...remote, ...local].forEach((item) => {
       const id = String(item?.id || '');
-      if (!id) return;
+      if (!id || state.deletedIds.has(id)) return;
       const current = map.get(id);
       if (!current || Date.parse(item.updatedAt || 0) >= Date.parse(current.updatedAt || 0)) {
         map.set(id, item);
@@ -127,22 +128,23 @@
     return state.loading;
   };
 
-  const save = async (rerender = true) => {
+  const save = async (rerender = true, retried = false) => {
     writeLocal();
     try {
       const payload = await apiJson(API, {
         method: 'PUT',
         body: JSON.stringify({ data: state.data, baseRevision: state.revision }),
       });
-      state.data = payload.data || state.data;
+      state.data = (payload.data || state.data || []).filter((item) => !state.deletedIds.has(String(item?.id || '')));
       state.revision = payload.revision || state.revision;
       state.shared = true;
+      state.deletedIds.clear();
       writeLocal();
     } catch (error) {
-      if (error.status === 409 && error.payload?.data) {
+      if (!retried && error.status === 409 && error.payload?.data) {
         state.data = mergeData(error.payload.data, state.data || []);
         state.revision = error.payload.revision || null;
-        return save(rerender);
+        return save(rerender, true);
       }
       state.shared = false;
       throw error;
@@ -406,6 +408,7 @@
     if (remove) {
       const item = state.data.find((candidate) => candidate.id === remove.dataset.contentDelete);
       if (!item || !window.confirm(`Excluir “${item.title}” da biblioteca?\n\nO arquivo original não será apagado.`)) return;
+      state.deletedIds.add(item.id);
       state.data = state.data.filter((candidate) => candidate.id !== item.id);
       try {
         await save(false);
