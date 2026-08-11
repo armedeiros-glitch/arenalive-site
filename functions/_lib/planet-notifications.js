@@ -1,10 +1,13 @@
 import { cleanText, nowIso } from './planet-leads.js';
 
 export const NOTIFICATIONS_STORAGE_KEY = 'planet-hub:planet-notifications:v1';
+export const NOTIFICATION_STORAGE_PREFIX = 'planet-hub:planet-notification:v2:';
 export const MAX_NOTIFICATIONS = 1000;
 
 const NOTIFICATION_TYPES = new Set(['lead.new', 'lead.updated', 'lead.alert']);
 const NOTIFICATION_PRIORITIES = new Set(['high', 'medium', 'low']);
+
+export const notificationStorageKey = (id) => `${NOTIFICATION_STORAGE_PREFIX}${cleanText(id, 120)}`;
 
 export const normalizeNotification = (item = {}) => {
   const createdAt = cleanText(item.createdAt, 40) || nowIso();
@@ -29,7 +32,7 @@ export const normalizeNotification = (item = {}) => {
   };
 };
 
-export const readNotificationDocument = async (store) => {
+const readLegacyNotificationDocument = async (store) => {
   const stored = await store.get(NOTIFICATIONS_STORAGE_KEY, { type: 'json' });
   if (!stored || !Array.isArray(stored.data)) {
     return { revision: null, updatedAt: null, data: [] };
@@ -41,20 +44,76 @@ export const readNotificationDocument = async (store) => {
   };
 };
 
-export const writeNotificationDocument = async (store, data) => {
-  const document = {
-    revision: crypto.randomUUID(),
-    updatedAt: nowIso(),
-    data: data.slice(0, MAX_NOTIFICATIONS).map(normalizeNotification),
+const listNotificationKeys = async (store) => {
+  const keys = [];
+  let cursor;
+  do {
+    const page = await store.list({ prefix: NOTIFICATION_STORAGE_PREFIX, cursor, limit: 1000 });
+    keys.push(...(page.keys || []).map((item) => item.name).filter(Boolean));
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor && keys.length < MAX_NOTIFICATIONS);
+  return keys.slice(0, MAX_NOTIFICATIONS);
+};
+
+const readNotificationItems = async (store, keys) => {
+  const result = [];
+  for (let index = 0; index < keys.length; index += 100) {
+    const batch = keys.slice(index, index + 100);
+    const values = await Promise.all(batch.map((key) => store.get(key, { type: 'json' })));
+    values.forEach((item) => {
+      if (item?.id) result.push(normalizeNotification(item));
+    });
+  }
+  return result;
+};
+
+export const readNotificationDocument = async (store) => {
+  const [legacy, keys] = await Promise.all([
+    readLegacyNotificationDocument(store),
+    listNotificationKeys(store),
+  ]);
+  const v2 = await readNotificationItems(store, keys);
+  const merged = new Map();
+  [...legacy.data, ...v2].forEach((item) => {
+    const current = merged.get(item.id);
+    if (!current || Date.parse(item.updatedAt || 0) >= Date.parse(current.updatedAt || 0)) {
+      merged.set(item.id, item);
+    }
+  });
+  const data = [...merged.values()]
+    .sort((a, b) => Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0))
+    .slice(0, MAX_NOTIFICATIONS);
+  return {
+    revision: 'per-notification-v2',
+    updatedAt: data[0]?.updatedAt || legacy.updatedAt || null,
+    data,
   };
-  await store.put(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(document));
-  return document;
+};
+
+export const writeNotification = async (store, rawNotification) => {
+  const notification = normalizeNotification(rawNotification);
+  await store.put(notificationStorageKey(notification.id), JSON.stringify(notification));
+  return notification;
+};
+
+export const writeNotificationDocument = async (store, data) => {
+  const normalized = data.slice(0, MAX_NOTIFICATIONS).map(normalizeNotification);
+  for (let index = 0; index < normalized.length; index += 100) {
+    await Promise.all(normalized.slice(index, index + 100).map((item) => writeNotification(store, item)));
+  }
+  return {
+    revision: 'per-notification-v2',
+    updatedAt: normalized.reduce((latest, item) => (
+      Date.parse(item.updatedAt || 0) > Date.parse(latest || 0) ? item.updatedAt : latest
+    ), null),
+    data: normalized,
+  };
 };
 
 export const appendNotification = async (store, input) => {
-  const current = await readNotificationDocument(store);
   const notification = normalizeNotification(input);
-  const document = await writeNotificationDocument(store, [notification, ...current.data]);
+  await writeNotification(store, notification);
+  const document = await readNotificationDocument(store);
   return { notification, document };
 };
 
