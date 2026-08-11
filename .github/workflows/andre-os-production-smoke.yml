@@ -62,7 +62,6 @@ jobs:
             '/api/hub/inauguracoes'
             '/api/hub/financeiro'
             '/api/hub/planet/acquisition/lp-franquias'
-            '/api/hub/planet/expansion/candidates'
             '/api/hub/planet/leads'
           )
 
