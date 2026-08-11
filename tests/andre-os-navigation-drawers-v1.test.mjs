@@ -13,13 +13,13 @@ const [indexHtml, accessScript, drawersScript, drawersCss, pagesScript] = await 
 ]);
 
 assert.match(indexHtml, /andre-os-navigation-drawers-v1\.css\?v=20260806-1/);
-assert.match(accessScript, /andre-os-navigation-drawers-v1\.js\?v=20260807-3/);
+assert.match(accessScript, /andre-os-navigation-drawers-v1\.js\?v=20260811-1/);
 
-const hunterPosition = accessScript.indexOf('planet-lead-hunter-v1.js');
+const expansionPosition = accessScript.indexOf('planet-expansion-v1.js');
 const drawersPosition = accessScript.indexOf('andre-os-navigation-drawers-v1.js');
 const pagesPosition = accessScript.indexOf('andre-os-home-pages-v1.js');
 const notificationsPosition = accessScript.indexOf('planet-notifications-v1.js');
-assert.ok(hunterPosition >= 0 && drawersPosition > hunterPosition, 'As gavetas devem montar depois do Caça Lead.');
+assert.ok(expansionPosition >= 0 && drawersPosition > expansionPosition, 'As gavetas devem montar depois do módulo de Expansão.');
 assert.ok(pagesPosition > drawersPosition, 'As páginas devem montar depois da navegação oficial.');
 assert.ok(notificationsPosition > pagesPosition, 'As notificações devem continuar carregando depois do shell.');
 
@@ -29,12 +29,12 @@ assert.match(drawersScript, /Aquisição/);
 assert.match(drawersScript, /aquisicao/);
 assert.match(drawersScript, /Expansão/);
 assert.match(drawersScript, /Leads recebidos/);
-assert.match(drawersScript, /Caça Leads/);
-assert.match(drawersScript, /data-expansion-section-destination/);
-assert.match(drawersScript, /sessionStorage\.setItem/);
+assert.match(drawersScript, /ensureExpansionItem/);
+assert.match(drawersScript, /data-expansion-nav/);
 assert.match(drawersScript, /ensureViewItem/);
 assert.match(drawersScript, /appendChild/);
 assert.match(drawersScript, /style\.order/);
+assert.doesNotMatch(drawersScript, /Caça Leads|caca-lead|data-expansion-section-destination|planet:expansion-section-rendered/);
 
 assert.doesNotMatch(drawersScript, /MutationObserver/);
 assert.doesNotMatch(drawersScript, /cloneNode/);
