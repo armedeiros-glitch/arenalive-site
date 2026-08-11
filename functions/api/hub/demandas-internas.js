@@ -1,4 +1,5 @@
-const STORAGE_KEY = 'planet-hub:demandas-internas:v1';
+const LEGACY_STORAGE_KEY = 'planet-hub:demandas-internas:v1';
+const ITEM_STORAGE_PREFIX = 'planet-hub:internal-demand:v2:';
 const MAX_ITEMS = 500;
 const MAX_BODY_BYTES = 550_000;
 
@@ -10,6 +11,7 @@ const headers = {
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers });
 const cleanText = (value, max = 300) => String(value ?? '').trim().slice(0, max);
 const cleanDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) ? String(value) : '';
+const itemStorageKey = (id) => `${ITEM_STORAGE_PREFIX}${cleanText(id, 120)}`;
 
 const STATUS = new Set(['new', 'in_progress', 'waiting', 'completed', 'cancelled']);
 const PRIORITY = new Set(['urgent', 'high', 'normal', 'low']);
@@ -52,8 +54,21 @@ const normalizeDemand = (item = {}) => {
   };
 };
 
-const readDocument = async (store) => {
-  const stored = await store.get(STORAGE_KEY, { type: 'json' });
+const normalizeV2Record = (item = {}) => {
+  const id = cleanText(item.id, 120);
+  if (!id) return null;
+  if (item.deleted === true) {
+    return {
+      id,
+      deleted: true,
+      updatedAt: cleanText(item.updatedAt, 40) || new Date().toISOString(),
+    };
+  }
+  return { ...normalizeDemand(item), deleted: false };
+};
+
+const readLegacyDocument = async (store) => {
+  const stored = await store.get(LEGACY_STORAGE_KEY, { type: 'json' });
   if (!stored || !Array.isArray(stored.data)) {
     return { revision: null, updatedAt: null, data: [] };
   }
@@ -63,6 +78,91 @@ const readDocument = async (store) => {
     updatedAt: stored.updatedAt || null,
     data: stored.data.slice(0, MAX_ITEMS).map(normalizeDemand),
   };
+};
+
+const listV2Keys = async (store) => {
+  const keys = [];
+  let cursor;
+  do {
+    const page = await store.list({ prefix: ITEM_STORAGE_PREFIX, cursor, limit: 1000 });
+    keys.push(...(page.keys || []).map((item) => item.name).filter(Boolean));
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor && keys.length < MAX_ITEMS * 2);
+  return keys.slice(0, MAX_ITEMS * 2);
+};
+
+const readV2Records = async (store) => {
+  const keys = await listV2Keys(store);
+  const records = [];
+  for (let index = 0; index < keys.length; index += 100) {
+    const batch = keys.slice(index, index + 100);
+    const values = await Promise.all(batch.map((key) => store.get(key, { type: 'json' })));
+    values.forEach((value) => {
+      const record = normalizeV2Record(value);
+      if (record) records.push(record);
+    });
+  }
+  return records;
+};
+
+const mergeStorage = (legacyData, v2Records) => {
+  const merged = new Map(legacyData.map((item) => [item.id, item]));
+  v2Records.forEach((record) => {
+    if (record.deleted) merged.delete(record.id);
+    else merged.set(record.id, normalizeDemand(record));
+  });
+  return [...merged.values()]
+    .sort((a, b) => Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0))
+    .slice(0, MAX_ITEMS);
+};
+
+const fingerprint = async (item) => {
+  const bytes = new TextEncoder().encode(JSON.stringify(item));
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  return Array.from(digest, (value) => value.toString(16).padStart(2, '0')).join('');
+};
+
+const buildVersionMap = async (data) => {
+  const entries = await Promise.all(data.map(async (item) => [item.id, await fingerprint(item)]));
+  return Object.fromEntries(entries);
+};
+
+const encodeRevision = (versionMap) => `v2:${encodeURIComponent(JSON.stringify(versionMap))}`;
+
+const decodeRevision = (revision) => {
+  if (!revision || !String(revision).startsWith('v2:')) return null;
+  try {
+    const parsed = JSON.parse(decodeURIComponent(String(revision).slice(3)));
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const readDocument = async (store) => {
+  const [legacy, v2Records] = await Promise.all([
+    readLegacyDocument(store),
+    readV2Records(store),
+  ]);
+  const data = mergeStorage(legacy.data, v2Records);
+  const versionMap = await buildVersionMap(data);
+  return {
+    revision: encodeRevision(versionMap),
+    updatedAt: data[0]?.updatedAt || legacy.updatedAt || null,
+    data,
+  };
+};
+
+const writeDemand = async (store, item, updatedAt) => {
+  const normalized = normalizeDemand({ ...item, updatedAt: item.updatedAt || updatedAt });
+  await store.put(itemStorageKey(normalized.id), JSON.stringify({ ...normalized, deleted: false }));
+  return normalized;
+};
+
+const writeTombstone = async (store, id, updatedAt) => {
+  const tombstone = { id: cleanText(id, 120), deleted: true, updatedAt };
+  await store.put(itemStorageKey(tombstone.id), JSON.stringify(tombstone));
+  return tombstone;
 };
 
 export async function onRequestGet({ env }) {
@@ -104,20 +204,55 @@ export async function onRequestPut({ env, request }) {
 
   try {
     const current = await readDocument(store);
-    const baseRevision = payload.baseRevision || null;
-    if (baseRevision && current.revision && baseRevision !== current.revision) {
+    const baseVersions = payload.baseRevision ? decodeRevision(payload.baseRevision) : {};
+    if (payload.baseRevision && !baseVersions) {
       return json({
-        error: 'As demandas foram alteradas em outro navegador.',
+        error: 'A versão aberta das demandas ficou desatualizada. Recarregue os dados antes de salvar.',
         conflict: true,
         ...current,
       }, 409);
     }
 
+    const incoming = payload.data.map(normalizeDemand);
+    const incomingById = new Map(incoming.map((item) => [item.id, item]));
+    const currentById = new Map(current.data.map((item) => [item.id, item]));
+    const currentVersions = await buildVersionMap(current.data);
+    const incomingVersions = await buildVersionMap(incoming);
+    const changedIds = incoming
+      .filter((item) => !baseVersions[item.id] || incomingVersions[item.id] !== baseVersions[item.id])
+      .map((item) => item.id);
+    const deletedIds = Object.keys(baseVersions).filter((id) => !incomingById.has(id));
+
+    const conflictingIds = [...changedIds, ...deletedIds].filter((id) => (
+      baseVersions[id]
+      && currentVersions[id]
+      && currentVersions[id] !== baseVersions[id]
+    ));
+    if (conflictingIds.length) {
+      return json({
+        error: 'Esta demanda foi alterada em outro navegador.',
+        conflict: true,
+        conflictIds: conflictingIds,
+        ...current,
+      }, 409);
+    }
+
     const updatedAt = new Date().toISOString();
+    await Promise.all([
+      ...changedIds.map((id) => writeDemand(store, incomingById.get(id), updatedAt)),
+      ...deletedIds.map((id) => writeTombstone(store, id, updatedAt)),
+    ]);
+
+    const nextById = new Map(currentById);
+    changedIds.forEach((id) => nextById.set(id, normalizeDemand({ ...incomingById.get(id), updatedAt: incomingById.get(id).updatedAt || updatedAt })));
+    deletedIds.forEach((id) => nextById.delete(id));
+    const data = [...nextById.values()]
+      .sort((a, b) => Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0))
+      .slice(0, MAX_ITEMS);
     const document = {
-      revision: crypto.randomUUID(),
-      updatedAt,
-      data: payload.data.map((item) => normalizeDemand({ ...item, updatedAt: item.updatedAt || updatedAt })),
+      revision: encodeRevision(await buildVersionMap(data)),
+      updatedAt: data[0]?.updatedAt || updatedAt,
+      data,
     };
 
     const serialized = JSON.stringify(document);
@@ -125,7 +260,6 @@ export async function onRequestPut({ env, request }) {
       return json({ error: 'Os dados normalizados ultrapassam o limite permitido.' }, 413);
     }
 
-    await store.put(STORAGE_KEY, serialized);
     return json({ ...document, storage: 'shared' });
   } catch (error) {
     return json({
