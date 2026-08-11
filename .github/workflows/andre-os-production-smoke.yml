@@ -1,0 +1,91 @@
+name: André OS Production Smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-smoke:
+    name: Produção · rotas públicas e proteção
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verificar página principal
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://arenalivebrasil.com.br"
+          code="$(curl -sS -L -o /tmp/home.html -w '%{http_code}' "$base/")"
+          echo "GET / -> $code"
+          test "$code" = "200"
+          grep -q 'André OS' /tmp/home.html
+
+      - name: Verificar contrato público de sessão
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://arenalivebrasil.com.br"
+          code="$(curl -sS -o /tmp/session.json -w '%{http_code}' "$base/api/hub/session")"
+          echo "GET /api/hub/session -> $code"
+          cat /tmp/session.json
+          test "$code" = "200"
+          python - <<'PY'
+          import json
+          data = json.load(open('/tmp/session.json', encoding='utf-8'))
+          assert isinstance(data.get('configured'), bool), data
+          assert isinstance(data.get('authenticated'), bool), data
+          assert data.get('authenticated') is False, data
+          print('session contract ok; configured=', data['configured'])
+          PY
+
+      - name: Verificar proteção das APIs privadas
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://arenalivebrasil.com.br"
+          configured="$(python - <<'PY'
+          import json
+          print('true' if json.load(open('/tmp/session.json', encoding='utf-8')).get('configured') else 'false')
+          PY
+          )"
+
+          routes=(
+            '/api/hub/health'
+            '/api/radar/today'
+            '/api/radar/next'
+            '/api/sults/chamados?start=0&limit=1'
+            '/api/sults/implantacoes?start=0&limit=1'
+            '/api/hub/inauguracoes'
+            '/api/hub/financeiro'
+            '/api/hub/planet/acquisition/lp-franquias'
+            '/api/hub/planet/expansion/candidates'
+            '/api/hub/planet/leads'
+          )
+
+          failures=0
+          for route in "${routes[@]}"; do
+            body="$(mktemp)"
+            code="$(curl -sS -o "$body" -w '%{http_code}' "$base$route")"
+            echo "GET $route -> $code"
+
+            if [[ "$configured" == "true" ]]; then
+              if [[ "$code" != "401" ]]; then
+                echo "ERRO: rota privada deveria responder 401 sem sessão."
+                cat "$body" || true
+                failures=$((failures + 1))
+              fi
+            else
+              if [[ "$code" == "404" || "$code" =~ ^5 ]]; then
+                echo "ERRO: rota inexistente ou indisponível com autenticação desativada."
+                cat "$body" || true
+                failures=$((failures + 1))
+              fi
+            fi
+            rm -f "$body"
+          done
+
+          test "$failures" -eq 0
