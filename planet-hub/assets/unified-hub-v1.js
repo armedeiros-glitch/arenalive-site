@@ -8,6 +8,7 @@
   };
   const LOCAL_KEY = 'planet-hub-inaugurations-v2';
   const DEFAULT_BUDGET = 4100;
+  const SULTS_LOAD_ERROR = 'Parte dos dados do SULTS não carregou. Use o botão atualizar para tentar novamente.';
 
   const checklistTemplate = [
     ['Número de telefone para redes sociais', 'Franqueado', 30],
@@ -183,7 +184,7 @@
       state.shared = false;
     }
     const errors = [ticketsResult, projectsResult].filter((result) => result.status === 'rejected');
-    if (errors.length) state.error = 'Parte dos dados do SULTS não carregou. Use o botão atualizar para tentar novamente.';
+    if (errors.length) state.error = SULTS_LOAD_ERROR;
     state.loading = false;
     render();
   };
@@ -380,7 +381,8 @@
       return;
     }
     const html = state.view === 'chamados' ? renderTickets() : state.view === 'inauguracoes' ? renderInaugurations() : state.view === 'calendario' ? renderCalendar() : state.view === 'conteudos' ? renderContents() : renderHome();
-    content.innerHTML = `${state.error ? `<div class="pmh-alert">${esc(state.error)}</div>` : ''}${html}`;
+    const visibleError = state.error === SULTS_LOAD_ERROR && !['inicio', 'chamados', 'inauguracoes'].includes(state.view) ? '' : state.error;
+    content.innerHTML = `${visibleError ? `<div class="pmh-alert">${esc(visibleError)}</div>` : ''}${html}`;
     announceView();
   };
 
