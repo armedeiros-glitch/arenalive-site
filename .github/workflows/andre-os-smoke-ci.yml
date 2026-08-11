@@ -46,15 +46,30 @@ jobs:
       - name: Executar todos os testes Node
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           mapfile -t tests < <(find tests -type f -name '*.test.mjs' | sort)
           if [[ ${#tests[@]} -eq 0 ]]; then
             echo "Nenhum teste encontrado."
             exit 1
           fi
+
           echo "${#tests[@]} testes encontrados."
+          failures=()
+
           for test_file in "${tests[@]}"; do
             echo "::group::$test_file"
-            node "$test_file"
+            if node "$test_file"; then
+              echo "PASS $test_file"
+            else
+              echo "FAIL $test_file"
+              failures+=("$test_file")
+            fi
             echo "::endgroup::"
           done
+
+          echo
+          echo "Resumo: ${#tests[@]} executados · ${#failures[@]} falha(s)."
+          if [[ ${#failures[@]} -gt 0 ]]; then
+            printf ' - %s\n' "${failures[@]}"
+            exit 1
+          fi
