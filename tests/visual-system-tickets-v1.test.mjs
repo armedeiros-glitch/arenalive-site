@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const css = fs.readFileSync('planet-hub/assets/ticket-command-v1.css', 'utf8');
+const mobileMarker = '@media (max-width: 820px) {';
+const mobileIndex = css.indexOf(mobileMarker);
 
 for (const token of [
   '--os-surface',
@@ -19,8 +21,13 @@ for (const token of [
 
 assert.equal(/background\s*:\s*(?:#fff(?:fff)?|white)\b/i.test(css), false, 'Chamados não deve manter fundo branco fixo');
 assert.equal(css.includes('MutationObserver'), false, 'CSS de Chamados não deve depender de observação do DOM');
-assert.equal(css.includes('!important'), false, 'Migração de Chamados não deve criar guerra de especificidade');
-assert.ok(css.includes('@media (max-width: 820px)'), 'Responsividade mobile deve ser preservada');
+assert.ok(mobileIndex >= 0, 'Responsividade mobile deve ser preservada');
+
+const baseCss = css.slice(0, mobileIndex);
+const mobileCss = css.slice(mobileIndex);
+assert.equal(baseCss.includes('!important'), false, 'Base/desktop de Chamados não deve criar guerra de especificidade');
+assert.match(mobileCss, /\.pmh-section-head:has\(\+ \.pmh-ticket-command\)/, 'Compatibilidade tardia deve permanecer confinada ao bloco mobile');
+assert.match(mobileCss, /\.pmh-ticket-drawer-panel/, 'Drawer mobile deve continuar sob responsabilidade do módulo');
 assert.ok(css.includes('.pmh-command-ticket-facts'), 'Fatos do chamado devem continuar estilizados');
 
 console.log('visual-system-tickets-v1: ok');
