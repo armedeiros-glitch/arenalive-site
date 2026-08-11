@@ -22,7 +22,7 @@ const [index, mobileBase, pageStyles, navigationStyles, shell, ticketDetailsJs, 
 
 const mobileBaseAsset = 'andre-os-mobile-v1.css?v=20260808-1';
 const mobilePages = 'andre-os-mobile-gavetas-v1.css?v=20260808-4';
-const mobileNavigation = 'andre-os-mobile-navigation-v2.css?v=20260807-2';
+const mobileNavigation = 'andre-os-mobile-navigation-v2.css?v=20260811-1';
 const mobileShell = 'andre-os-mobile-shell-v2.js?v=20260807-11';
 const darkTheme = 'andre-os-dark-theme-v1.css?v=20260808-1';
 const ticketDetailsStyles = 'ticket-details-v1.css?v=20260808-1';
