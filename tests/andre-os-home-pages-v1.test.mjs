@@ -38,6 +38,8 @@ assert.match(pages, /eventView:\s*'inicio'/);
 assert.match(pages, /segmented:\s*true/);
 assert.match(pages, /andre-os:home-page-rendered/);
 assert.match(pages, /PMHRadarData\.collect/);
+assert.match(pages, /sources:\s*\['demands',\s*'contents'\]/, 'Marketing deve ler somente Demandas e Conteúdos pelo RadarData.');
+assert.doesNotMatch(pages, /sources:\s*\[[^\]]*tickets[^\]]*\]/, 'Marketing não deve solicitar tickets na leitura seletiva.');
 assert.match(demands, /event\.detail\?\.view === 'inicio'/);
 assert.doesNotMatch(pages, /MutationObserver/);
 assert.doesNotMatch(pages, /createElement\('link'\)|appendChild\(link\)/);
