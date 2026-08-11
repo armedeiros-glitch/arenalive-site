@@ -15,7 +15,7 @@ assert.ok(css.includes('.pmh-priority-focus-section'), 'focus section styles mus
 assert.ok(css.includes('.pmh-priority-others-section'), 'other points section styles must exist');
 assert.ok(css.includes('.pmh-priority-ready > :not(.pmh-priority-mobile)'), 'original cockpit must remain as fallback until ready');
 assert.ok(css.includes('scroll-snap-type: x mandatory'), 'secondary points must use native horizontal snapping');
-assert.ok(index.includes('mobile-priority-carousel-v1.css?v=20260805-1'), 'official entry must load carousel CSS');
+assert.ok(index.includes('mobile-priority-carousel-v1.css?v=20260805-3'), 'official entry must load carousel CSS');
 assert.ok(index.includes('mobile-priority-carousel-v1.js?v=20260805-1'), 'official entry must load carousel JS');
 
 console.log('mobile priority split checks passed');
