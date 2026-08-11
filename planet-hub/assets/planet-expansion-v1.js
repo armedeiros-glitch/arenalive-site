@@ -3,7 +3,6 @@
 
   const VIEW = 'expansao';
   const API = '/api/hub/planet/leads';
-  const SECTION_KEY = 'planet-expansion-section';
   const STATUS_LABELS = {
     new: 'Novo',
     claimed: 'Assumido',
@@ -45,8 +44,6 @@
   const content = () => document.querySelector('[data-content]');
   const title = () => document.querySelector('[data-title]');
   const isOpen = () => location.hash === '#expansao';
-  const activeSection = () => sessionStorage.getItem(SECTION_KEY) === 'caca-lead' ? 'caca-lead' : 'leads';
-  const setActiveSection = (value) => sessionStorage.setItem(SECTION_KEY, value === 'caca-lead' ? 'caca-lead' : 'leads');
 
   const showNotice = (message, tone = 'success') => {
     clearTimeout(noticeTimer);
@@ -167,14 +164,9 @@
     if (!target) return;
 
     const values = metrics();
-    const section = activeSection();
     if (title()) title().textContent = 'Expansão';
     target.innerHTML = `<section class="pmh-expansion-shell">
-      <nav class="pmh-expansion-tabs" aria-label="Seções de Expansão">
-        <button type="button" class="${section === 'leads' ? 'active' : ''}" data-expansion-section="leads">Leads</button>
-        <button type="button" class="${section === 'caca-lead' ? 'active' : ''}" data-expansion-section="caca-lead">Caça Lead</button>
-      </nav>
-      <section class="pmh-expansion-panel" data-expansion-leads-panel ${section === 'leads' ? '' : 'hidden'}>
+      <section class="pmh-expansion-panel" data-expansion-leads-panel>
         <header class="pmh-expansion-head">
           <div><small>PLANET CHOCOLATE · PROFISSIONAL</small><h2>Expansão e Leads</h2><p>Receba o lead, abra o contato e registre o avanço sem sair do André OS.</p></div>
           <div class="pmh-expansion-head-actions">
@@ -193,15 +185,9 @@
           ${state.loading && !state.loaded ? '<div class="pmh-expansion-empty"><b>Carregando leads…</b></div>' : state.leads.length ? state.leads.map(leadCard).join('') : emptyState()}
         </section>
       </section>
-      <section data-lead-hunter-root ${section === 'caca-lead' ? '' : 'hidden'}></section>
     </section>`;
 
-    if (section === 'leads') focusSelected();
-    requestAnimationFrame(() => {
-      window.dispatchEvent(new CustomEvent('planet:expansion-section-rendered', {
-        detail: { section },
-      }));
-    });
+    focusSelected();
   };
 
   const load = async ({ silent = false } = {}) => {
@@ -356,13 +342,6 @@
       return;
     }
 
-    const sectionButton = event.target.closest?.('[data-expansion-section]');
-    if (sectionButton) {
-      setActiveSection(sectionButton.dataset.expansionSection || 'leads');
-      render();
-      return;
-    }
-
     if (event.target.closest?.('[data-expansion-refresh]')) {
       load();
       return;
@@ -396,7 +375,6 @@
     const leadId = String(event.detail?.leadId || '');
     if (!leadId) return;
     state.selectedLeadId = leadId;
-    setActiveSection('leads');
     if (isOpen()) {
       render();
       markViewed(leadId);
@@ -405,12 +383,6 @@
       sessionStorage.setItem('planet-expansion-open-lead', leadId);
       location.hash = '#expansao';
     }
-  });
-
-  window.addEventListener('planet:open-candidate', () => {
-    setActiveSection('caca-lead');
-    if (isOpen()) render();
-    else location.hash = '#expansao';
   });
 
   window.addEventListener('pmh:view-rendered', () => {
@@ -430,14 +402,7 @@
     else syncNavigation();
   });
 
-  window.PlanetExpansion = {
-    openSection(value) {
-      setActiveSection(value);
-      if (isOpen()) render();
-      else location.hash = '#expansao';
-    },
-    render,
-  };
+  window.PlanetExpansion = { render };
 
   ensureNavigation();
   connectNotifications();
