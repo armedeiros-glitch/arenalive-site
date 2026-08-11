@@ -33,11 +33,12 @@ assert.doesNotMatch(expansionStyles, /!important/);
 
 const baseStyleIndex = index.indexOf('planet-expansion-v1.css?v=20260806-1');
 const operationsStyleIndex = index.indexOf('andre-os-operations-v1.css');
-const accessScriptIndex = index.indexOf('hub-access-v1.js?v=20260811-1');
+const accessScriptIndex = index.indexOf('hub-access-v1.js?v=20260811-2');
 assert.ok(baseStyleIndex >= 0 && operationsStyleIndex > baseStyleIndex);
 assert.ok(accessScriptIndex >= 0);
 assert.ok(!index.includes('planet-lead-hunter'));
 assert.ok(/planet-expansion-v1\.js\?v=20260811-1/.test(access));
+assert.ok(/andre-os-navigation-drawers-v1\.js\?v=20260811-1/.test(access));
 assert.ok(!access.includes('planet-lead-hunter'));
 assert.ok(leadsApi.includes('upsertLead'));
 assert.ok(webhook.includes('upsertLead'));
