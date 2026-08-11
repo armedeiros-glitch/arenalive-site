@@ -1,4 +1,5 @@
 export const LEADS_STORAGE_KEY = 'planet-hub:planet-expansion-leads:v1';
+export const LEAD_STORAGE_PREFIX = 'planet-hub:planet-expansion-lead:v2:';
 export const MAX_LEADS = 2000;
 export const MAX_LEAD_BODY_BYTES = 128_000;
 export const LEAD_SOURCES = new Set(['rd_station', 'reactivated', 'caca_lead', 'manual']);
@@ -7,6 +8,7 @@ export const LEAD_STATUSES = new Set(['new', 'claimed', 'contacted', 'qualified'
 export const cleanText = (value, max = 300) => String(value ?? '').trim().slice(0, max);
 export const cleanPhone = (value) => cleanText(value, 40).replace(/[^\d+]/g, '');
 export const nowIso = () => new Date().toISOString();
+export const leadStorageKey = (id) => `${LEAD_STORAGE_PREFIX}${cleanText(id, 120)}`;
 
 export const suggestedWhatsappMessage = (name) => {
   const normalizedName = cleanText(name, 180);
@@ -82,7 +84,7 @@ export const normalizeLead = (item = {}, options = {}) => {
   };
 };
 
-export const readLeadDocument = async (store, options = {}) => {
+const readLegacyLeadDocument = async (store, options = {}) => {
   const stored = await store.get(LEADS_STORAGE_KEY, { type: 'json' });
   if (!stored || !Array.isArray(stored.data)) {
     return { revision: null, updatedAt: null, data: [] };
@@ -96,15 +98,70 @@ export const readLeadDocument = async (store, options = {}) => {
   };
 };
 
-export const writeLeadDocument = async (store, data, options = {}) => {
-  const updatedAt = nowIso();
-  const document = {
-    revision: crypto.randomUUID(),
-    updatedAt,
-    data: data.slice(0, MAX_LEADS).map((item) => normalizeLead(item, options)),
+const listLeadKeys = async (store) => {
+  const keys = [];
+  let cursor;
+  do {
+    const page = await store.list({ prefix: LEAD_STORAGE_PREFIX, cursor, limit: 1000 });
+    keys.push(...(page.keys || []).map((item) => item.name).filter(Boolean));
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor && keys.length < MAX_LEADS);
+  return keys.slice(0, MAX_LEADS);
+};
+
+const readLeadItems = async (store, keys, options = {}) => {
+  const result = [];
+  for (let index = 0; index < keys.length; index += 100) {
+    const batch = keys.slice(index, index + 100);
+    const values = await Promise.all(batch.map((key) => store.get(key, { type: 'json' })));
+    values.forEach((item) => {
+      if (item?.id) result.push(normalizeLead(item, options));
+    });
+  }
+  return result;
+};
+
+export const readLeadDocument = async (store, options = {}) => {
+  const [legacy, keys] = await Promise.all([
+    readLegacyLeadDocument(store, options),
+    listLeadKeys(store),
+  ]);
+  const v2 = await readLeadItems(store, keys, options);
+  const merged = new Map();
+  [...legacy.data, ...v2].forEach((lead) => {
+    const current = merged.get(lead.id);
+    if (!current || Date.parse(lead.updatedAt || 0) >= Date.parse(current.updatedAt || 0)) {
+      merged.set(lead.id, lead);
+    }
+  });
+  const data = [...merged.values()]
+    .sort((a, b) => Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0))
+    .slice(0, MAX_LEADS);
+  return {
+    revision: 'per-lead-v2',
+    updatedAt: data[0]?.updatedAt || legacy.updatedAt || null,
+    data,
   };
-  await store.put(LEADS_STORAGE_KEY, JSON.stringify(document));
-  return document;
+};
+
+export const writeLead = async (store, rawLead, options = {}) => {
+  const lead = normalizeLead(rawLead, options);
+  await store.put(leadStorageKey(lead.id), JSON.stringify(lead));
+  return lead;
+};
+
+export const writeLeadDocument = async (store, data, options = {}) => {
+  const normalized = data.slice(0, MAX_LEADS).map((item) => normalizeLead(item, options));
+  for (let index = 0; index < normalized.length; index += 100) {
+    await Promise.all(normalized.slice(index, index + 100).map((lead) => writeLead(store, lead)));
+  }
+  return {
+    revision: 'per-lead-v2',
+    updatedAt: normalized.reduce((latest, item) => (
+      Date.parse(item.updatedAt || 0) > Date.parse(latest || 0) ? item.updatedAt : latest
+    ), null),
+    data: normalized,
+  };
 };
 
 export const findDuplicateLead = (items, incoming) => (Array.isArray(items) ? items : []).find((lead) => (
@@ -211,11 +268,8 @@ export const upsertLead = async (store, rawLead, options = {}) => {
       lead.history = [...options.appendHistory, ...lead.history].slice(0, 100);
     }
 
-    const document = await writeLeadDocument(
-      store,
-      current.data.map((item) => item.id === duplicate.id ? lead : item),
-    );
-    return { lead, duplicate: true, changes, revision: document.revision, document };
+    await writeLead(store, lead);
+    return { lead, duplicate: true, changes, revision: lead.updatedAt, document: { revision: lead.updatedAt, data: [lead] } };
   }
 
   const createdAt = cleanText(options.createdAt, 40) || timestamp;
@@ -228,8 +282,8 @@ export const upsertLead = async (store, rawLead, options = {}) => {
       ? options.initialHistory
       : [historyEvent('created', options.createdTitle || 'Lead cadastrado manualmente', [], createdAt)],
   }, normalizeOptions);
-  const document = await writeLeadDocument(store, [lead, ...current.data]);
-  return { lead, duplicate: false, changes: [], revision: document.revision, document };
+  await writeLead(store, lead);
+  return { lead, duplicate: false, changes: [], revision: lead.updatedAt, document: { revision: lead.updatedAt, data: [lead] } };
 };
 
 export const updateLeadById = async (store, id, changes = {}) => {
@@ -284,9 +338,6 @@ export const updateLeadById = async (store, id, changes = {}) => {
     ].slice(0, 100);
   }
   const lead = normalizeLead(next);
-  const document = await writeLeadDocument(
-    store,
-    current.data.map((item) => item.id === leadId ? lead : item),
-  );
-  return { lead, revision: document.revision, changedLabels };
+  await writeLead(store, lead);
+  return { lead, revision: lead.updatedAt, changedLabels };
 };
