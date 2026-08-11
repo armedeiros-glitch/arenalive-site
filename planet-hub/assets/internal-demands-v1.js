@@ -39,6 +39,7 @@
     editingId: '',
     inputText: '',
     aiMessage: '',
+    deletedIds: new Set(),
   };
 
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -119,6 +120,7 @@
     const merged = new Map();
     collections.flat().forEach((raw) => {
       const item = normalizeDemand(raw);
+      if (state.deletedIds.has(item.id)) return;
       const current = merged.get(item.id);
       if (!current || Date.parse(item.updatedAt || 0) >= Date.parse(current.updatedAt || 0)) merged.set(item.id, item);
     });
@@ -158,9 +160,12 @@
         method: 'PUT',
         body: JSON.stringify({ data: state.items, baseRevision: state.revision }),
       });
-      state.items = (payload.data || state.items).map(normalizeDemand);
+      state.items = (payload.data || state.items)
+        .map(normalizeDemand)
+        .filter((item) => !state.deletedIds.has(item.id));
       state.revision = payload.revision || state.revision;
       state.shared = true;
+      state.deletedIds.clear();
       writeLocal();
     } catch (error) {
       if (!retried && error.status === 409 && error.payload?.data) {
@@ -391,6 +396,7 @@
     if (remove) {
       const item = state.items.find((candidate) => candidate.id === remove.dataset.demandDelete);
       if (!item || !confirm(`Excluir a demanda “${item.title}”?`)) return;
+      state.deletedIds.add(item.id);
       state.items = state.items.filter((candidate) => candidate.id !== item.id);
       await save();
       return toast('Demanda excluída.');
