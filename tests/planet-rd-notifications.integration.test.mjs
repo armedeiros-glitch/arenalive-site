@@ -5,6 +5,8 @@ if (!globalThis.crypto) globalThis.crypto = webcrypto;
 
 const webhook = await import('../functions/api/integrations/planet/rd/webhook/[secret].js');
 const notifications = await import('../functions/api/hub/planet/notifications.js');
+const { readLeadDocument } = await import('../functions/_lib/planet-leads.js');
+const { readNotificationDocument } = await import('../functions/_lib/planet-notifications.js');
 
 class MemoryKv {
   constructor() { this.data = new Map(); }
@@ -14,6 +16,13 @@ class MemoryKv {
     return options.type === 'json' ? JSON.parse(value) : value;
   }
   async put(key, value) { this.data.set(key, String(value)); }
+  async list({ prefix = '', cursor = undefined, limit = 1000 } = {}) {
+    const keys = [...this.data.keys()]
+      .filter((key) => key.startsWith(prefix))
+      .slice(0, limit)
+      .map((name) => ({ name }));
+    return { keys, list_complete: true, cursor };
+  }
 }
 
 const store = new MemoryKv();
@@ -81,7 +90,7 @@ assert.equal(secondMovement.notification.created, true);
 assert.equal(secondMovement.notification.grouped, true);
 assert.equal(secondMovement.notification.unread, 2);
 
-const leadDocument = await store.get('planet-hub:planet-expansion-leads:v1', { type: 'json' });
+const leadDocument = await readLeadDocument(store);
 assert.equal(leadDocument.data.length, 1);
 const lead = leadDocument.data[0];
 assert.equal(lead.name, 'Maria Planet');
@@ -92,7 +101,7 @@ assert.equal(lead.assignedTo, 'Comercial Planet');
 assert.equal(lead.rdStage, 'Negociação');
 assert.equal(lead.history.length, 3);
 
-const notificationDocument = await store.get('planet-hub:planet-notifications:v1', { type: 'json' });
+const notificationDocument = await readNotificationDocument(store);
 assert.equal(notificationDocument.data.length, 2);
 const movementNotification = notificationDocument.data.find((item) => item.type === 'lead.updated');
 assert.ok(movementNotification);
@@ -123,4 +132,4 @@ const afterRead = await (await notifications.onRequestPut({
 })).json();
 assert.equal(afterRead.unread, 1);
 
-console.log('Planet RD → núcleo compartilhado → notificações: integration tests passed');
+console.log('Planet RD → núcleo compartilhado por item → notificações: integration tests passed');
