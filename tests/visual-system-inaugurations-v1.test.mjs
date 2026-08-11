@@ -21,8 +21,8 @@ test('o núcleo de inaugurações não mantém branco fixo', () => {
 });
 
 test('os estilos atualizados recebem nova versão de cache', () => {
-  assert.match(index, /andre-os-operations-v1\.css\?v=20260806-1/);
-  assert.match(index, /inauguration-workspace-v2\.css\?v=20260806-1/);
+  assert.match(index, /andre-os-operations-v1\.css\?v=20260806-2/);
+  assert.match(index, /inauguration-workspace-v2\.css\?v=20260808-2/);
 });
 
 test('a migração não adiciona observação de DOM', () => {
