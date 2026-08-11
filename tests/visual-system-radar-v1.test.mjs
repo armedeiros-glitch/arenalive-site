@@ -14,6 +14,6 @@ assert.match(css, /@media \(max-width: 720px\)/, 'Layout mobile deve continuar p
 assert.doesNotMatch(css, /!important/, 'Migração não deve depender de !important');
 assert.doesNotMatch(css, /MutationObserver/, 'Migração visual não deve observar DOM');
 assert.doesNotMatch(css, /background:\s*#fff(?:fff)?\b/i, 'Radar não deve manter branco fixo');
-assert.match(index, /active-workstream-v1\.css\?v=20260806-1/, 'Index deve invalidar cache do CSS migrado');
+assert.match(index, /active-workstream-v1\.css\?v=20260806-2/, 'Index deve invalidar cache do CSS migrado');
 
 console.log('visual-system-radar-v1: ok');
