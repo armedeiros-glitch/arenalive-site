@@ -9,11 +9,12 @@
     { key: 'campaigns', label: 'Campanhas', url: '/api/hub/campanhas' },
     { key: 'contexts', label: 'Contextos operacionais', url: '/api/hub/radar-contextos' },
   ];
+  const SOURCE_BY_KEY = new Map(SOURCES.map((source) => [source.key, source]));
   const DEFAULT_MAX_AGE_MS = 15 * 1000;
 
-  let cachedSnapshot = null;
-  let cachedAt = 0;
-  let pending = null;
+  const sourceCache = new Map();
+  const sourcePending = new Map();
+  let lastFullSnapshot = null;
 
   const todayIso = () => new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Sao_Paulo',
@@ -272,51 +273,114 @@
     return Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0);
   });
 
-  const buildSnapshot = async () => {
-    const results = await Promise.allSettled(SOURCES.map((source) => fetchJson(source.url)));
-    const values = Object.fromEntries(SOURCES.map((source, index) => [
-      source.key,
-      results[index].status === 'fulfilled' ? results[index].value : [],
-    ]));
-    const errors = SOURCES
-      .filter((_, index) => results[index].status === 'rejected')
-      .map((source) => source.label);
+  const NORMALIZERS = Object.freeze({
+    tickets: fromTickets,
+    inaugurations: fromInaugurations,
+    demands: fromInternalDemands,
+    contents: fromContents,
+    campaigns: fromCampaigns,
+    contexts: (items) => Array.isArray(items) ? items : [],
+  });
 
-    const rawItems = [
-      ...fromTickets(values.tickets),
-      ...fromInaugurations(values.inaugurations),
-      ...fromInternalDemands(values.demands),
-      ...fromContents(values.contents),
-      ...fromCampaigns(values.campaigns),
-    ];
-    const items = sortItems(mergeContexts(rawItems, values.contexts));
-
-    return { items, errors, loadedAt: new Date().toISOString() };
+  const normalizeRequestedSources = (sources) => {
+    if (sources == null) return SOURCES.map((source) => source.key);
+    const requested = Array.isArray(sources) ? sources : [sources];
+    const keys = [...new Set(requested.map((key) => String(key || '').trim()).filter(Boolean))];
+    const invalid = keys.filter((key) => !SOURCE_BY_KEY.has(key));
+    if (invalid.length) throw new Error(`Fonte(s) do RadarData inválida(s): ${invalid.join(', ')}`);
+    return keys;
   };
 
-  const collect = async ({ force = false, maxAgeMs = DEFAULT_MAX_AGE_MS } = {}) => {
-    const fresh = cachedSnapshot && Date.now() - cachedAt < maxAgeMs;
-    if (!force && fresh) return cachedSnapshot;
-    if (!force && pending) return pending;
+  const sourceResult = (source, raw, error = null) => {
+    const loadedAt = new Date().toISOString();
+    return {
+      key: source.key,
+      label: source.label,
+      raw: Array.isArray(raw) ? raw : [],
+      items: NORMALIZERS[source.key](Array.isArray(raw) ? raw : []),
+      loadedAt,
+      cachedAt: Date.now(),
+      reliability: error ? 'error' : 'fresh',
+      error: error ? String(error instanceof Error ? error.message : error) : '',
+    };
+  };
 
-    pending = buildSnapshot()
-      .then((snapshot) => {
-        cachedSnapshot = snapshot;
-        cachedAt = Date.now();
-        window.dispatchEvent(new CustomEvent('pmh:radar-data', { detail: snapshot }));
-        return snapshot;
+  const loadSource = async (key, { force = false, maxAgeMs = DEFAULT_MAX_AGE_MS } = {}) => {
+    const source = SOURCE_BY_KEY.get(key);
+    if (!source) throw new Error(`Fonte do RadarData inválida: ${key}`);
+
+    const inFlight = sourcePending.get(key);
+    if (inFlight) return inFlight;
+
+    const cached = sourceCache.get(key);
+    const fresh = cached && Date.now() - cached.cachedAt < maxAgeMs;
+    if (!force && fresh) return cached;
+
+    const pending = fetchJson(source.url)
+      .then((raw) => sourceResult(source, raw))
+      .catch((error) => sourceResult(source, [], error))
+      .then((result) => {
+        sourceCache.set(key, result);
+        return result;
       })
-      .finally(() => { pending = null; });
+      .finally(() => { sourcePending.delete(key); });
 
+    sourcePending.set(key, pending);
     return pending;
   };
 
-  const invalidate = () => {
-    cachedSnapshot = null;
-    cachedAt = 0;
+  const buildSnapshot = async (requestedKeys, options) => {
+    const results = await Promise.all(requestedKeys.map((key) => loadSource(key, options)));
+    const byKey = Object.fromEntries(results.map((result) => [result.key, result]));
+    const contexts = requestedKeys.includes('contexts') ? (byKey.contexts?.raw || []) : [];
+    const rawItems = requestedKeys
+      .filter((key) => key !== 'contexts')
+      .flatMap((key) => byKey[key]?.items || []);
+    const items = sortItems(mergeContexts(rawItems, contexts));
+    const errors = results.filter((result) => result.error).map((result) => result.label);
+    const sources = Object.fromEntries(results.map((result) => [result.key, {
+      loadedAt: result.loadedAt,
+      reliability: result.reliability,
+      error: result.error,
+    }]));
+
+    return { items, errors, loadedAt: new Date().toISOString(), sources };
   };
 
-  const getSnapshot = () => cachedSnapshot;
+  const collect = async ({ force = false, maxAgeMs = DEFAULT_MAX_AGE_MS, sources = null } = {}) => {
+    const requestedKeys = normalizeRequestedSources(sources);
+    const isFullCollection = requestedKeys.length === SOURCES.length
+      && SOURCES.every((source) => requestedKeys.includes(source.key));
+    const snapshot = await buildSnapshot(requestedKeys, { force, maxAgeMs });
+
+    if (isFullCollection) {
+      lastFullSnapshot = snapshot;
+      window.dispatchEvent(new CustomEvent('pmh:radar-data', { detail: snapshot }));
+    } else {
+      window.dispatchEvent(new CustomEvent('pmh:radar-data-partial', {
+        detail: { ...snapshot, requestedSources: requestedKeys },
+      }));
+    }
+    return snapshot;
+  };
+
+  const invalidate = (sources = null) => {
+    const keys = normalizeRequestedSources(sources);
+    keys.forEach((key) => sourceCache.delete(key));
+    if (sources == null || keys.length === SOURCES.length) lastFullSnapshot = null;
+  };
+
+  const getSnapshot = () => lastFullSnapshot;
+
+  const getSourceState = (key) => {
+    const cached = sourceCache.get(String(key || ''));
+    if (!cached) return null;
+    return {
+      loadedAt: cached.loadedAt,
+      reliability: cached.reliability,
+      error: cached.error,
+    };
+  };
 
   const toAnalysisItems = (items) => (Array.isArray(items) ? items : []).map((item) => ({
     id: item.id,
@@ -345,6 +409,7 @@
     collect,
     invalidate,
     getSnapshot,
+    getSourceState,
     toAnalysisItems,
   });
 })();
