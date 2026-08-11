@@ -290,6 +290,10 @@ html.aos-mobile .aos-mobile-nav-row > b {
   font-weight: 400 !important;
 }
 
+html.aos-mobile .aos-mobile-nav-row > b[hidden] {
+  display: none !important;
+}
+
 html.aos-mobile .aos-mobile-nav-row.environment {
   min-height: 61px !important;
   margin-top: 3px !important;
