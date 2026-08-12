@@ -176,6 +176,49 @@
     }
   };
 
+  const deletePaymentById = async (paymentId, document = null, attempt = 0) => {
+    const targetId = String(paymentId || '');
+    if (!targetId) throw new Error('Pagamento inválido para exclusão.');
+
+    const current = document || {
+      suppliers: cloneItems(state.suppliers),
+      payments: cloneItems(state.payments),
+      revision: state.revision,
+    };
+    const suppliers = cloneItems(current.suppliers || []);
+    const payments = (current.payments || [])
+      .filter((item) => String(item.id || '') !== targetId)
+      .map((item) => ({ ...item }));
+
+    try {
+      const payload = await apiJson(API.finance, {
+        method: 'PUT',
+        body: JSON.stringify({
+          suppliers,
+          payments,
+          baseRevision: current.revision || null,
+        }),
+      });
+      state.suppliers = payload.suppliers || suppliers;
+      state.payments = payload.payments || payments;
+      state.revision = payload.revision || current.revision || null;
+      state.configured = true;
+      state.error = '';
+      return payload;
+    } catch (error) {
+      if (error.status === 409 && attempt < 2) {
+        const remote = error.payload?.suppliers && error.payload?.payments
+          ? error.payload
+          : await apiJson(API.finance);
+        return deletePaymentById(targetId, remote, attempt + 1);
+      }
+      const finalError = error.status === 409
+        ? new Error('Os dados financeiros mudaram novamente. Reabra o painel e tente excluir outra vez.')
+        : error;
+      throw finalError;
+    }
+  };
+
   const panelPayments = () => {
     const id = String(state.panelContext?.inaugurationId || '');
     return state.payments
@@ -191,7 +234,7 @@
         <div><strong>${money(payment.amount)}</strong><small>Vencimento: ${esc(payment.dueDate || 'não definido')}</small></div>
         <select data-payment-status="${esc(payment.id)}">${statusOptions(payment.status)}</select>
         <div><strong>${esc(STATUS_LABELS[payment.status] || payment.status)}</strong><small>${esc(payment.documentNumber || 'Sem NF/recibo')}</small></div>
-        <button data-finance-edit-payment="${esc(payment.id)}">Editar</button>
+        <div><button data-finance-edit-payment="${esc(payment.id)}">Editar</button><button data-finance-delete-payment="${esc(payment.id)}">Excluir</button></div>
       </article>`;
     }).join('')
     : '<div class="pmh-finance-empty"><h3>Nenhum pagamento nesta implantação</h3><p>Use “Novo pagamento” para criar o primeiro registro financeiro da unidade.</p></div>';
@@ -471,7 +514,7 @@
     }
   };
 
-  document.addEventListener('click', (event) => {
+  document.addEventListener('click', async (event) => {
     const financeButton = event.target.closest?.('[data-inauguration-finance-open]');
     if (financeButton) {
       event.preventDefault();
@@ -503,6 +546,40 @@
     const editSupplier = event.target.closest?.('[data-finance-edit-supplier]');
     if (editSupplier) {
       supplierModal(supplierById(editSupplier.dataset.financeEditSupplier));
+      return;
+    }
+
+    const deletePayment = event.target.closest?.('[data-finance-delete-payment]');
+    if (deletePayment) {
+      const payment = state.payments.find((item) => String(item.id) === String(deletePayment.dataset.financeDeletePayment));
+      if (!payment) return;
+      const supplier = supplierById(payment.supplierId);
+      const confirmed = window.confirm([
+        'Excluir este pagamento?',
+        '',
+        `Ação: ${payment.actionName || 'Pagamento da implantação'}`,
+        `Fornecedor: ${supplier?.legalName || 'Fornecedor não encontrado'}`,
+        `Valor: ${money(payment.amount)}`,
+        '',
+        'O lançamento financeiro desta implantação será removido.',
+      ].join('\n'));
+      if (!confirmed) return;
+
+      const originalText = deletePayment.textContent;
+      deletePayment.disabled = true;
+      deletePayment.textContent = 'Excluindo…';
+      try {
+        await deletePaymentById(payment.id);
+        renderPanel();
+      } catch (error) {
+        state.error = error instanceof Error ? error.message : 'Não foi possível excluir o pagamento.';
+        renderPanel();
+      } finally {
+        if (document.contains(deletePayment)) {
+          deletePayment.disabled = false;
+          deletePayment.textContent = originalText;
+        }
+      }
       return;
     }
 
