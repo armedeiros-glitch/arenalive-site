@@ -47,10 +47,14 @@ assert.match(quickFlow, /const deletePayment = async \(paymentId\)/,
   'fluxo rápido existente deve permanecer intacto');
 assert.doesNotMatch(backend, /onRequestDelete|export async function onRequestDelete/,
   'não deve surgir backend DELETE novo');
-assert.match(finance, /const committedAmount = \(payments, actualValue = 0\) => Math\.max\(/,
-  'regra atual de saldo deve permanecer');
-assert.match(finance, /<small>GASTO<\/small><strong>\$\{esc\(context\.actual \|\| money\(actualValue\)\)\}<\/strong>/,
-  'GASTO deve manter a semântica atual');
+assert.match(finance, /const calculateInaugurationFinance = \(inauguration = \{\}, payments = \[\]\) =>/,
+  'exclusão deve continuar integrada à regra financeira única');
+assert.match(finance, /const committed = Math\.max\(actual, requested\)/,
+  'comprometido deve usar a semântica financeira oficial');
+assert.match(finance, /const availableBalance = budget - committed/,
+  'saldo disponível deve usar a semântica financeira oficial');
+assert.match(finance, /GASTO REALIZADO/,
+  'painel deve manter o gasto realizado explícito');
 
 const removeById = (document, paymentId) => ({
   suppliers: [...document.suppliers],
