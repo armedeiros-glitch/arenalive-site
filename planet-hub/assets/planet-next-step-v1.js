@@ -59,10 +59,18 @@
     chamados: new Set(['chamados']),
   };
 
+  const radarSources = {
+    marketing: ['demands', 'contexts'],
+    calendario: ['campaigns', 'contexts'],
+    inauguracoes: ['inaugurations', 'contexts'],
+    chamados: ['tickets', 'contexts'],
+  };
+
   const collectRadarItems = async (area) => {
     const actions = radarActions[area];
-    if (!actions || !window.PMHRadarData?.collect) return [];
-    const snapshot = await window.PMHRadarData.collect({ maxAgeMs: 15000 });
+    const sources = radarSources[area];
+    if (!actions || !sources || !window.PMHRadarData?.collect) return [];
+    const snapshot = await window.PMHRadarData.collect({ sources, maxAgeMs: 15000 });
     return (Array.isArray(snapshot?.items) ? snapshot.items : []).filter((item) => actions.has(item.action));
   };
 
