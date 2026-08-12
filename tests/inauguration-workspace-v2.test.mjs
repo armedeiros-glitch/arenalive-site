@@ -10,7 +10,7 @@ const finance = read('planet-hub/assets/financeiro-v1.js');
 const access = read('planet-hub/assets/hub-access-v1.js');
 
 assert.match(rootEntry, /inauguration-workspace-v2\.css\?v=20260808-2/);
-assert.match(rootEntry, /inauguration-workspace-v2\.js\?v=20260807-3/);
+assert.match(rootEntry, /inauguration-workspace-v2\.js\?v=20260812-1/);
 assert.doesNotMatch(rootEntry, /finance-placement-v1\.js/);
 assert.match(rootEntry, /andre-os-mobile-shell-v2\.js\?v=20260807-11/);
 
