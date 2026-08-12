@@ -179,7 +179,10 @@ fetchCalls.length = 0;
 dispatched.length = 0;
 const marketingSnapshotBeforeReadings = await radarIdentity.collect({ sources: ['demands', 'contents'], force: true });
 await new Promise((resolve) => setTimeout(resolve, 0));
-assert.deepEqual(marketingSnapshotBeforeReadings.items.map((item) => item.id).sort(), ['content-c1', 'demand-d1']);
+assert.deepEqual(
+  Array.from(marketingSnapshotBeforeReadings.items, (item) => String(item.id)).sort(),
+  ['content-c1', 'demand-d1'],
+);
 assert.equal(fetchCalls.some((url) => url.includes('/api/sults/chamados')), false, 'snapshot sem tickets não pode chamar SULTS');
 assert.equal(dispatched.some((event) => event.type === 'pmh:ticket-readings'), false, 'snapshot sem tickets não deve emitir readings');
 
@@ -204,7 +207,10 @@ fetchCalls.length = 0;
 dispatched.length = 0;
 const selectiveAfterReadings = await radarIdentity.collect({ sources: ['demands', 'contents'], force: true });
 await new Promise((resolve) => setTimeout(resolve, 0));
-assert.deepEqual(selectiveAfterReadings.items.map((item) => item.id).sort(), ['content-c1', 'demand-d1']);
+assert.deepEqual(
+  Array.from(selectiveAfterReadings.items, (item) => String(item.id)).sort(),
+  ['content-c1', 'demand-d1'],
+);
 assert.deepEqual(Object.keys(selectiveAfterReadings.sources).sort(), ['contents', 'demands']);
 assert.equal(fetchCalls.some((url) => url.includes('/api/sults/chamados')), false, 'readings anteriores não podem contaminar coleta seletiva posterior');
 assert.equal(radarIdentity.getSnapshot(), officialFullSnapshot, 'coleta parcial continua sem substituir o último snapshot completo');
