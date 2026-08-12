@@ -249,7 +249,6 @@
         loadedAt: snapshot.ticketReadingsLoadedAt || new Date().toISOString(),
       },
     }));
-    scheduleDecorate();
   };
 
   const enhance = async (snapshot) => {
@@ -296,6 +295,57 @@
       <p>${esc(reading.text)}</p>
       ${reading.suggestion ? `<footer><strong>${esc(reading.suggestion.dependsOn ? `A bola parece estar com ${reading.suggestion.dependsOn}` : 'Há um próximo movimento sugerido')}</strong><span>${esc(reading.suggestion.nextAction)}</span></footer>` : ''}
     </section>`;
+  };
+
+  const usefulListSuggestion = (item) => {
+    const suggestion = item?.ticketReading?.suggestion;
+    if (!suggestion || !['high', 'medium'].includes(suggestion.confidence)) return null;
+    const dependsOn = cleanExcerpt(suggestion.dependsOn, 48);
+    const nextAction = cleanExcerpt(suggestion.nextAction, 110);
+    if (!dependsOn && !nextAction) return null;
+    return { dependsOn, nextAction, confidence: suggestion.confidence };
+  };
+
+  const listReadingMarkup = (item) => {
+    const suggestion = usefulListSuggestion(item);
+    if (!suggestion) return '';
+    const signature = `${suggestion.dependsOn}|${suggestion.nextAction}|${suggestion.confidence}`;
+    return `<div class="pmh-ticket-list-reading" data-ticket-list-reading data-reading-signature="${esc(signature)}">
+      ${suggestion.dependsOn ? `<span><small>Bola com</small><strong>${esc(suggestion.dependsOn)}</strong></span>` : ''}
+      ${suggestion.nextAction ? `<span class="next"><small>Próximo</small><strong>${esc(suggestion.nextAction)}</strong></span>` : ''}
+    </div>`;
+  };
+
+  const ensureListStyles = () => {
+    if (document.querySelector('style[data-ticket-list-reading-style]')) return;
+    const style = document.createElement('style');
+    style.dataset.ticketListReadingStyle = '1';
+    style.textContent = `
+      .pmh-command-ticket .pmh-ticket-list-reading{display:flex;gap:8px 18px;align-items:flex-start;flex-wrap:wrap;margin:8px 0 2px;padding:8px 10px;border:1px solid var(--aos-border-subtle,rgba(127,127,127,.18));border-radius:10px;background:rgba(127,127,127,.045);font-size:12px;line-height:1.35}
+      .pmh-command-ticket .pmh-ticket-list-reading>span{display:flex;gap:5px;align-items:baseline;min-width:0}
+      .pmh-command-ticket .pmh-ticket-list-reading>span.next{flex:1 1 320px}
+      .pmh-command-ticket .pmh-ticket-list-reading small{font-size:10px;letter-spacing:.04em;text-transform:uppercase;opacity:.58;white-space:nowrap}
+      .pmh-command-ticket .pmh-ticket-list-reading strong{font-size:12px;font-weight:600;opacity:.82;min-width:0}
+    `;
+    document.head.appendChild(style);
+  };
+
+  const decorateTicketList = (snapshot) => {
+    ensureListStyles();
+    document.querySelectorAll('.pmh-command-ticket[data-ticket-id]').forEach((card) => {
+      const item = snapshot?.items?.find((candidate) => candidate.id === `ticket-${card.dataset.ticketId}`);
+      const suggestion = usefulListSuggestion(item);
+      const existing = card.querySelector('[data-ticket-list-reading]');
+      if (!suggestion) {
+        existing?.remove();
+        return;
+      }
+      const signature = `${suggestion.dependsOn}|${suggestion.nextAction}|${suggestion.confidence}`;
+      if (existing?.dataset.readingSignature === signature) return;
+      existing?.remove();
+      const facts = card.querySelector('.pmh-command-ticket-facts');
+      if (facts) facts.insertAdjacentHTML('beforebegin', listReadingMarkup(item));
+    });
   };
 
   const decorateCockpit = (snapshot) => {
@@ -353,6 +403,7 @@
   const decorate = () => {
     const snapshot = enrichedSnapshot || window.PMHRadarData?.getSnapshot?.();
     if (!snapshot) return;
+    decorateTicketList(snapshot);
     decorateCockpit(snapshot);
     decorateRows(snapshot);
     decorateDrawer(snapshot);
@@ -369,6 +420,11 @@
 
   window.addEventListener('pmh:radar-data-partial', (event) => {
     enhance(event.detail);
+  });
+
+  window.addEventListener('pmh:ticket-readings', (event) => {
+    if (event.detail?.snapshot) enrichedSnapshot = event.detail.snapshot;
+    scheduleDecorate();
   });
 
   document.addEventListener('visibilitychange', () => {
