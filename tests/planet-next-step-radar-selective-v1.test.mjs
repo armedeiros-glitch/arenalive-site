@@ -42,14 +42,16 @@ assert.doesNotMatch(
   'Next Step não deve introduzir collect() legado completo',
 );
 
-// Compatibilidade do comportamento e fallbacks já existentes.
+// Compatibilidade do comportamento e fallbacks que continuam válidos.
 assert.match(script, /marketingStep/);
 assert.match(script, /campaignStep/);
 assert.match(script, /inaugurationStep/);
 assert.match(script, /radarStep/);
 assert.match(script, /actionModelForItem/);
 assert.match(script, /pmh-campaign-focus-card\[data-edit-campaign\]/, 'fallback DOM de Campanhas deve permanecer');
-assert.match(script, /pmh-checklist label/, 'fallback DOM de Inaugurações deve permanecer');
+assert.doesNotMatch(script, /pmh-checklist label/, 'fallback DOM de Inaugurações deve permanecer removido');
+assert.doesNotMatch(script, /\.pmh-inauguration-card/, 'Next Step não deve depender dos cards renderizados de Inaugurações');
+assert.doesNotMatch(script, /\.pmh-inauguration-project-row-main/, 'unidade de Inaugurações não deve vir do DOM');
 assert.match(script, /\/api\/hub\/inauguracoes/, 'fallback API de Inaugurações deve permanecer');
 assert.match(script, /\/api\/hub\/planet\/acquisition\/lp-franquias\?period=7d/);
 assert.match(script, /\/api\/hub\/planet\/leads/);
@@ -61,4 +63,4 @@ assert.match(radarData, /window\.PMHRadarData\s*=/, 'RadarData continua owner do
 assert.ok(calendarBundle.length > 200000, 'bundle legado do calendário continua presente e compilado');
 assert.match(styles, /aos-planet-next-step/, 'CSS existente continua presente sem depender deste corte');
 
-console.log('Planet Next Step: leituras Radar seletivas por área, maxAge preservado e fallbacks intactos.');
+console.log('Planet Next Step: Radar seletivo preservado, Inaugurações sem DOM e demais fallbacks mantidos.');
