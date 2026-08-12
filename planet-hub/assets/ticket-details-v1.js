@@ -12,7 +12,6 @@
     6: 'Aguardando responsável',
   };
 
-  let activeFilter = 'all';
   let drawer = null;
 
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -42,53 +41,7 @@
     }).format(date) : 'Sem data';
   };
 
-  const todayBr = () => new Intl.DateTimeFormat('pt-BR').format(new Date());
   const ticketIdFromCard = (card) => String(card.querySelector('small')?.textContent || '').replace(/\D/g, '');
-  const laneName = (card) => card.closest('.pmh-lane')?.querySelector('header h3')?.textContent?.trim() || '';
-
-  const cardMatches = (card, filter) => {
-    if (filter === 'all') return true;
-    if (filter === 'late') return card.classList.contains('late');
-    if (filter === 'today') {
-      const deadline = [...card.querySelectorAll('dd')].at(-1)?.textContent?.trim();
-      return deadline === todayBr();
-    }
-    if (filter === 'waiting') return laneName(card).toLowerCase().includes('aguardando');
-    if (filter === 'progress') return laneName(card).toLowerCase().includes('andamento');
-    return true;
-  };
-
-  const applyFilter = () => {
-    document.querySelectorAll('.pmh-ticket').forEach((card) => {
-      card.hidden = !cardMatches(card, activeFilter);
-    });
-    document.querySelectorAll('.pmh-lane').forEach((lane) => {
-      const cards = [...lane.querySelectorAll('.pmh-ticket')];
-      lane.hidden = Boolean(cards.length) && cards.every((card) => card.hidden);
-    });
-    document.querySelectorAll('[data-ticket-filter]').forEach((button) => {
-      button.classList.toggle('active', button.dataset.ticketFilter === activeFilter);
-    });
-  };
-
-  const injectFilters = () => {
-    const kanban = document.querySelector('.pmh-kanban');
-    const head = kanban?.previousElementSibling;
-    if (!kanban || !head?.classList.contains('pmh-section-head') || document.querySelector('[data-ticket-filters]')) return;
-
-    const bar = document.createElement('div');
-    bar.className = 'pmh-ticket-filters';
-    bar.dataset.ticketFilters = '1';
-    bar.innerHTML = `
-      <span>Mostrar:</span>
-      <button type="button" data-ticket-filter="all">Todos</button>
-      <button type="button" data-ticket-filter="late">Atrasados</button>
-      <button type="button" data-ticket-filter="today">Vencem hoje</button>
-      <button type="button" data-ticket-filter="waiting">Aguardando</button>
-      <button type="button" data-ticket-filter="progress">Em andamento</button>`;
-    head.insertAdjacentElement('afterend', bar);
-    applyFilter();
-  };
 
   const decorateCards = () => {
     document.querySelectorAll('.pmh-ticket').forEach((card) => {
@@ -198,20 +151,7 @@
     }
   };
 
-  const decorate = () => {
-    injectFilters();
-    decorateCards();
-    applyFilter();
-  };
-
   document.addEventListener('click', (event) => {
-    const filter = event.target.closest('[data-ticket-filter]');
-    if (filter) {
-      activeFilter = filter.dataset.ticketFilter || 'all';
-      applyFilter();
-      return;
-    }
-
     if (event.target.closest('[data-ticket-close]') || (drawer && event.target === drawer)) {
       closeDrawer();
       return;
@@ -239,7 +179,7 @@
     }
   });
 
-  const observer = new MutationObserver(decorate);
+  const observer = new MutationObserver(decorateCards);
   observer.observe(document.documentElement, { childList: true, subtree: true });
-  decorate();
+  decorateCards();
 })();
