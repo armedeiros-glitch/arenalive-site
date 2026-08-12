@@ -9,6 +9,7 @@ const MARKETING_DEPARTMENT_ID = 10;
 const DEFAULT_PERSON_NAME = 'André Roberto Medeiros';
 const DEFAULT_BRAND_TERM = 'Planet Chocolate';
 const IGNORED_STORAGE_KEY = 'planet-hub:chamados-ignorados:v1';
+const IGNORED_STORAGE_PREFIX = 'planet-hub:chamado-ignorado:v2:';
 const SNAPSHOT_STORAGE_PREFIX = 'planet-hub:sults-chamados-completos:v2';
 
 const json = (body, status = 200) =>
@@ -132,13 +133,38 @@ const fetchAllPages = async (token, params = {}) => {
 
 const readIgnoredIds = async (env) => {
   if (!env.PLANET_HUB_DATA) return new Set();
+  const store = env.PLANET_HUB_DATA;
+  let ignored = new Set();
+
   try {
-    const stored = await env.PLANET_HUB_DATA.get(IGNORED_STORAGE_KEY, { type: 'json' });
+    const stored = await store.get(IGNORED_STORAGE_KEY, { type: 'json' });
     const data = Array.isArray(stored?.data) ? stored.data : [];
-    return new Set(data.map((item) => String(item?.id || '')).filter(Boolean));
+    ignored = new Set(data.map((item) => String(item?.id || '')).filter(Boolean));
   } catch {
-    return new Set();
+    ignored = new Set();
   }
+
+  if (typeof store.list !== 'function') return ignored;
+
+  try {
+    let cursor;
+    do {
+      const page = await store.list({ prefix: IGNORED_STORAGE_PREFIX, cursor, limit: 1000 });
+      const keys = (page.keys || []).map((item) => item.name).filter(Boolean);
+      const records = await Promise.all(keys.map((key) => store.get(key, { type: 'json' })));
+      records.forEach((record) => {
+        const id = String(record?.id || '').trim();
+        if (!id) return;
+        if (record.state === 'restored') ignored.delete(id);
+        else ignored.add(id);
+      });
+      cursor = page.list_complete ? undefined : page.cursor;
+    } while (cursor);
+  } catch {
+    return ignored;
+  }
+
+  return ignored;
 };
 
 const snapshotKey = (includeClosed) => `${SNAPSHOT_STORAGE_PREFIX}:${includeClosed ? 'todos' : 'ativos'}`;
