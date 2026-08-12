@@ -218,31 +218,6 @@
     return !stepIsDone(step) && /^\d{4}-\d{2}-\d{2}$/.test(date) && date < today();
   };
 
-  const domChecklistStep = (unit) => {
-    const cards = [...document.querySelectorAll('.pmh-inauguration-card')];
-    const normalizedUnit = String(unit || '').toLowerCase().trim();
-    const card = cards.find((entry) => String(entry.querySelector(':scope > header h3')?.textContent || '').toLowerCase().trim() === normalizedUnit)
-      || cards[0]
-      || null;
-    if (!card) return null;
-
-    const pending = [...card.querySelectorAll('.pmh-checklist label')].filter((label) => !label.classList.contains('done'));
-    if (!pending.length) return null;
-    const late = pending.find((label) => {
-      if (/late|overdue|atras/i.test(label.className)) return true;
-      const text = label.textContent || '';
-      const match = text.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-      if (!match) return false;
-      return `${match[3]}-${match[2]}-${match[1]}` < today();
-    });
-    const target = late || pending[0];
-    const title = target.querySelector('strong')?.textContent?.trim()
-      || target.querySelector('span')?.textContent?.trim()
-      || target.textContent?.replace(/\s+/g, ' ').trim()
-      || '';
-    return title ? { title, late: Boolean(late) } : null;
-  };
-
   const apiChecklistStep = async (unit) => {
     try {
       const payload = await fetchJson(API.inaugurations);
@@ -265,9 +240,8 @@
     if (action) return action;
 
     const item = items[0] || null;
-    const unit = item?.title || document.querySelector('.pmh-inauguration-project-row-main strong')?.textContent?.trim() || '';
-    const domStep = domChecklistStep(unit);
-    const apiStep = domStep || await apiChecklistStep(unit);
+    const unit = item?.title || '';
+    const apiStep = await apiChecklistStep(unit);
     const dueInfo = due(item?.dueDate);
 
     if (apiStep) {
