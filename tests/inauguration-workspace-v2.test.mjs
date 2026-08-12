@@ -35,6 +35,6 @@ assert.match(finance, /data-finance-edit-payment/);
 assert.match(finance, /data-finance-edit-supplier/);
 assert.doesNotMatch(finance, /MutationObserver|injectNav|openFinance|state\.active/);
 
-assert.match(access, /financeiro-v1\.js\?v=20260805-5/);
+assert.match(access, /financeiro-v1\.js\?v=20260812-1/);
 
 console.log('AndreOS inauguration workspace v2: tests passed');
