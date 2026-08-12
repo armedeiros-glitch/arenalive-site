@@ -8,9 +8,10 @@ import {
 import { onRequestGet as getTickets } from '../functions/api/sults/chamados.js';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [ownerSource, removalSource] = await Promise.all([
+const [ownerSource, removalSource, ticketsBackend] = await Promise.all([
   read('planet-hub/assets/ignored-tickets-v1.js'),
   read('planet-hub/assets/ticket-removal-v1.js'),
+  read('functions/api/sults/chamados.js'),
 ]);
 
 assert.match(ownerSource, /data-open-ignored-tickets/, 'Chamados deve expor acesso aos ignorados');
@@ -39,6 +40,8 @@ assert.match(removalSource, /ticket|chamado/i, 'arquivo histórico permanece ape
 const restoreBlock = ownerSource.match(/const restoreTicket = async \(button\) => \{[\s\S]*?\n  \};/)?.[0] || '';
 assert.ok(restoreBlock, 'fluxo de restauração deve existir');
 assert.doesNotMatch(restoreBlock, /\/api\/sults|situation|responsible|status\s*:/i, 'restauração não pode escrever dados oficiais do SULTS');
+assert.match(ticketsBackend, /IGNORED_STORAGE_PREFIX = 'planet-hub:chamado-ignorado:v2:'/, 'lista normal deve ler tombstones v2');
+assert.match(ticketsBackend, /record\.state === 'restored'/, 'lista normal deve respeitar restauração v2');
 
 class FakeKV {
   constructor() { this.values = new Map(); }
@@ -58,62 +61,77 @@ class FakeKV {
 const kv = new FakeKV();
 const env = { PLANET_HUB_DATA: kv };
 const endpoint = 'https://andre-os.test/api/hub/chamados-ignorados';
-
-const ignoredResponse = await ignoreTicket({
-  env,
-  request: new Request(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: '321', title: 'Chamado teste', unit: 'Planet Teste' }),
-  }),
-});
-assert.equal(ignoredResponse.status, 200, 'ignore existente deve continuar funcionando');
-
-const listResponse = await listIgnored({ env });
-assert.equal(listResponse.status, 200, 'lista de ignorados deve carregar');
-const ignoredPayload = await listResponse.json();
-assert.equal(ignoredPayload.data.length, 1, 'chamado ignorado deve aparecer na lista');
-assert.equal(ignoredPayload.data[0].id, '321');
-assert.equal(ignoredPayload.data[0].title, 'Chamado teste');
-assert.equal(ignoredPayload.data[0].unit, 'Planet Teste');
-assert.ok(ignoredPayload.data[0].ignoredAt, 'data do ignore deve existir');
-
-const restoreResponse = await restoreTicket({
-  env,
-  request: new Request(endpoint, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: '321' }),
-  }),
-});
-assert.equal(restoreResponse.status, 200, 'restauração existente deve funcionar');
-const restoredPayload = await restoreResponse.json();
-assert.equal(restoredPayload.restoredId, '321');
-assert.equal(restoredPayload.data.length, 0, 'após restaurar o item deve sair da lista de ignorados');
-
-const emptyResponse = await listIgnored({ env });
-const emptyPayload = await emptyResponse.json();
-assert.deepEqual(emptyPayload.data, [], 'estado vazio do backend deve ser uma lista vazia');
+const fakeSultsPayload = {
+  data: [{
+    id: 321,
+    titulo: 'Chamado teste',
+    unidade: { nome: 'Planet Teste' },
+    situacao: 4,
+    responsavel: { nome: 'André Roberto Medeiros' },
+    departamento: { id: 10, nome: 'Marketing' },
+    apoio: [],
+    etiqueta: [],
+    ultimaAlteracao: '2026-08-12T10:00:00.000Z',
+  }],
+};
 
 const originalFetch = globalThis.fetch;
 try {
-  globalThis.fetch = async () => new Response(JSON.stringify({
-    data: [{
-      id: 321,
-      titulo: 'Chamado teste',
-      unidade: { nome: 'Planet Teste' },
-      situacao: 4,
-      responsavel: { nome: 'André Roberto Medeiros' },
-      departamento: { id: 10, nome: 'Marketing' },
-      apoio: [],
-      etiqueta: [],
-      ultimaAlteracao: '2026-08-12T10:00:00.000Z',
-    }],
-  }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  globalThis.fetch = async () => new Response(JSON.stringify(fakeSultsPayload), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  const ignoredResponse = await ignoreTicket({
+    env,
+    request: new Request(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: '321', title: 'Chamado teste', unit: 'Planet Teste' }),
+    }),
+  });
+  assert.equal(ignoredResponse.status, 200, 'ignore existente deve continuar funcionando');
+
+  const listResponse = await listIgnored({ env });
+  assert.equal(listResponse.status, 200, 'lista de ignorados deve carregar');
+  const ignoredPayload = await listResponse.json();
+  assert.equal(ignoredPayload.data.length, 1, 'chamado ignorado deve aparecer na lista');
+  assert.equal(ignoredPayload.data[0].id, '321');
+  assert.equal(ignoredPayload.data[0].title, 'Chamado teste');
+  assert.equal(ignoredPayload.data[0].unit, 'Planet Teste');
+  assert.ok(ignoredPayload.data[0].ignoredAt, 'data do ignore deve existir');
+
+  const hiddenResponse = await getTickets({
+    env: { ...env, SULTS_API_TOKEN: 'token' },
+    request: new Request('https://andre-os.test/api/sults/chamados?start=0&limit=100&scope=all'),
+  });
+  const hiddenPayload = await hiddenResponse.json();
+  assert.equal(
+    hiddenPayload.data.some((item) => String(item.id) === '321'),
+    false,
+    'enquanto ignorado o chamado deve permanecer fora da lista normal',
+  );
+
+  const restoreResponse = await restoreTicket({
+    env,
+    request: new Request(endpoint, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: '321' }),
+    }),
+  });
+  assert.equal(restoreResponse.status, 200, 'restauração existente deve funcionar');
+  const restoredPayload = await restoreResponse.json();
+  assert.equal(restoredPayload.restoredId, '321');
+  assert.equal(restoredPayload.data.length, 0, 'após restaurar o item deve sair da lista de ignorados');
+
+  const emptyResponse = await listIgnored({ env });
+  const emptyPayload = await emptyResponse.json();
+  assert.deepEqual(emptyPayload.data, [], 'estado vazio do backend deve ser uma lista vazia');
 
   const ticketsResponse = await getTickets({
     env: { ...env, SULTS_API_TOKEN: 'token' },
-    request: new Request('https://andre-os.test/api/sults/chamados?start=0&limit=100'),
+    request: new Request('https://andre-os.test/api/sults/chamados?start=0&limit=100&scope=all'),
   });
   const ticketsPayload = await ticketsResponse.json();
   assert.equal(
