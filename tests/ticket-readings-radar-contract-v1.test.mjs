@@ -23,7 +23,7 @@ assert.ok(readingsSource.includes('const MAX_TICKETS = 5'), 'limite de cinco tic
 assert.ok(readingsSource.includes("fetch(`/api/sults/chamados/${encodeURIComponent(item.sourceId)}`"), 'busca de detalhe SULTS deve permanecer');
 assert.ok(readingsSource.includes("document.querySelector('.pmh-ticket-drawer-panel:not(.loading)')"), 'leitura sob demanda do drawer deve permanecer');
 assert.ok(readingsSource.includes('requestDrawerReading(panel, snapshot, item)'), 'drawer deve continuar pedindo reading quando necessário');
-assert.match(marketingSource, /collect\(\{\s*sources:\s*\['demands',\s*'contents'\]\s*\}/, 'Marketing deve continuar coletando somente demands + contents');
+assert.ok(marketingSource.includes("sources: ['demands', 'contents']"), 'Marketing deve continuar coletando somente demands + contents');
 
 const listeners = new Map();
 const dispatched = [];
