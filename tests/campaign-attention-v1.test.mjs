@@ -21,12 +21,14 @@ assert.match(index, /calendar-operations-v1\.js\?v=20260812-1/);
 assert.match(styles, /\.pmh-campaign-attention/);
 assert.match(styles, /\.pmh-campaign-attention-badge/);
 
-const persistedFields = ['status', 'responsible', 'nextMilestone', 'milestoneDate', 'materials', 'notes', 'updatedAt'];
-for (const field of persistedFields) assert.match(source, new RegExp(`${field}:`));
+const updatedBlock = source.match(/const updated = \{([\s\S]*?)\n      \};/)?.[1] || '';
+for (const field of ['id', 'status', 'responsible', 'nextMilestone', 'milestoneDate', 'materials', 'notes', 'updatedAt']) {
+  assert.match(updatedBlock, new RegExp(`\\b${field}:`), `campo operacional ${field} deve permanecer`);
+}
+assert.doesNotMatch(updatedBlock, /\boverdue:|\battention:|\burgency:|\bdaysRemaining:/,
+  'campos derivados não podem entrar no objeto persistido');
 assert.doesNotMatch(backend, /overdue|attention|urgency|daysRemaining/,
   'backend não deve ganhar campos derivados de atenção');
-assert.doesNotMatch(source, /overdue:\s|attention:\s*String|urgency:\s|daysRemaining:\s/,
-  'estado derivado não deve entrar no objeto persistido');
 
 const instrumented = source.replace(
   /  const observer = new MutationObserver\(transform\);[\s\S]*?\n\}\)\(\);\s*$/,
