@@ -29,7 +29,7 @@ const totalWithoutRejected = withRejected
   .reduce((sum, item) => sum + item.amount, 0);
 assert.equal(budget - Math.max(actualValue, totalWithoutRejected), 2350);
 
-assert.match(access, /financeiro-v1\.js\?v=20260805-5/);
+assert.match(access, /financeiro-v1\.js\?v=20260812-1/);
 assert.match(indexHtml, /hub-access-v1\.js\?v=/);
 
 console.log('AndreOS finance available balance: tests passed');
