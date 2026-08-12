@@ -11,6 +11,7 @@ const ACQUISITION = '/planet-hub/assets/planet-acquisition-v1.js?v=20260807-1';
 const expectedGlobalScripts = [
   '/planet-hub/assets/unified-hub-v1.js?v=20260812-1',
   '/planet-hub/assets/financeiro-v1.js?v=20260812-2',
+  '/planet-hub/assets/inauguration-finance-report-v1.js?v=20260812-1',
   '/planet-hub/assets/planet-expansion-v1.js?v=20260811-1',
   '/planet-hub/assets/andre-os-navigation-drawers-v1.js?v=20260811-1',
   '/planet-hub/assets/andre-os-home-pages-v1.js?v=20260807-3',
