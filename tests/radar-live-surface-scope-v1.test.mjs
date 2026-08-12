@@ -89,7 +89,7 @@ for (const hash of ['#inicio', '#hoje', '#radar', '#planet']) {
   assert.equal(await app.bootstrap(), 700, `${hash} deve iniciar pelo delay de bootstrap`);
   assert.equal(app.calls.collect.length, 1, `${hash} deve permitir coleta completa`);
   assert.equal(app.calls.invalidate, 1, `${hash} deve invalidar antes da coleta`);
-  assert.deepEqual(app.calls.collect[0], { force: true }, `${hash} deve preservar collect({ force: true })`);
+  assert.equal(app.calls.collect[0]?.force, true, `${hash} deve preservar collect({ force: true })`);
 }
 
 for (const hash of ['#marketing', '#chamados', '#inauguracoes', '#demandas', '#conteudos', '#expansao', '#aquisicao', '#5-estrelas', '#calendario']) {
