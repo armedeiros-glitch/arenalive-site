@@ -51,6 +51,31 @@
     });
   };
 
+  const ensureOverrideStyles = () => {
+    if (!document.head?.appendChild || document.querySelector('style[data-inauguration-checklist-overrides]')) return;
+    const style = document.createElement('style');
+    style.dataset.inaugurationChecklistOverrides = '1';
+    style.textContent = `
+      .pmh-checklist-override{margin:-3px 0 7px 38px;padding:0;border:1px solid var(--os-border);border-radius:10px;background:var(--os-surface-subtle)}
+      .pmh-checklist-override>summary{padding:7px 10px;color:var(--os-text-muted);font-size:10px;font-weight:800;cursor:pointer;list-style:none}
+      .pmh-checklist-override>summary::-webkit-details-marker{display:none}
+      .pmh-checklist-override.is-customized>summary{color:var(--os-accent)}
+      .pmh-checklist-override-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:0 10px 9px}
+      .pmh-checklist-override-grid>div>small,.pmh-checklist-override-grid>div>em{display:block}
+      .pmh-checklist-override-grid>div>small{margin-bottom:4px;color:var(--os-text-faint);font-size:8px;font-weight:900;letter-spacing:.06em}
+      .pmh-checklist-override-grid>div>div{display:flex;gap:5px}
+      .pmh-checklist-override-grid input{min-width:0;width:100%;height:32px;padding:0 8px;border:1px solid var(--os-border);border-radius:8px;color:var(--os-text);background:var(--os-surface);font:inherit;font-size:11px}
+      .pmh-checklist-override-grid button{height:32px;padding:0 8px;border:1px solid var(--os-border);border-radius:8px;color:var(--os-text-muted);background:var(--os-surface);font-size:9px;font-weight:800;cursor:pointer}
+      .pmh-checklist-override-grid>div>em{margin-top:4px;color:var(--os-text-faint);font-size:8px;font-style:normal}
+      .pmh-checklist-save-status{min-height:14px;margin:0;padding:0 10px 8px;color:var(--os-text-faint);font-size:9px}
+      .pmh-checklist-save-status.saving{color:var(--os-text-muted)}
+      .pmh-checklist-save-status.saved{color:var(--os-success,#2f9e62)}
+      .pmh-checklist-save-status.error{color:var(--os-danger)}
+      @media(max-width:820px){.pmh-checklist-override{margin-left:30px}.pmh-checklist-override-grid{grid-template-columns:1fr}}
+    `;
+    document.head.appendChild(style);
+  };
+
   const readTracked = () => {
     try {
       const items = JSON.parse(window.localStorage.getItem(TRACKED_KEY) || '[]');
@@ -68,6 +93,10 @@
     : String(value || 'Etapa sem nome');
 
   const checklistDueDate = (item, step) => {
+    if (step?.dueDate) {
+      const override = new Date(`${String(step.dueDate).slice(0, 10)}T12:00:00`);
+      if (!Number.isNaN(override.getTime())) return override;
+    }
     if (!item?.openingDate || !Number.isFinite(Number(step?.daysBefore))) return null;
     const opening = new Date(`${String(item.openingDate).slice(0, 10)}T12:00:00`);
     if (Number.isNaN(opening.getTime())) return null;
@@ -95,7 +124,7 @@
     return {
       state: overdue ? 'overdue' : 'pending',
       action: displayChecklistAction(step?.action),
-      owner: String(step?.owner || ''),
+      owner: String(step?.ownerOverride || step?.owner || ''),
       due: formatStepDate(dueDate),
     };
   };
@@ -178,8 +207,8 @@
     const opening = card.querySelector('.pmh-date strong')?.textContent?.trim() || 'Sem data';
     const countdown = card.querySelector('.pmh-date span')?.textContent?.trim() || 'Sem contagem';
     const owner = card.querySelector(':scope > header p')?.textContent?.trim() || 'Responsável não definido';
-    const total = checklist.querySelectorAll('label').length;
-    const done = checklist.querySelectorAll('label.done').length;
+    const total = checklist.querySelectorAll(':scope > label').length || checklist.querySelectorAll('label').length;
+    const done = checklist.querySelectorAll(':scope > label.done').length || checklist.querySelectorAll('label.done').length;
     const pending = Math.max(0, total - done);
     const nextStep = projectNextStep(itemId);
 
@@ -393,6 +422,7 @@
 
   const updateCopy = (view, content) => {
     if (view === 'inauguracoes') {
+      ensureOverrideStyles();
       const intro = content.querySelector('.pmh-section-head p');
       if (intro) intro.textContent = 'Visão da implantação primeiro. Checklist e financeiro só aparecem quando você entra na unidade.';
       buildBrowser(content);
@@ -465,4 +495,6 @@
     if (!event.target.closest?.('[data-new-inauguration], [data-start-project]')) return;
     requestAnimationFrame(upgradeNewInaugurationModal);
   }, true);
+
+  ensureOverrideStyles();
 })();
