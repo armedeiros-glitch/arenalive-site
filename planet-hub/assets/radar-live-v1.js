@@ -4,16 +4,19 @@
   const VISIBLE_INTERVAL_MS = 60 * 1000;
   const MIN_REFRESH_GAP_MS = 40 * 1000;
   const START_DELAY_MS = 700;
+  const GLOBAL_SURFACES = new Set(['', 'inicio', 'hoje', 'radar', 'planet']);
 
   let timer = 0;
   let running = false;
   let lastRefreshAt = 0;
 
   const radar = () => window.PMHRadarData;
+  const currentSurface = () => String(location.hash || '#inicio').replace(/^#/, '').toLowerCase();
+  const isGlobalSurface = () => GLOBAL_SURFACES.has(currentSurface());
   const isVisible = () => document.visibilityState === 'visible';
   const isOnline = () => navigator.onLine !== false;
   const serviceReady = () => Boolean(radar()?.collect);
-  const canRun = () => isVisible() && isOnline() && serviceReady();
+  const canRun = () => isGlobalSurface() && isVisible() && isOnline() && serviceReady();
 
   const clearTimer = () => {
     if (!timer) return;
@@ -66,6 +69,7 @@
   window.addEventListener('offline', clearTimer);
   window.addEventListener('pageshow', wake);
   window.addEventListener('pagehide', clearTimer);
+  window.addEventListener('hashchange', wake);
 
   const bootstrap = () => {
     if (!serviceReady()) {
