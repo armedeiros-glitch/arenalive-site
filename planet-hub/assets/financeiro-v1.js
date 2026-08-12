@@ -5,6 +5,7 @@
     finance: '/api/hub/financeiro',
     inaugurations: '/api/hub/inauguracoes',
   };
+  const TRACKED_KEY = 'planet-hub-inaugurations-v2';
   const STATUS_LABELS = {
     draft: 'Rascunho',
     docs_pending: 'Documentação pendente',
@@ -33,6 +34,10 @@
     currency: 'BRL',
   }).format(Number(value) || 0);
   const digits = (value) => String(value || '').replace(/\D/g, '');
+  const cleanAmount = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  };
   const maskDocument = (value) => {
     const doc = digits(value);
     if (doc.length === 11) return doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
@@ -51,6 +56,148 @@
     });
     return [...merged.values()];
   };
+
+  const calculateInaugurationFinance = (inauguration = {}, payments = []) => {
+    const inaugurationId = String(inauguration.id || inauguration.inaugurationId || '');
+    const actions = (Array.isArray(inauguration.inauguralActions) ? inauguration.inauguralActions : [])
+      .filter((action) => action?.included !== false);
+    const packageActions = actions.filter((action) => action?.costType === 'package');
+    const scopedPayments = (Array.isArray(payments) ? payments : [])
+      .filter((payment) => String(payment?.inaugurationId || '') === inaugurationId);
+    const activePayments = scopedPayments.filter((payment) => payment?.status !== 'rejected');
+    const budget = cleanAmount(inauguration.packageBudget ?? inauguration.budget);
+    const planned = packageActions.reduce((sum, action) => sum + cleanAmount(action?.plannedAmount), 0);
+    const actual = packageActions.reduce((sum, action) => sum + cleanAmount(action?.actualAmount), 0);
+    const requested = activePayments.reduce((sum, payment) => sum + cleanAmount(payment?.amount), 0);
+    const sent = activePayments
+      .filter((payment) => ['sent_finance', 'paid'].includes(payment?.status))
+      .reduce((sum, payment) => sum + cleanAmount(payment?.amount), 0);
+    const paid = activePayments
+      .filter((payment) => payment?.status === 'paid')
+      .reduce((sum, payment) => sum + cleanAmount(payment?.amount), 0);
+    const pending = activePayments.filter((payment) => payment?.status !== 'paid').length;
+    const committed = Math.max(actual, requested);
+    const availableBalance = budget - committed;
+    const unitActual = actions
+      .filter((action) => action?.costType === 'unit')
+      .reduce((sum, action) => sum + cleanAmount(action?.actualAmount), 0);
+    return {
+      budget,
+      planned,
+      actual,
+      requested,
+      sent,
+      paid,
+      pending,
+      committed,
+      availableBalance,
+      unitActual,
+    };
+  };
+
+  const financeDomain = window.PlanetInaugurationFinance || {};
+  financeDomain.calculate = calculateInaugurationFinance;
+  financeDomain.payments = Array.isArray(financeDomain.payments) ? financeDomain.payments : [];
+  window.PlanetInaugurationFinance = financeDomain;
+
+  const readTrackedInaugurations = () => {
+    try {
+      const items = JSON.parse(window.localStorage.getItem(TRACKED_KEY) || '[]');
+      return Array.isArray(items) ? items : [];
+    } catch (_) {
+      return [];
+    }
+  };
+
+  const publishFinanceSnapshot = () => {
+    financeDomain.payments = cloneItems(state.payments);
+    window.dispatchEvent(new CustomEvent('pmh:inauguration-finance-updated', {
+      detail: { payments: financeDomain.payments, revision: state.revision },
+    }));
+  };
+
+  const articleByLabel = (root, label) => [...(root?.querySelectorAll('article') || [])]
+    .find((article) => String(article.querySelector('small')?.textContent || '').trim().toUpperCase() === label.toUpperCase());
+
+  const updateArticle = (root, oldLabels, newLabel, value) => {
+    const labels = Array.isArray(oldLabels) ? oldLabels : [oldLabels];
+    const article = labels.map((label) => articleByLabel(root, label)).find(Boolean);
+    if (!article) return;
+    const small = article.querySelector('small');
+    const strong = article.querySelector('strong');
+    if (small) small.textContent = newLabel;
+    if (strong) strong.textContent = money(value);
+    article.classList.toggle('negative', Number(value) < 0 && newLabel === 'SALDO DISPONÍVEL');
+    article.classList.toggle('is-negative', Number(value) < 0 && newLabel === 'SALDO DISPONÍVEL');
+  };
+
+  const syncInaugurationFinancialSurfaces = () => {
+    const items = readTrackedInaugurations();
+    if (!items.length) return;
+
+    items.forEach((item) => {
+      const finance = calculateInaugurationFinance(item, state.payments);
+      const itemId = String(item.id || '');
+      if (!itemId) return;
+
+      document.querySelectorAll('.pmh-inauguration-card').forEach((card) => {
+        const cardId = String(
+          card.dataset.inaugurationProjectId
+            || card.querySelector('[data-item]')?.dataset.item
+            || card.querySelector('[data-budget]')?.dataset.budget
+            || '',
+        );
+        if (cardId !== itemId) return;
+
+        const legacyFinance = card.querySelector('.pmh-finance, .pmh-action-finance');
+        if (legacyFinance) {
+          updateArticle(legacyFinance, 'PLANEJADO', 'PLANEJADO', finance.planned);
+          updateArticle(legacyFinance, ['GASTO', 'GASTO REALIZADO'], 'GASTO REALIZADO', finance.actual);
+          updateArticle(legacyFinance, ['SALDO', 'SALDO DISPONÍVEL'], 'SALDO DISPONÍVEL', finance.availableBalance);
+          const summaryBalance = legacyFinance.closest('details')?.querySelector(':scope > summary b');
+          if (summaryBalance) summaryBalance.textContent = `${money(finance.availableBalance)} disponível`;
+        }
+
+        const summary = card.querySelector('.pmh-inauguration-summary-grid');
+        const summaryBalance = summary ? [...summary.querySelectorAll('article')]
+          .find((article) => /SALDO/.test(String(article.querySelector('small')?.textContent || '').toUpperCase())) : null;
+        if (summaryBalance) {
+          const label = summaryBalance.querySelector('small');
+          const value = summaryBalance.querySelector('strong');
+          const note = summaryBalance.querySelector('span');
+          if (label) label.textContent = 'SALDO DISPONÍVEL';
+          if (value) value.textContent = money(finance.availableBalance);
+          if (note) note.textContent = `${money(finance.actual)} gasto realizado · ${money(finance.planned)} planejado`;
+          summaryBalance.classList.toggle('negative', finance.availableBalance < 0);
+        }
+
+        const financeButton = card.querySelector('[data-inauguration-finance-open]');
+        if (financeButton) {
+          financeButton.dataset.financePlanned = money(finance.planned);
+          financeButton.dataset.financeActual = money(finance.actual);
+          financeButton.dataset.financeActualValue = String(finance.actual);
+          financeButton.dataset.financeBalance = money(finance.availableBalance);
+        }
+      });
+
+      const row = [...document.querySelectorAll('[data-inauguration-open]')]
+        .find((candidate) => String(candidate.dataset.inaugurationOpen || '') === itemId);
+      if (row) {
+        const dateBlock = row.querySelector('.pmh-inauguration-project-row-date');
+        if (dateBlock) {
+          let balance = dateBlock.querySelector('[data-inauguration-list-balance]');
+          if (!balance) {
+            balance = document.createElement('small');
+            balance.dataset.inaugurationListBalance = '1';
+            dateBlock.appendChild(balance);
+          }
+          balance.textContent = `Saldo disponível: ${money(finance.availableBalance)}`;
+        }
+      }
+    });
+  };
+
+  const scheduleFinancialSurfaceSync = () => window.setTimeout(syncInaugurationFinancialSurfaces, 0);
 
   const apiJson = async (url, options = {}) => {
     const response = await fetch(url, {
@@ -72,23 +219,6 @@
   const statusOptions = (selected) => Object.entries(STATUS_LABELS)
     .map(([value, label]) => `<option value="${value}" ${value === selected ? 'selected' : ''}>${label}</option>`)
     .join('');
-  const metrics = (payments) => {
-    const active = payments.filter((item) => item.status !== 'rejected');
-    return {
-      total: active.reduce((sum, item) => sum + Number(item.amount || 0), 0),
-      sent: active
-        .filter((item) => ['sent_finance', 'paid'].includes(item.status))
-        .reduce((sum, item) => sum + Number(item.amount || 0), 0),
-      paid: active
-        .filter((item) => item.status === 'paid')
-        .reduce((sum, item) => sum + Number(item.amount || 0), 0),
-      pending: active.filter((item) => item.status !== 'paid').length,
-    };
-  };
-  const committedAmount = (payments, actualValue = 0) => Math.max(
-    Number(actualValue) || 0,
-    metrics(payments).total,
-  );
 
   const closeModal = (runCallback = true) => {
     document.querySelector('.pmh-finance-modal')?.remove();
@@ -120,6 +250,8 @@
       state.suppliers = payload.suppliers || [];
       state.payments = payload.payments || [];
       state.revision = payload.revision || null;
+      publishFinanceSnapshot();
+      scheduleFinancialSurfaceSync();
     } catch (error) {
       state.configured = error.status !== 503;
       state.error = error.message;
@@ -149,6 +281,8 @@
       state.revision = payload.revision || state.revision;
       state.configured = true;
       state.error = '';
+      publishFinanceSnapshot();
+      scheduleFinancialSurfaceSync();
     } catch (error) {
       if (error.status === 409 && error.payload && attempt < 2) {
         state.suppliers = mergeChangedItems(
@@ -204,6 +338,8 @@
       state.revision = payload.revision || current.revision || null;
       state.configured = true;
       state.error = '';
+      publishFinanceSnapshot();
+      scheduleFinancialSurfaceSync();
       return payload;
     } catch (error) {
       if (error.status === 409 && attempt < 2) {
@@ -258,29 +394,30 @@
     }
 
     const payments = panelPayments();
-    const kpi = metrics(payments);
-    const budget = Number(context.budget || 0);
-    const actualValue = Number(context.actualValue || 0);
-    const committedValue = committedAmount(payments, actualValue);
-    const balanceValue = budget - committedValue;
-    const balanceLabel = money(balanceValue);
+    const inauguration = {
+      ...(context.inauguration || {}),
+      id: context.inaugurationId || context.inauguration?.id || '',
+      packageBudget: context.budget ?? context.inauguration?.packageBudget ?? 0,
+    };
+    const financial = calculateInaugurationFinance(inauguration, state.payments);
 
     showModal(`<section class="pmh-inauguration-finance-panel">
       <header><div><small>FINANCEIRO DA IMPLANTAÇÃO</small><h2>${esc(context.unit)}</h2><p>${esc(context.openingDate || 'Data não informada')} · ${payments.length} pagamento(s)</p></div><button data-finance-close>×</button></header>
       <div class="pmh-inauguration-finance-body">
         ${state.error ? `<div class="pmh-alert">${esc(state.error)}</div>` : ''}
         <section class="pmh-inauguration-finance-summary">
-          <label><small>VERBA DO PACOTE</small><input type="number" min="0" step="0.01" value="${budget}" data-inauguration-panel-budget="${esc(context.inaugurationId)}"></label>
-          <article><small>PLANEJADO</small><strong>${esc(context.planned || money(0))}</strong></article>
-          <article><small>GASTO</small><strong>${esc(context.actual || money(actualValue))}</strong></article>
-          <article class="${balanceValue < 0 ? 'negative' : ''}" data-inauguration-balance-card><small>SALDO</small><strong>${esc(balanceLabel)}</strong></article>
-          ${context.unitCost ? `<article><small>CUSTO DA UNIDADE</small><strong>${esc(context.unitCost)}</strong></article>` : ''}
+          <label><small>VERBA DO PACOTE</small><input type="number" min="0" step="0.01" value="${financial.budget}" data-inauguration-panel-budget="${esc(context.inaugurationId)}"></label>
+          <article><small>PLANEJADO</small><strong>${money(financial.planned)}</strong></article>
+          <article><small>GASTO REALIZADO</small><strong>${money(financial.actual)}</strong></article>
+          <article><small>VALOR COMPROMETIDO</small><strong>${money(financial.committed)}</strong></article>
+          <article class="${financial.availableBalance < 0 ? 'negative' : ''}" data-inauguration-balance-card><small>SALDO DISPONÍVEL</small><strong>${money(financial.availableBalance)}</strong></article>
+          ${financial.unitActual > 0 ? `<article><small>CUSTO DA UNIDADE</small><strong>${money(financial.unitActual)}</strong></article>` : ''}
         </section>
         <section class="pmh-inauguration-payment-kpis">
-          <article><small>VALOR SOLICITADO</small><strong>${money(kpi.total)}</strong></article>
-          <article><small>ENVIADO AO FINANCEIRO</small><strong>${money(kpi.sent)}</strong></article>
-          <article><small>VALOR PAGO</small><strong>${money(kpi.paid)}</strong></article>
-          <article><small>PENDENTES</small><strong>${kpi.pending}</strong></article>
+          <article><small>VALOR SOLICITADO</small><strong>${money(financial.requested)}</strong></article>
+          <article><small>ENVIADO AO FINANCEIRO</small><strong>${money(financial.sent)}</strong></article>
+          <article><small>VALOR PAGO</small><strong>${money(financial.paid)}</strong></article>
+          <article><small>PENDENTES</small><strong>${financial.pending}</strong></article>
         </section>
         <div class="pmh-inauguration-finance-toolbar">
           <div><button class="primary" data-inauguration-finance-new-payment>+ Novo pagamento</button><button data-inauguration-finance-new-supplier>+ Novo fornecedor</button></div>
@@ -415,6 +552,8 @@
         renderPanel();
       } catch (error) {
         state.payments = previousPayments;
+        publishFinanceSnapshot();
+        scheduleFinancialSurfaceSync();
         state.error = '';
         if (errorBox) {
           errorBox.textContent = error instanceof Error ? error.message : 'Não foi possível salvar o pagamento.';
@@ -454,16 +593,14 @@
       .find((item) => String(item.id || '') === inaugurationId) || {};
     const budgetBridge = [...document.querySelectorAll('[data-budget]')]
       .find((input) => String(input.dataset.budget || '') === inaugurationId);
+    const budget = Number(budgetBridge?.value || inauguration.packageBudget || 0);
 
     return {
       inaugurationId,
       unit: inauguration.unit || button.dataset.inaugurationUnit || 'Implantação',
       openingDate: inauguration.openingDate || '',
-      budget: Number(budgetBridge?.value || inauguration.packageBudget || 0),
-      planned: button.dataset.financePlanned || '',
-      actual: button.dataset.financeActual || '',
-      actualValue: Number(button.dataset.financeActualValue || 0),
-      balance: button.dataset.financeBalance || '',
+      budget,
+      inauguration: { ...inauguration, packageBudget: budget },
       unitCost: button.dataset.financeUnitCost || '',
     };
   };
@@ -498,19 +635,24 @@
       bridge.dispatchEvent(new Event('change', { bubbles: true }));
     }
     if (state.panelContext) {
-      state.panelContext.budget = Number(input.value || 0);
-      const committedValue = committedAmount(
-        panelPayments(),
-        Number(state.panelContext.actualValue || 0),
-      );
-      const balance = state.panelContext.budget - committedValue;
-      state.panelContext.balance = money(balance);
+      const budget = Number(input.value || 0);
+      state.panelContext.budget = budget;
+      state.panelContext.inauguration = {
+        ...(state.panelContext.inauguration || {}),
+        id: inaugurationId,
+        packageBudget: budget,
+      };
+      const financial = calculateInaugurationFinance(state.panelContext.inauguration, state.payments);
       const card = document.querySelector('[data-inauguration-balance-card]');
       if (card) {
-        card.classList.toggle('negative', balance < 0);
+        card.classList.toggle('negative', financial.availableBalance < 0);
         const value = card.querySelector('strong');
-        if (value) value.textContent = money(balance);
+        if (value) value.textContent = money(financial.availableBalance);
       }
+      const committedCard = articleByLabel(document.querySelector('.pmh-inauguration-finance-summary'), 'VALOR COMPROMETIDO');
+      const committedValue = committedCard?.querySelector('strong');
+      if (committedValue) committedValue.textContent = money(financial.committed);
+      scheduleFinancialSurfaceSync();
     }
   };
 
@@ -611,12 +753,18 @@
       renderPanel();
     } catch (error) {
       state.payments = previousPayments;
+      publishFinanceSnapshot();
+      scheduleFinancialSurfaceSync();
       state.error = error instanceof Error ? error.message : 'Não foi possível atualizar o status.';
       renderPanel();
     }
   });
 
+  window.addEventListener('pmh:view-rendered', scheduleFinancialSurfaceSync);
+  window.addEventListener('pmh:inauguration-finance-updated', scheduleFinancialSurfaceSync);
   window.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeModal(false);
   });
+
+  loadFinance().catch(() => {});
 })();
