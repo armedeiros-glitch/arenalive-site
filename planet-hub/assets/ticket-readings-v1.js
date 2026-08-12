@@ -317,7 +317,7 @@
   };
 
   const ensureListStyles = () => {
-    if (document.querySelector('style[data-ticket-list-reading-style]')) return;
+    if (!document.head?.appendChild || document.querySelector('style[data-ticket-list-reading-style]')) return;
     const style = document.createElement('style');
     style.dataset.ticketListReadingStyle = '1';
     style.textContent = `
