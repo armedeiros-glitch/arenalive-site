@@ -1,0 +1,142 @@
+.pmh-campaign-attention {
+  margin-top: var(--os-space-4);
+  padding: var(--os-space-5);
+  border: 1px solid var(--os-border);
+  border-radius: var(--os-radius-xl);
+  background: var(--os-surface);
+  box-shadow: var(--os-shadow-sm);
+}
+
+.pmh-campaign-attention > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--os-space-4);
+}
+
+.pmh-campaign-attention > header small {
+  color: var(--os-danger);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+.pmh-campaign-attention > header h3 {
+  margin: 6px 0 0;
+  color: var(--os-text-strong);
+  font-size: 22px;
+}
+
+.pmh-campaign-attention > header > span,
+.pmh-campaign-attention > p {
+  color: var(--os-text-muted);
+  font-size: 12px;
+}
+
+.pmh-campaign-attention > div {
+  display: grid;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.pmh-campaign-attention-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  width: 100%;
+  min-height: 86px;
+  padding: 13px 14px;
+  border: 1px solid var(--os-border);
+  border-left: 5px solid var(--attention-tone, var(--os-warning));
+  border-radius: var(--os-radius-md);
+  color: var(--os-text);
+  background: var(--os-surface-subtle);
+  text-align: left;
+}
+
+.pmh-campaign-attention-item.attention-overdue { --attention-tone: var(--os-danger); }
+.pmh-campaign-attention-item.attention-today { --attention-tone: var(--os-warning); }
+.pmh-campaign-attention-item.attention-upcoming { --attention-tone: var(--os-info); }
+
+.pmh-campaign-attention-item > div:first-child > span,
+.pmh-campaign-attention-item > div:first-child > strong,
+.pmh-campaign-attention-item > div:first-child > small,
+.pmh-campaign-attention-item > div:last-child > strong,
+.pmh-campaign-attention-item > div:last-child > span,
+.pmh-campaign-attention-item > div:last-child > small {
+  display: block;
+}
+
+.pmh-campaign-attention-item > div:first-child > span {
+  color: var(--attention-tone);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.pmh-campaign-attention-item > div:first-child > strong {
+  margin-top: 4px;
+  color: var(--os-text-strong);
+  font-size: 15px;
+}
+
+.pmh-campaign-attention-item > div:first-child > small,
+.pmh-campaign-attention-item > div:last-child > span,
+.pmh-campaign-attention-item > div:last-child > small {
+  margin-top: 4px;
+  color: var(--os-text-muted);
+  font-size: 11px;
+}
+
+.pmh-campaign-attention-item > div:last-child {
+  min-width: 150px;
+  text-align: right;
+}
+
+.pmh-campaign-attention-item > div:last-child > strong {
+  color: var(--os-text-strong);
+  font-size: 13px;
+}
+
+.pmh-campaign-focus-signals {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+.pmh-campaign-attention-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: var(--os-radius-pill);
+  color: var(--attention-tone, var(--os-info));
+  background: color-mix(in srgb, var(--attention-tone, var(--os-info)) 12%, transparent);
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.pmh-campaign-attention-badge.attention-overdue { --attention-tone: var(--os-danger); }
+.pmh-campaign-attention-badge.attention-today { --attention-tone: var(--os-warning); }
+.pmh-campaign-attention-badge.attention-upcoming { --attention-tone: var(--os-info); }
+
+.pmh-campaign-attention-badge b {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .05em;
+}
+
+.pmh-campaign-attention-badge small {
+  color: inherit;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.pmh-campaign-annual-card > .pmh-campaign-attention-badge {
+  margin-top: 8px;
+}
