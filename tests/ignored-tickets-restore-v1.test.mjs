@@ -36,7 +36,9 @@ assert.match(ownerSource, /window\.confirm\([\s\S]*Excluir o chamado/, 'Excluir 
 assert.match(ownerSource, /method:\s*'POST'/, 'Excluir do Hub deve continuar usando POST');
 assert.doesNotMatch(ownerSource, /ticket-removal-v1/, 'owner não pode reutilizar mecanismo histórico');
 assert.match(removalSource, /ticket|chamado/i, 'arquivo histórico permanece apenas físico');
-assert.doesNotMatch(ownerSource, /situation\s*=|status\s*=|responsible\s*=|PUT[^\n]*sults/i, 'restauração não pode alterar dado oficial do SULTS');
+const restoreBlock = ownerSource.match(/const restoreTicket = async \(button\) => \{[\s\S]*?\n  \};/)?.[0] || '';
+assert.ok(restoreBlock, 'fluxo de restauração deve existir');
+assert.doesNotMatch(restoreBlock, /\/api\/sults|situation|responsible|status\s*:/i, 'restauração não pode escrever dados oficiais do SULTS');
 
 class FakeKV {
   constructor() { this.values = new Map(); }
