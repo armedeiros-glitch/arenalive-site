@@ -4,9 +4,7 @@
   const CACHE_PREFIX = 'pmh:ticket-reading:v1:';
   const CACHE_TTL_MS = 15 * 60 * 1000;
   const MAX_TICKETS = 5;
-  const START_DELAY_MS = 500;
 
-  let baseRadar = null;
   let enrichedSnapshot = null;
   let processing = false;
   let queuedSnapshot = null;
@@ -50,6 +48,7 @@
   const isVisible = () => document.visibilityState === 'visible' && navigator.onLine !== false;
   const isAndre = (value) => /\bandre\b/.test(normalize(value));
   const samePerson = (left, right) => Boolean(left && right && normalize(left) === normalize(right));
+  const hasTicketSource = (snapshot) => Boolean(snapshot?.sources && Object.prototype.hasOwnProperty.call(snapshot.sources, 'tickets'));
 
   const usefulInteraction = (entry) => {
     if (!entry?.interaction?.messageHtml) return false;
@@ -192,8 +191,9 @@
   };
 
   const candidateScore = (item) => {
-    if (!baseRadar) return 0;
-    const due = baseRadar.dueMeta(item.dueDate);
+    const radar = window.PMHRadarData;
+    if (!radar?.dueMeta) return 0;
+    const due = radar.dueMeta(item.dueDate);
     let score = Number(item.priority || 2) * 30;
     if (due.bucket === 'late') score -= 10000;
     else if (due.bucket === 'today') score -= 8000;
@@ -237,14 +237,23 @@
     };
   };
 
-  const dispatchEnriched = (snapshot) => {
+  const dispatchReadings = (snapshot) => {
     enrichedSnapshot = snapshot;
-    window.dispatchEvent(new CustomEvent('pmh:radar-data', { detail: snapshot }));
+    const readings = (snapshot?.items || [])
+      .filter((item) => item.ticketReading)
+      .map((item) => ({ ticketId: item.id, reading: item.ticketReading }));
+    window.dispatchEvent(new CustomEvent('pmh:ticket-readings', {
+      detail: {
+        snapshot,
+        readings,
+        loadedAt: snapshot.ticketReadingsLoadedAt || new Date().toISOString(),
+      },
+    }));
     scheduleDecorate();
   };
 
   const enhance = async (snapshot) => {
-    if (!baseRadar || !snapshot || snapshot.ticketReadings || !isVisible()) return;
+    if (!snapshot || !hasTicketSource(snapshot) || snapshot.ticketReadings || !isVisible()) return;
     if (processing) {
       queuedSnapshot = snapshot;
       return;
@@ -254,7 +263,7 @@
     if (!candidates.length) return;
     const signature = signatureFor(candidates);
     if (signature === lastSignature && enrichedSnapshot) {
-      dispatchEnriched(mergeReadings(snapshot));
+      dispatchReadings(mergeReadings(snapshot));
       return;
     }
 
@@ -268,7 +277,7 @@
           return { item, reading: null };
         }
       }));
-      dispatchEnriched(mergeReadings(snapshot, results));
+      dispatchReadings(mergeReadings(snapshot, results));
     } finally {
       processing = false;
       if (queuedSnapshot) {
@@ -318,7 +327,7 @@
     fetchReading(item).then((reading) => {
       if (!reading) return;
       const current = enrichedSnapshot || snapshot;
-      dispatchEnriched(mergeReadings(current, [{ item, reading }]));
+      dispatchReadings(mergeReadings(current, [{ item, reading }]));
     }).catch(() => {
       panel.dataset.readingRequested = '0';
     });
@@ -342,7 +351,7 @@
   };
 
   const decorate = () => {
-    const snapshot = enrichedSnapshot || baseRadar?.getSnapshot?.();
+    const snapshot = enrichedSnapshot || window.PMHRadarData?.getSnapshot?.();
     if (!snapshot) return;
     decorateCockpit(snapshot);
     decorateRows(snapshot);
@@ -354,49 +363,24 @@
     decorateTimer = setTimeout(decorate, 50);
   };
 
-  const wrapRadar = () => {
-    if (baseRadar || !window.PMHRadarData) return Boolean(baseRadar);
-    baseRadar = window.PMHRadarData;
-    const wrapped = {
-      ...baseRadar,
-      getSnapshot: () => enrichedSnapshot || baseRadar.getSnapshot(),
-      collect: async (options) => {
-        const snapshot = await baseRadar.collect(options);
-        enhance(snapshot);
-        return enrichedSnapshot || snapshot;
-      },
-      invalidate: () => {
-        enrichedSnapshot = null;
-        lastSignature = '';
-        baseRadar.invalidate();
-      },
-    };
-    window.PMHRadarData = Object.freeze(wrapped);
-    return true;
-  };
-
   window.addEventListener('pmh:radar-data', (event) => {
-    if (event.detail?.ticketReadings) {
-      enrichedSnapshot = event.detail;
-      scheduleDecorate();
-      return;
-    }
-    if (!baseRadar) wrapRadar();
+    enhance(event.detail);
+  });
+
+  window.addEventListener('pmh:radar-data-partial', (event) => {
     enhance(event.detail);
   });
 
   document.addEventListener('visibilitychange', () => {
-    if (isVisible()) enhance(baseRadar?.getSnapshot?.());
+    if (!isVisible()) return;
+    const snapshot = window.PMHRadarData?.getSnapshot?.();
+    if (snapshot) enhance(snapshot);
   });
 
   const observer = new MutationObserver(scheduleDecorate);
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
-  const bootstrap = () => {
-    if (!wrapRadar()) return setTimeout(bootstrap, START_DELAY_MS);
-    enhance(baseRadar.getSnapshot());
-    scheduleDecorate();
-  };
-
-  setTimeout(bootstrap, START_DELAY_MS);
+  const initialSnapshot = window.PMHRadarData?.getSnapshot?.();
+  if (initialSnapshot) enhance(initialSnapshot);
+  scheduleDecorate();
 })();
