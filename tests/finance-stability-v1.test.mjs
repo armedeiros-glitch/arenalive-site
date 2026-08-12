@@ -19,7 +19,8 @@ assert.match(source, /state\.suppliers = previousSuppliers/);
 
 assert.match(source, /const previousPayments = cloneItems\(state\.payments\);\s*select\.disabled = true;/s);
 assert.match(source, /await saveFinance\(\{ changedPaymentIds: \[payment\.id\] \}\)/);
-assert.match(source, /state\.payments = previousPayments;\s*state\.error = error instanceof Error/s);
+assert.match(source, /state\.payments = previousPayments;\s*publishFinanceSnapshot\(\);\s*scheduleFinancialSurfaceSync\(\);\s*state\.error = error instanceof Error/s,
+  'falha de status deve restaurar pagamentos e sincronizar novamente o estado consistente');
 assert.doesNotMatch(source, /alert\(error\.message\)/);
 
 assert.match(source, /String\(payment\.inaugurationId \|\| ''\) === id/);
