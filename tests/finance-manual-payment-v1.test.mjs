@@ -17,7 +17,7 @@ assert.match(finance, /submitButton\.textContent = 'Salvando…'/);
 const saveIndex = finance.indexOf('await saveFinance({ changedPaymentIds: [updated.id] });\n        closeModal(false);');
 assert.ok(saveIndex >= 0, 'o modal deve fechar somente depois da confirmação da API');
 
-assert.match(access, /financeiro-v1\.js\?v=20260812-1/);
+assert.match(access, /financeiro-v1\.js\?v=20260812-2/);
 assert.match(rootEntry, /hub-access-v1\.js\?v=/);
 
 console.log('AndreOS manual finance payment: tests passed');
