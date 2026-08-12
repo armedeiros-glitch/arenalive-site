@@ -3,6 +3,7 @@
 
   const FIXED_CLASS = 'aos-fixed-workspace-page';
   const HOME_PAGE_ATTR = 'homePage';
+  const PLANET_RADAR_SOURCES = ['tickets', 'inaugurations', 'demands', 'contents', 'campaigns'];
 
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
@@ -252,7 +253,7 @@
     try {
       const options = page === 'marketing'
         ? { maxAgeMs: 15000, sources: ['demands', 'contents'] }
-        : { maxAgeMs: 15000 };
+        : { maxAgeMs: 15000, sources: PLANET_RADAR_SOURCES };
       const snapshot = await window.PMHRadarData.collect(options);
       if (pageFromHash() !== page) return;
       if (page === 'planet') renderPlanetSnapshot(snapshot);
