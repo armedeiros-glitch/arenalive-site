@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const read = (relativePath) => fs.readFileSync(new URL(`../${relativePath}`), 'utf8');
+const read = (relativePath) => fs.readFileSync(new URL(`../${relativePath}`, import.meta.url), 'utf8');
 
 const rootEntry = read('index.html');
 const workspace = read('planet-hub/assets/inauguration-workspace-v2.js');
