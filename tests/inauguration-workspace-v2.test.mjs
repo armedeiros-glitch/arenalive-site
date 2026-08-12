@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const read = (relativePath) => fs.readFileSync(new URL(`../${relativePath}`, import.meta.url), 'utf8');
+const read = (relativePath) => fs.readFileSync(new URL(`../${relativePath}`), 'utf8');
 
 const rootEntry = read('index.html');
 const workspace = read('planet-hub/assets/inauguration-workspace-v2.js');
@@ -33,8 +33,10 @@ assert.match(finance, /data-inauguration-finance-new-payment/);
 assert.match(finance, /data-inauguration-finance-new-supplier/);
 assert.match(finance, /data-finance-edit-payment/);
 assert.match(finance, /data-finance-edit-supplier/);
+assert.match(finance, /calculateInaugurationFinance/);
+assert.match(finance, /SALDO DISPONÍVEL/);
 assert.doesNotMatch(finance, /MutationObserver|injectNav|openFinance|state\.active/);
 
-assert.match(access, /financeiro-v1\.js\?v=20260812-1/);
+assert.match(access, /financeiro-v1\.js\?v=20260812-2/);
 
 console.log('AndreOS inauguration workspace v2: tests passed');
