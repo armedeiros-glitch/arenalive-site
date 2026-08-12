@@ -10,7 +10,7 @@ const access = read('planet-hub/assets/hub-access-v1.js');
 assert.match(source, /Gerar relatório para o Financeiro/);
 assert.match(finance, /Exportar esta implantação/, 'CSV existente deve permanecer disponível');
 assert.match(source, /currentInaugurationId/);
-assert.match(source, /payment\.inaugurationId \|\| ''\) === inaugurationId/);
+assert.match(source, /payment\?\.inaugurationId \|\| ''\) === inaugurationId/);
 assert.match(source, /financeDomain\.calculate\(inauguration, financeDomain\.payments \|\| \[\]\)/,
   'relatório deve reutilizar o cálculo financeiro central');
 assert.doesNotMatch(source, /Math\.max\(.*actual.*requested|availableBalance\s*=|committed\s*=/s,
