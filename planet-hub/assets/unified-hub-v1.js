@@ -86,6 +86,7 @@
     revision: null,
     shared: false,
     search: '',
+    checklistSave: new Map(),
   };
 
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -97,6 +98,14 @@
     const date = value instanceof Date ? value : asDate(value);
     return date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat('pt-BR').format(date) : 'Sem data';
   };
+  const dateValue = (value) => {
+    const date = value instanceof Date ? value : asDate(value);
+    if (!date || Number.isNaN(date.getTime())) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
   const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value) || 0);
   const number = (value) => Math.max(0, Number(String(value ?? '').replace(',', '.')) || 0);
   const now = () => new Date();
@@ -107,11 +116,35 @@
     today.setHours(12, 0, 0, 0);
     return Math.ceil((date - today) / 86400000);
   };
+  const checklistDefaultDue = (item, entry) => {
+    const due = asDate(item?.openingDate);
+    if (!due || !Number.isFinite(Number(entry?.daysBefore))) return null;
+    due.setDate(due.getDate() - Number(entry.daysBefore));
+    return due;
+  };
+  const checklistEffectiveDue = (item, entry) => asDate(entry?.dueDate) || checklistDefaultDue(item, entry);
+  const checklistEffectiveOwner = (entry) => String(entry?.ownerOverride || entry?.owner || '');
+  const checklistSaveKey = (itemId, index) => `${itemId}:${index}`;
+  const checklistSaveState = (itemId, index) => state.checklistSave.get(checklistSaveKey(itemId, index)) || null;
 
   const makeChecklist = () => checklistTemplate.map(([action, owner, daysBefore]) => ({ action, owner, daysBefore, done: false }));
   const makeActions = () => actionTemplate.map(([id, name, description, owner, timing, plannedAmount, costType, quantity]) => ({
     id, name, description, owner, timing, plannedAmount, actualAmount: 0, costType, quantity, included: true, done: false, notes: '',
   }));
+
+  const normalizeChecklistEntry = (entry = {}) => {
+    const normalized = {
+      action: String(entry.action || ''),
+      owner: String(entry.owner || ''),
+      daysBefore: Number(entry.daysBefore) || 0,
+      done: Boolean(entry.done),
+    };
+    const ownerOverride = String(entry.ownerOverride || '').trim().slice(0, 120);
+    const dueDate = String(entry.dueDate || '').slice(0, 10);
+    if (ownerOverride && ownerOverride !== normalized.owner) normalized.ownerOverride = ownerOverride;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) normalized.dueDate = dueDate;
+    return normalized;
+  };
 
   const normalizeInauguration = (item = {}) => {
     const actionsById = new Map((Array.isArray(item.inauguralActions) ? item.inauguralActions : []).map((action) => [action.id, action]));
@@ -125,9 +158,7 @@
       createdAt: item.createdAt || new Date().toISOString(),
       updatedAt: item.updatedAt || new Date().toISOString(),
       packageBudget: number(item.packageBudget || DEFAULT_BUDGET),
-      checklist: (Array.isArray(item.checklist) && item.checklist.length ? item.checklist : makeChecklist()).map((entry) => ({
-        action: String(entry.action || ''), owner: String(entry.owner || ''), daysBefore: Number(entry.daysBefore) || 0, done: Boolean(entry.done),
-      })),
+      checklist: (Array.isArray(item.checklist) && item.checklist.length ? item.checklist : makeChecklist()).map(normalizeChecklistEntry),
       inauguralActions: makeActions().map((template) => ({ ...template, ...(actionsById.get(template.id) || {}) })),
     };
   };
@@ -192,6 +223,7 @@
   const saveInaugurations = async (rerender = true) => {
     state.inaugurations = state.inaugurations.map((item) => normalizeInauguration(item));
     writeLocal(state.inaugurations);
+    let saved = true;
     try {
       const payload = await apiJson(API.inaugurations, {
         method: 'PUT',
@@ -200,6 +232,7 @@
       state.inaugurations = (payload.data || state.inaugurations).map(normalizeInauguration);
       state.revision = payload.revision || state.revision;
       state.shared = true;
+      state.error = state.error === 'Alteração salva neste navegador, mas a sincronização compartilhada falhou.' ? '' : state.error;
       writeLocal(state.inaugurations);
     } catch (error) {
       if (error.status === 409 && error.payload?.data) {
@@ -207,10 +240,50 @@
         state.revision = error.payload.revision || null;
         return saveInaugurations(rerender);
       }
+      saved = false;
       state.shared = false;
       state.error = 'Alteração salva neste navegador, mas a sincronização compartilhada falhou.';
     }
     if (rerender) render();
+    return saved;
+  };
+
+  const saveChecklistOverride = async (itemId, index, field, value) => {
+    const item = state.inaugurations.find((candidate) => candidate.id === itemId);
+    const step = item?.checklist?.[index];
+    if (!item || !step || !['ownerOverride', 'dueDate'].includes(field)) return;
+
+    const previous = { ...step };
+    const previousUpdatedAt = item.updatedAt;
+    if (field === 'ownerOverride') {
+      const owner = String(value || '').trim().slice(0, 120);
+      if (!owner || owner === String(step.owner || '')) delete step.ownerOverride;
+      else step.ownerOverride = owner;
+    } else {
+      const defaultDue = dateValue(checklistDefaultDue(item, step));
+      const dueDate = String(value || '').slice(0, 10);
+      if (!dueDate || dueDate === defaultDue) delete step.dueDate;
+      else if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) step.dueDate = dueDate;
+    }
+
+    item.updatedAt = new Date().toISOString();
+    const key = checklistSaveKey(itemId, index);
+    state.checklistSave.set(key, { status: 'saving', message: 'Salvando…' });
+    document.querySelector(`[data-check-save-status="${CSS.escape(key)}"]`)?.replaceChildren('Salvando…');
+
+    const saved = await saveInaugurations(false);
+    if (!saved) {
+      const current = state.inaugurations.find((candidate) => candidate.id === itemId);
+      if (current?.checklist?.[index]) current.checklist[index] = previous;
+      if (current) current.updatedAt = previousUpdatedAt;
+      writeLocal(state.inaugurations);
+      state.checklistSave.set(key, { status: 'error', message: 'Não foi salvo. Valor anterior restaurado.' });
+      render();
+      return;
+    }
+
+    state.checklistSave.set(key, { status: 'saved', message: 'Salvo' });
+    render();
   };
 
   const isFinished = (ticket) => Boolean(ticket.concludedAt || ticket.resolvedAt);
@@ -324,6 +397,24 @@
     <label class="pmh-action-note"><small>OBSERVAÇÃO / FORNECEDOR</small><input type="text" maxlength="300" value="${esc(action.notes || '')}" data-action-field="notes" data-item="${esc(item.id)}" data-action="${esc(action.id)}"></label>
   </article>`;
 
+  const renderChecklistStep = (item, entry, index) => {
+    const due = checklistEffectiveDue(item, entry);
+    const defaultDue = checklistDefaultDue(item, entry);
+    const effectiveOwner = checklistEffectiveOwner(entry);
+    const key = checklistSaveKey(item.id, index);
+    const saveState = checklistSaveState(item.id, index);
+    const customized = Boolean(entry.ownerOverride || entry.dueDate);
+    return `<label class="${entry.done ? 'done' : ''}"><input type="checkbox" data-check-index="${index}" data-item="${esc(item.id)}" ${entry.done ? 'checked' : ''}><div><strong>${esc(entry.action)}</strong><small>${esc(effectiveOwner)} · ${entry.dueDate ? 'Prazo ajustado' : `D-${entry.daysBefore}`}</small></div><em>${entry.done ? 'Concluído' : fmtDate(due)}</em></label>
+      <details class="pmh-checklist-override ${customized ? 'is-customized' : ''}" data-check-editor="${esc(key)}">
+        <summary>${customized ? 'Ajustes desta unidade' : 'Ajustar responsável / prazo'}</summary>
+        <div class="pmh-checklist-override-grid">
+          <div><small>RESPONSÁVEL</small><div><input type="text" maxlength="120" value="${esc(effectiveOwner)}" data-check-field="ownerOverride" data-item="${esc(item.id)}" data-check-index="${index}" aria-label="Responsável da etapa ${esc(entry.action)}"><button type="button" data-check-reset="ownerOverride" data-item="${esc(item.id)}" data-check-index="${index}">Padrão</button></div><em>Padrão: ${esc(entry.owner || 'Não definido')}</em></div>
+          <div><small>PRAZO</small><div><input type="date" value="${esc(dateValue(due))}" data-check-field="dueDate" data-item="${esc(item.id)}" data-check-index="${index}" aria-label="Prazo da etapa ${esc(entry.action)}"><button type="button" data-check-reset="dueDate" data-item="${esc(item.id)}" data-check-index="${index}">Padrão</button></div><em>Padrão: ${esc(fmtDate(defaultDue))}</em></div>
+        </div>
+        <p class="pmh-checklist-save-status ${saveState?.status || ''}" data-check-save-status="${esc(key)}">${esc(saveState?.message || '')}</p>
+      </details>`;
+  };
+
   const renderTrackedCard = (item) => {
     const completed = item.checklist.filter((entry) => entry.done).length;
     const progress = Math.round((completed / Math.max(1, item.checklist.length)) * 100);
@@ -333,7 +424,7 @@
     return `<article class="pmh-inauguration-card">
       <header><div><small>INAUGURAÇÃO ACOMPANHADA</small><h3>${esc(item.unit)}</h3><p>${esc(item.responsible || 'Sem responsável')} · ${esc(item.location || 'Local não informado')}</p></div><div class="pmh-date"><strong>${fmtDate(item.openingDate)}</strong><span>${days == null ? 'Sem contagem' : days < 0 ? `${Math.abs(days)} dias atrás` : days === 0 ? 'Hoje' : `Em ${days} dias`}</span></div></header>
       <div class="pmh-progress"><i style="width:${progress}%"></i></div><div class="pmh-progress-label"><span>${completed}/${item.checklist.length} etapas</span><b>${progress}%</b></div>
-      <details><summary>Checklist de implantação</summary><div class="pmh-checklist">${item.checklist.map((entry, index) => { const due = asDate(item.openingDate); if (due) due.setDate(due.getDate() - entry.daysBefore); return `<label class="${entry.done ? 'done' : ''}"><input type="checkbox" data-check-index="${index}" data-item="${esc(item.id)}" ${entry.done ? 'checked' : ''}><div><strong>${esc(entry.action)}</strong><small>${esc(entry.owner)} · D-${entry.daysBefore}</small></div><em>${entry.done ? 'Concluído' : fmtDate(due)}</em></label>`; }).join('')}</div></details>
+      <details><summary>Checklist de implantação</summary><div class="pmh-checklist">${item.checklist.map((entry, index) => renderChecklistStep(item, entry, index)).join('')}</div></details>
       <details class="pmh-actions"><summary><span><strong>Ações inaugurais</strong><small>${totals.done}/${totals.used.length} concluídas</small></span><b>${money(balance)} disponível</b></summary><div class="pmh-finance"><label><small>VERBA DO PACOTE</small><input type="number" min="0" step="0.01" value="${number(item.packageBudget)}" data-budget="${esc(item.id)}"></label><article><small>PLANEJADO</small><strong>${money(totals.planned)}</strong></article><article><small>GASTO</small><strong>${money(totals.actual)}</strong></article><article class="${balance < 0 ? 'negative' : ''}"><small>SALDO</small><strong>${money(balance)}</strong></article>${totals.unit ? `<article><small>CUSTO DA UNIDADE</small><strong>${money(totals.unit)}</strong></article>` : ''}</div><div class="pmh-actions-list">${item.inauguralActions.map((action) => renderAction(item, action)).join('')}</div></details>
       <footer><button class="danger" data-remove-inauguration="${esc(item.id)}">Remover acompanhamento</button></footer>
     </article>`;
@@ -344,7 +435,11 @@
     const tracked = [...state.inaugurations].sort((a, b) => (asDate(a.openingDate) || Infinity) - (asDate(b.openingDate) || Infinity));
     const activeProjects = state.projects.filter((item) => item.active && !item.completed);
     const upcoming = tracked.filter((item) => { const days = daysUntil(item.openingDate); return days != null && days >= 0 && days <= 45; });
-    const lateSteps = tracked.reduce((sum, item) => sum + item.checklist.filter((entry) => { if (entry.done || !item.openingDate) return false; const due = asDate(item.openingDate); due.setDate(due.getDate() - entry.daysBefore); return due < now(); }).length, 0);
+    const lateSteps = tracked.reduce((sum, item) => sum + item.checklist.filter((entry) => {
+      if (entry.done) return false;
+      const due = checklistEffectiveDue(item, entry);
+      return due ? due < now() : false;
+    }).length, 0);
     return `<section class="pmh-section-head"><div><small>IMPLANTAÇÕES E INAUGURAÇÕES</small><h2>Unidades no radar do Marketing</h2><p>Uma única área para data real, checklist e ações inaugurais.</p></div><button class="primary" data-new-inauguration>+ Nova inauguração</button></section>
       <section class="pmh-metrics">${metric('Implantações no SULTS', activeProjects.length, 'Projetos ativos', 'green')}${metric('Em acompanhamento', tracked.length, 'Checklists ativos', 'blue')}${metric('Próximas inaugurações', upcoming.length, 'Nos próximos 45 dias', 'orange')}${metric('Etapas atrasadas', lateSteps, 'Precisam de ação', 'red')}</section>
       <section class="pmh-tracked">${tracked.length ? tracked.map(renderTrackedCard).join('') : empty('Nenhuma inauguração em acompanhamento. Clique em “Nova inauguração”.')}</section>
@@ -420,6 +515,20 @@
   };
 
   shell.addEventListener('click', async (event) => {
+    const reset = event.target.closest('[data-check-reset]');
+    if (reset) {
+      event.preventDefault();
+      const itemId = String(reset.dataset.item || '');
+      const index = Number(reset.dataset.checkIndex);
+      const field = reset.dataset.checkReset;
+      const item = state.inaugurations.find((candidate) => candidate.id === itemId);
+      const step = item?.checklist?.[index];
+      if (!step) return;
+      const value = field === 'ownerOverride' ? step.owner : dateValue(checklistDefaultDue(item, step));
+      await saveChecklistOverride(itemId, index, field, value);
+      return;
+    }
+
     const viewButton = event.target.closest('[data-view]');
     if (viewButton) return setView(viewButton.dataset.view);
     if (event.target.closest('[data-refresh]')) return loadAll();
@@ -434,6 +543,12 @@
   });
 
   shell.addEventListener('change', async (event) => {
+    const checklistField = event.target.dataset.checkField;
+    if (checklistField) {
+      await saveChecklistOverride(String(event.target.dataset.item || ''), Number(event.target.dataset.checkIndex), checklistField, event.target.value);
+      return;
+    }
+
     const itemId = event.target.dataset.item;
     if (!itemId && !event.target.dataset.budget) return;
     const item = state.inaugurations.find((candidate) => candidate.id === (itemId || event.target.dataset.budget));
