@@ -109,7 +109,9 @@ const runScenario = async ({ radarItem, projects }) => {
   });
 
   vm.runInContext(source, context, { filename: 'planet-next-step-v1.js' });
-  for (let i = 0; i < 8; i += 1) await Promise.resolve();
+  for (let i = 0; i < 50 && placeholder?.innerHTML.includes('Lendo a operação'); i += 1) {
+    await Promise.resolve();
+  }
 
   return { calls, placeholder };
 };
