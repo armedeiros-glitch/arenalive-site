@@ -9,6 +9,7 @@
     campaigns: '/api/hub/campanhas',
   };
   const CAMPAIGN_LOCAL_KEY = 'planet-hub-campaign-operations-v1';
+  const RADAR_SOURCES = ['tickets', 'inaugurations', 'demands', 'contents', 'campaigns'];
   const BASE_CAMPAIGNS_2026 = [
     ['2026-02-14', 'Valentine’s Day', 'apoio'],
     ['2026-02-24', 'Aniversário Planet', 'principal'],
@@ -256,7 +257,7 @@
   const hydrate = async () => {
     if (!DESKTOP.matches || location.hash !== '#planet') return;
     if (window.PMHRadarData?.collect) {
-      try { radarSnapshot = await window.PMHRadarData.collect({ maxAgeMs: 15000 }); } catch (_) { /* mantém leitura parcial */ }
+      try { radarSnapshot = await window.PMHRadarData.collect({ sources: RADAR_SOURCES, maxAgeMs: 15000 }); } catch (_) { /* mantém leitura parcial */ }
     }
     render();
     await loadExtras({ force: true });
