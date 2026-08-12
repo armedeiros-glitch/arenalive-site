@@ -11,10 +11,12 @@
     '/planet-hub/assets/planet-five-stars-data-v1.js?v=20260807-1',
     '/planet-hub/assets/planet-five-stars-import-v1.js?v=20260807-1',
     '/planet-hub/assets/planet-five-stars-actions-v1.js?v=20260807-1',
-    '/planet-hub/assets/planet-acquisition-v1.js?v=20260807-1',
     '/planet-hub/assets/andre-os-desktop-shell-v2.js?v=20260807-4',
     '/planet-hub/assets/planet-notifications-v1.js?v=20260805-1',
   ];
+  const ACQUISITION_SCRIPT = '/planet-hub/assets/planet-acquisition-v1.js?v=20260807-1';
+  let acquisitionLoaded = false;
+  let acquisitionLoading = null;
 
   const loadScript = (src) => new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -39,6 +41,15 @@
     if (value.includes('expans')) return 'expansao';
     if (value.includes('5-estrelas') || value.includes('cinco-estrelas') || value.includes('5estrelas')) return 'cinco-estrelas';
     return 'inicio';
+  };
+
+  const loadAcquisitionForCurrentView = () => {
+    if (currentView() !== 'aquisicao' || acquisitionLoaded) return Promise.resolve();
+    if (acquisitionLoading) return acquisitionLoading;
+    acquisitionLoading = loadScript(ACQUISITION_SCRIPT)
+      .then(() => { acquisitionLoaded = true; })
+      .finally(() => { acquisitionLoading = null; });
+    return acquisitionLoading;
   };
 
   const runtimeEvents = () => window.AndreOS?.events || null;
@@ -112,8 +123,12 @@
     window.PMH_ACCESS = access;
     document.documentElement.classList.remove('pmh-access-pending');
     for (const src of SCRIPT_SEQUENCE) await loadScript(src);
+    await loadAcquisitionForCurrentView();
     announceAuthenticated(access);
     scheduleViewReplay();
+    window.addEventListener('hashchange', () => {
+      loadAcquisitionForCurrentView().catch(() => {});
+    });
   };
 
   const renderLogin = (message = '') => {
