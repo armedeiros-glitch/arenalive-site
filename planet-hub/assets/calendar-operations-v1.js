@@ -61,6 +61,58 @@
     return Math.round((date.getTime() - today().getTime()) / 86400000);
   };
 
+  const civilDayNumber = (year, month, day) => Math.floor(Date.UTC(year, month, day) / 86400000);
+
+  const milestoneDayNumber = (value) => {
+    const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return null;
+    return civilDayNumber(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  };
+
+  const localDayNumber = (reference = new Date()) => civilDayNumber(
+    reference.getFullYear(),
+    reference.getMonth(),
+    reference.getDate(),
+  );
+
+  const milestoneAttention = (operation, reference = new Date()) => {
+    if (!operation || operation.status === 'concluida' || !operation.milestoneDate) return null;
+    const milestoneDay = milestoneDayNumber(operation.milestoneDate);
+    if (milestoneDay == null) return null;
+    const days = milestoneDay - localDayNumber(reference);
+    if (days < 0) {
+      const elapsed = Math.abs(days);
+      return {
+        kind: 'overdue',
+        label: 'MARCO ATRASADO',
+        detail: `${elapsed} ${elapsed === 1 ? 'dia' : 'dias'} em atraso`,
+        days,
+        date: operation.milestoneDate,
+      };
+    }
+    if (days === 0) {
+      return { kind: 'today', label: 'MARCO HOJE', detail: 'vence hoje', days, date: operation.milestoneDate };
+    }
+    if (days <= 7) {
+      return {
+        kind: 'upcoming',
+        label: 'PRÓXIMO MARCO',
+        detail: `em ${days} ${days === 1 ? 'dia' : 'dias'}`,
+        days,
+        date: operation.milestoneDate,
+      };
+    }
+    return null;
+  };
+
+  const attentionRank = (kind) => ({ overdue: 0, today: 1, upcoming: 2 }[kind] ?? 9);
+
+  const sortAttentionItems = (a, b) => {
+    const rank = attentionRank(a.attention.kind) - attentionRank(b.attention.kind);
+    if (rank !== 0) return rank;
+    return String(a.attention.date).localeCompare(String(b.attention.date));
+  };
+
   const campaignId = (campaign) => `${campaign.start}__${normalize(campaign.name)}`;
 
   const parseCampaigns = (calendar) => {
@@ -192,6 +244,12 @@
 
   const renderStatus = (status) => `<span class="pmh-campaign-status status-${esc(status)}">${esc(STATUS[status] || STATUS.planejamento)}</span>`;
 
+  const renderAttentionBadge = (operation, compact = false) => {
+    const attention = milestoneAttention(operation);
+    if (!attention) return '';
+    return `<span class="pmh-campaign-attention-badge attention-${esc(attention.kind)}"><b>${esc(attention.label)}</b>${compact ? '' : `<small>${esc(attention.detail)}</small>`}</span>`;
+  };
+
   const renderFocusCard = (campaign, role) => {
     if (!campaign) {
       return `<article class="pmh-campaign-focus-card empty"><small>${esc(role)}</small><h3>Nenhuma campanha encontrada</h3><p>O calendário não possui uma campanha para este período.</p></article>`;
@@ -199,7 +257,7 @@
     const operation = operationFor(campaign);
     return `<button type="button" class="pmh-campaign-focus-card ${esc(campaign.type)}" data-edit-campaign="${esc(campaign.id)}">
       <small>${esc(role)}</small>
-      <div class="pmh-campaign-focus-head"><h3>${esc(campaign.name)}</h3>${renderStatus(operation.status)}</div>
+      <div class="pmh-campaign-focus-head"><h3>${esc(campaign.name)}</h3><div class="pmh-campaign-focus-signals">${renderStatus(operation.status)}${renderAttentionBadge(operation)}</div></div>
       <p>${esc(campaign.note || 'Sem observações gerais.')}</p>
       <footer><span>${esc(periodLabel(campaign))}</span><b>${esc(relativeStart(campaign))}</b></footer>
       ${operation.responsible ? `<em>Responsável: ${esc(operation.responsible)}</em>` : '<em>Responsável ainda não definido</em>'}
@@ -212,9 +270,9 @@
       <div class="pmh-campaign-date-block"><strong>${esc(fmtDate(campaign.start).slice(0, 5))}</strong><span>${esc(relativeStart(campaign))}</span></div>
       <div class="pmh-campaign-timeline-main">
         <div><small>${esc(typeLabel(campaign.type))}</small><h4>${esc(campaign.name)}</h4><p>${esc(campaign.note)}</p></div>
-        <div class="pmh-campaign-timeline-meta">${renderStatus(operation.status)}<span>${esc(operation.responsible || 'Sem responsável')}</span></div>
+        <div class="pmh-campaign-timeline-meta">${renderStatus(operation.status)}${renderAttentionBadge(operation, true)}<span>${esc(operation.responsible || 'Sem responsável')}</span></div>
       </div>
-      <div class="pmh-campaign-next-step"><small>PRÓXIMO MARCO</small><strong>${esc(operation.nextMilestone || 'Ainda não definido')}</strong><span>${operation.milestoneDate ? esc(fmtDate(operation.milestoneDate)) : 'Sem data'}</span></div>
+      <div class="pmh-campaign-next-step"><small>PRÓXIMO MARCO</small><strong>${esc(operation.nextMilestone || 'Ainda não definido')}</strong><span>${operation.milestoneDate ? esc(fmtDate(operation.milestoneDate)) : 'Sem data'}${milestoneAttention(operation) ? ` · ${esc(milestoneAttention(operation).detail)}` : ''}</span></div>
     </button>`;
   };
 
@@ -224,8 +282,14 @@
     return `<button type="button" class="pmh-campaign-annual-card ${esc(campaign.type)} ${past ? 'past' : ''}" data-edit-campaign="${esc(campaign.id)}">
       <small>${esc(periodLabel(campaign))}</small><h4>${esc(campaign.name)}</h4><p>${esc(campaign.note)}</p>
       <footer>${renderStatus(operation.status)}<span>${esc(operation.responsible || typeLabel(campaign.type))}</span></footer>
+      ${renderAttentionBadge(operation, true)}
     </button>`;
   };
+
+  const renderAttentionItem = ({ campaign, operation, attention }) => `<button type="button" class="pmh-campaign-attention-item attention-${esc(attention.kind)}" data-edit-campaign="${esc(campaign.id)}">
+    <div><span>${esc(attention.label)}</span><strong>${esc(campaign.name)}</strong><small>${esc(operation.nextMilestone || 'Marco sem descrição')}</small></div>
+    <div><strong>${esc(fmtDate(operation.milestoneDate))}</strong><span>${esc(attention.detail)}</span>${operation.responsible ? `<small>Responsável: ${esc(operation.responsible)}</small>` : ''}</div>
+  </button>`;
 
   const renderMetric = (label, value, note, tone) => `<article class="pmh-campaign-metric ${tone}"><small>${esc(label)}</small><strong>${esc(value)}</strong><span>${esc(note)}</span></article>`;
 
@@ -249,6 +313,14 @@
       const end = asDate(campaign.end || campaign.start);
       return start && end && end >= now && start <= plus60;
     });
+    const attentionItems = state.campaigns
+      .map((campaign) => {
+        const operation = operationFor(campaign);
+        return { campaign, operation, attention: milestoneAttention(operation) };
+      })
+      .filter((item) => item.attention)
+      .sort(sortAttentionItems);
+    const visibleAttention = attentionItems.slice(0, 6);
 
     const months = Array.from({ length: 12 }, (_, month) => state.campaigns.filter((campaign) => asDate(campaign.start)?.getMonth() === month));
     const nextNote = next ? relativeStart(next) : 'Nenhuma próxima campanha';
@@ -263,6 +335,12 @@
         ${renderMetric('Próxima campanha', next ? next.name : '—', nextNote, 'purple')}
         ${renderMetric('Em produção', production.length, production[0]?.name || 'Nenhuma em produção', 'blue')}
         ${renderMetric('Em aprovação', approval.length, approval[0]?.name || 'Nenhuma em aprovação', 'orange')}
+      </section>
+
+      <section class="pmh-campaign-attention">
+        <header><div><small>PRECISA DE ATENÇÃO</small><h3>Marcos que pedem ação agora</h3></div><span>${attentionItems.length} ${attentionItems.length === 1 ? 'campanha' : 'campanhas'}</span></header>
+        <div>${visibleAttention.length ? visibleAttention.map(renderAttentionItem).join('') : '<div class="pmh-campaign-empty">Nenhum marco atrasado ou previsto para os próximos 7 dias.</div>'}</div>
+        ${attentionItems.length > visibleAttention.length ? `<p>+${attentionItems.length - visibleAttention.length} campanha(s) com marco próximo.</p>` : ''}
       </section>
 
       <section class="pmh-campaign-focus">
