@@ -3,6 +3,7 @@
 
   const OLD_CHECKLIST_LABEL = 'Separar brindes/cupons';
   const NEW_CHECKLIST_LABEL = '50 potes P para degustação';
+  const TRACKED_KEY = 'planet-hub-inaugurations-v2';
   const DESKTOP = window.matchMedia('(min-width: 821px)');
 
   let selectedProjectId = '';
@@ -13,6 +14,10 @@
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
+
+  const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
+  }[char]));
 
   const currencyNumber = (value) => {
     const normalized = String(value || '')
@@ -43,6 +48,91 @@
       if (normalize(label.textContent) === normalize(OLD_CHECKLIST_LABEL)) {
         label.textContent = NEW_CHECKLIST_LABEL;
       }
+    });
+  };
+
+  const readTracked = () => {
+    try {
+      const items = JSON.parse(window.localStorage.getItem(TRACKED_KEY) || '[]');
+      return Array.isArray(items) ? items : [];
+    } catch (_) {
+      return [];
+    }
+  };
+
+  const trackedProject = (itemId) => readTracked()
+    .find((item) => String(item?.id || '') === String(itemId || '')) || null;
+
+  const displayChecklistAction = (value) => normalize(value) === normalize(OLD_CHECKLIST_LABEL)
+    ? NEW_CHECKLIST_LABEL
+    : String(value || 'Etapa sem nome');
+
+  const checklistDueDate = (item, step) => {
+    if (!item?.openingDate || !Number.isFinite(Number(step?.daysBefore))) return null;
+    const opening = new Date(`${String(item.openingDate).slice(0, 10)}T12:00:00`);
+    if (Number.isNaN(opening.getTime())) return null;
+    opening.setDate(opening.getDate() - Number(step.daysBefore));
+    return opening;
+  };
+
+  const formatStepDate = (date) => date
+    ? new Intl.DateTimeFormat('pt-BR').format(date)
+    : '';
+
+  const nextChecklistStep = (item) => {
+    const checklist = Array.isArray(item?.checklist) ? item.checklist : [];
+    const pending = checklist.filter((step) => !step?.done);
+    if (!pending.length) return { state: 'completed', action: 'Checklist concluído', owner: '', due: '' };
+
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    const overdue = pending.find((step) => {
+      const dueDate = checklistDueDate(item, step);
+      return dueDate && dueDate.getTime() < today.getTime();
+    });
+    const step = overdue || pending[0];
+    const dueDate = checklistDueDate(item, step);
+    return {
+      state: overdue ? 'overdue' : 'pending',
+      action: displayChecklistAction(step?.action),
+      owner: String(step?.owner || ''),
+      due: formatStepDate(dueDate),
+    };
+  };
+
+  const projectNextStep = (itemId) => {
+    const item = trackedProject(itemId);
+    return item ? nextChecklistStep(item) : null;
+  };
+
+  const nextStepMarkup = (step, mode = 'summary') => {
+    if (!step) return '';
+    const completed = step.state === 'completed';
+    const overdue = step.state === 'overdue';
+    const label = completed
+      ? 'CHECKLIST'
+      : overdue
+        ? 'ETAPA ATRASADA'
+        : mode === 'list' ? 'PRÓXIMA ETAPA' : 'PRÓXIMA ETAPA';
+    const meta = [step.owner ? `Responsável: ${step.owner}` : '', step.due ? `Prazo: ${step.due}` : '']
+      .filter(Boolean)
+      .join(' · ');
+    return `<small>${esc(label)}</small><strong>${esc(step.action)}</strong>${meta ? `<span>${esc(meta)}</span>` : ''}`;
+  };
+
+  const applyNextStep = (node, step, mode) => {
+    if (!node || !step) return;
+    node.classList.toggle('is-overdue', step.state === 'overdue');
+    node.classList.toggle('is-completed', step.state === 'completed');
+    node.innerHTML = nextStepMarkup(step, mode);
+  };
+
+  const refreshProjectNextStep = (itemId) => {
+    const step = projectNextStep(itemId);
+    if (!step) return;
+    document.querySelectorAll('[data-inauguration-next-step]').forEach((node) => {
+      if (String(node.dataset.inaugurationNextStep || '') !== String(itemId)) return;
+      applyNextStep(node, step, node.dataset.inaugurationNextStepMode || 'summary');
     });
   };
 
@@ -82,7 +172,7 @@
     return button;
   };
 
-  const buildSummaryPanel = ({ card, checklist, planned, actual, balance }) => {
+  const buildSummaryPanel = ({ card, checklist, planned, actual, balance, itemId }) => {
     const progress = card.querySelector('.pmh-progress-label b')?.textContent?.trim() || '0%';
     const progressText = card.querySelector('.pmh-progress-label span')?.textContent?.trim() || 'Sem etapas';
     const opening = card.querySelector('.pmh-date strong')?.textContent?.trim() || 'Sem data';
@@ -91,6 +181,7 @@
     const total = checklist.querySelectorAll('label').length;
     const done = checklist.querySelectorAll('label.done').length;
     const pending = Math.max(0, total - done);
+    const nextStep = projectNextStep(itemId);
 
     const panel = document.createElement('section');
     panel.className = 'pmh-inauguration-project-summary';
@@ -102,6 +193,7 @@
         <article><small>PENDÊNCIAS</small><strong>${pending}</strong><span>etapas ainda abertas</span></article>
         <article><small>SALDO DO PACOTE</small><strong>${balance || '—'}</strong><span>${actual || '—'} gasto · ${planned || '—'} planejado</span></article>
       </div>
+      ${nextStep ? `<div class="pmh-inauguration-summary-next ${nextStep.state === 'overdue' ? 'is-overdue' : ''} ${nextStep.state === 'completed' ? 'is-completed' : ''}" data-inauguration-next-step="${esc(itemId)}" data-inauguration-next-step-mode="summary">${nextStepMarkup(nextStep, 'summary')}</div>` : ''}
       <div class="pmh-inauguration-summary-owner"><small>RESPONSÁVEL / LOCAL</small><strong>${owner}</strong></div>`;
     return panel;
   };
@@ -147,7 +239,7 @@
       <button type="button" data-inauguration-tab="checklist">Checklist</button>
       <button type="button" data-inauguration-tab="finance">Financeiro</button>`;
 
-    const summaryPanel = buildSummaryPanel({ card, checklist, planned, actual, balance });
+    const summaryPanel = buildSummaryPanel({ card, checklist, planned, actual, balance, itemId });
 
     const workspace = document.createElement('section');
     workspace.className = 'pmh-inauguration-workspace';
@@ -176,6 +268,7 @@
   };
 
   const projectSummary = (card) => {
+    const itemId = projectIdFromCard(card);
     const unit = card.querySelector(':scope > header h3')?.textContent?.trim() || 'Implantação';
     const subtitle = card.querySelector(':scope > header p')?.textContent?.trim() || 'Sem responsável';
     const opening = card.querySelector('.pmh-date strong')?.textContent?.trim() || 'Sem data';
@@ -183,7 +276,8 @@
     const progress = card.querySelector('.pmh-progress-label b')?.textContent?.trim() || '0%';
     const progressText = card.querySelector('.pmh-progress-label span')?.textContent?.trim() || 'Sem etapas';
     const width = card.querySelector('.pmh-progress i')?.style.width || progress;
-    return { unit, subtitle, opening, countdown, progress, progressText, width };
+    const nextStep = projectNextStep(itemId);
+    return { itemId, unit, subtitle, opening, countdown, progress, progressText, width, nextStep };
   };
 
   const buildProjectRow = (card) => {
@@ -198,6 +292,7 @@
         <small>EM IMPLANTAÇÃO</small>
         <strong>${data.unit}</strong>
         <span>${data.subtitle}</span>
+        ${data.nextStep ? `<div class="pmh-inauguration-project-row-next ${data.nextStep.state === 'overdue' ? 'is-overdue' : ''} ${data.nextStep.state === 'completed' ? 'is-completed' : ''}" data-inauguration-next-step="${esc(itemId)}" data-inauguration-next-step-mode="list">${nextStepMarkup(data.nextStep, 'list')}</div>` : ''}
       </div>
       <div class="pmh-inauguration-project-row-progress">
         <div><span>Progresso</span><b>${data.progress}</b></div>
@@ -324,6 +419,15 @@
     const view = String(event.detail?.view || '');
     const content = event.detail?.content || document.querySelector('[data-content]');
     if (content) updateCopy(view, content);
+  });
+
+  document.addEventListener('change', (event) => {
+    const checkbox = event.target.closest?.('.pmh-checklist input[type="checkbox"]');
+    if (!checkbox) return;
+    const card = checkbox.closest('.pmh-inauguration-card');
+    const itemId = projectIdFromCard(card);
+    if (!itemId) return;
+    window.setTimeout(() => refreshProjectNextStep(itemId), 0);
   });
 
   document.addEventListener('click', (event) => {
