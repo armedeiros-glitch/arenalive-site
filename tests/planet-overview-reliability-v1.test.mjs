@@ -32,6 +32,9 @@ assert.equal(health.combineHealth('unavailable', 'unavailable'), 'unavailable');
 assert.equal(health.combineHealth('fresh', 'unavailable'), 'partial');
 assert.equal(health.healthLabel('unavailable'), 'Indisponível');
 assert.equal(health.healthLabel('partial'), 'Dados parciais');
+assert.equal(health.sourceUnavailableLabel(1), '1 fonte indisponível');
+assert.equal(health.sourceUnavailableLabel(2), '2 fontes indisponíveis');
+assert.doesNotMatch(health.sourceUnavailableLabel(2), /indisponívelis/);
 
 assert.match(script, /health === 'fresh'[\s\S]*\{ \.\.\.metric, health \}[\s\S]*value: '—'/,
   'Fresh preserva o valor real; partial/unavailable não podem fabricar zero.');
@@ -42,8 +45,9 @@ assert.match(script, /if \(sourceHealth\.inaugurations !== 'unavailable'\) agend
 assert.match(script, /if \(sourceHealth\.contents !== 'unavailable'\) agendaParts\.push/);
 assert.match(script, /const agendaHealth = combineHealth/);
 assert.match(script, /Leitura parcial da operação/);
-assert.match(script, /fonte\$\{unavailable\.length === 1/);
+assert.match(script, /sourceUnavailableLabel\(unavailable\.length\)/);
 assert.match(script, /Resposta inválida da fonte/);
+assert.doesNotMatch(script, /indisponível\$\{[^}]+\? '' : 'is'\}/);
 
 assert.match(ticketsBackend, /const ACTIVE_SITUATIONS = \[1, 4, 5, 6\]/);
 assert.match(radarData, /\[2, 3\]\.includes\(Number\(item\.situation\?\.id \|\| item\.situationId\)\)/,
@@ -54,4 +58,4 @@ assert.doesNotMatch(script, /localStorage\.setItem|sessionStorage|\/api\/hub\/ra
   'Health do Overview não pode criar persistência nem adicionar contexts.');
 assert.match(index, /planet-overview-desktop-v1\.js\?v=20260813-1/);
 
-console.log('Visão Geral Planet: confiabilidade fresh/partial/unavailable validada sem alterar fontes.');
+console.log('Visão Geral Planet: confiabilidade e plural de fontes indisponíveis validados.');
