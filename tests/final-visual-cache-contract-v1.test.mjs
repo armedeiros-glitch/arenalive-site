@@ -10,7 +10,7 @@ const expectedVersions = new Map([
   ['ticket-command-v1.css', '20260807-4'],
   ['calendar-operations-v1.css', '20260808-1'],
   ['content-library-v1.css', '20260808-1'],
-  ['internal-demands-v1.css', '20260806-1'],
+  ['internal-demands-v1.css', '20260813-1'],
   ['active-workstream-v1.css', '20260806-2'],
   ['andre-os-shell-home-v1.css', '20260806-2'],
   ['andre-os-feedback-v1.css', '20260806-1'],
