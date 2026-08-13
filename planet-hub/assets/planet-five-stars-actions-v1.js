@@ -22,11 +22,43 @@
   const page = () => document.querySelector('[data-p5-page]');
   const content = () => page()?.querySelector('[data-p5-content]');
   const selectedTab = () => page()?.querySelector('[data-p5-tab].active')?.dataset.p5Tab || '';
+  const normalizeUnit = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   const today = () => new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(new Date());
   const formatDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) ? value.split('-').reverse().join('/') : 'Sem prazo';
-  const isLate = (plan) => plan.status !== 'concluido' && plan.deadline && plan.deadline < today();
+  const isLate = (plan, reference = today()) => plan.status !== 'concluido' && plan.deadline && plan.deadline < reference;
+
+  const biggestGap = (evaluation) => {
+    if (!evaluation?.scores) return null;
+    let best = null;
+    Object.entries(LIMITS).forEach(([pillar, max]) => {
+      const score = Math.min(max, Math.max(0, Number(evaluation.scores?.[pillar]) || 0));
+      const gap = (max - score) / max;
+      if (!best || gap > best.gap) best = { pillar, label: PILLAR_LABELS[pillar], score, max, gap };
+    });
+    return best;
+  };
+
+  const firstOpenPlan = (unit, plans = [], reference = today()) => {
+    const key = normalizeUnit(unit);
+    return [...plans]
+      .filter((plan) => normalizeUnit(plan.unit) === key && ['aberto', 'em_andamento'].includes(plan.status))
+      .sort((a, b) => {
+        const dueA = /^\d{4}-\d{2}-\d{2}$/.test(String(a.deadline || '')) ? a.deadline : '9999-12-31';
+        const dueB = /^\d{4}-\d{2}-\d{2}$/.test(String(b.deadline || '')) ? b.deadline : '9999-12-31';
+        if (dueA !== dueB) return dueA.localeCompare(dueB);
+        const timeA = Date.parse(a.updatedAt || a.createdAt || 0) || 0;
+        const timeB = Date.parse(b.updatedAt || b.createdAt || 0) || 0;
+        if (timeA !== timeB) return timeB - timeA;
+        return String(a.id || '').localeCompare(String(b.id || ''));
+      })[0] || null;
+  };
+
+  const unitGuidance = (unit, evaluation, plans = [], reference = today()) => ({
+    gap: biggestGap(evaluation),
+    plan: firstOpenPlan(unit, plans, reference),
+  });
 
   const apiJson = async (url, options = {}) => {
     const response = await fetch(url, {
@@ -55,10 +87,10 @@
   };
 
   const latestEvaluationForUnit = async (unit) => {
-    const normalized = String(unit || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const normalized = normalizeUnit(unit);
     const evaluations = await loadEvaluations();
     return evaluations
-      .filter((item) => String(item.unit || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() === normalized)
+      .filter((item) => normalizeUnit(item.unit) === normalized)
       .sort((a, b) => `${b.cycle || ''}:${b.evaluatedAt || ''}`.localeCompare(`${a.cycle || ''}:${a.evaluatedAt || ''}`))[0] || null;
   };
 
@@ -68,16 +100,14 @@
     if (Number(evaluation.total) >= 90 && ['hiddenShopper', 'reportsOnTime', 'noSeriousPending'].some((key) => requirements[key] !== 'ok')) {
       return { pillar: 'requirements', title: 'Regularizar requisito pendente para certificação 5 estrelas' };
     }
-    const gaps = Object.entries(LIMITS).map(([key, max]) => ({
-      key, gap: Math.max(0, 1 - (Number(evaluation.scores?.[key]) || 0) / max),
-    })).sort((a, b) => b.gap - a.gap);
-    const pillar = gaps[0]?.key || 'other';
+    const gap = biggestGap(evaluation);
+    const pillar = gap?.pillar || 'other';
     return { pillar, title: `Evoluir ${PILLAR_LABELS[pillar] || 'ponto da avaliação'}` };
   };
 
   const statsMarkup = () => {
     const open = state.plans.filter((plan) => plan.status !== 'concluido').length;
-    const late = state.plans.filter(isLate).length;
+    const late = state.plans.filter((plan) => isLate(plan)).length;
     const done = state.plans.filter((plan) => plan.status === 'concluido').length;
     return `<div class="p5-action-stats"><span><small>ABERTOS</small><strong>${open}</strong></span><span class="${late ? 'danger' : ''}"><small>ATRASADOS</small><strong>${late}</strong></span><span><small>CONCLUÍDOS</small><strong>${done}</strong></span></div>`;
   };
@@ -112,18 +142,37 @@
     }
   };
 
-  const decorateUnitRows = () => {
+  const guidanceMarkup = (unit, evaluation) => {
+    const guidance = unitGuidance(unit, evaluation, state.plans);
+    const gap = guidance.gap;
+    const plan = guidance.plan;
+    return `<div class="p5-unit-guidance" data-p5-unit-guidance>
+      <span><small>MAIOR OPORTUNIDADE</small>${gap ? `<strong>${esc(gap.label)}</strong><em>${gap.score.toLocaleString('pt-BR')}/${gap.max}</em>` : '<strong>Sem avaliação registrada</strong>'}</span>
+      <span><small>AÇÃO PENDENTE</small>${plan ? `<strong>${esc(plan.title)}</strong><em>${esc(STATUS_LABELS[plan.status] || plan.status)} · ${esc(formatDate(plan.deadline))}${isLate(plan) ? ' · <b>ATRASADA</b>' : ''}</em>` : '<strong>Nenhuma ação pendente</strong>'}</span>
+    </div>`;
+  };
+
+  const decorateUnitRows = async () => {
+    if (!active() || selectedTab() !== 'units') return;
+    try { await Promise.all([loadPlans(), loadEvaluations()]); } catch { return; }
     if (!active() || selectedTab() !== 'units') return;
     document.querySelectorAll('[data-p5-page] .p5-unit-row').forEach((row) => {
-      if (row.querySelector('[data-p5-plan-unit]')) return;
       const unit = row.querySelector('.p5-unit-main strong')?.textContent?.trim();
       if (!unit) return;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'p5-row-action p5-plan-unit-button';
-      button.dataset.p5PlanUnit = unit;
-      button.textContent = '+ Plano';
-      row.appendChild(button);
+      const evaluation = state.evaluations
+        .filter((item) => normalizeUnit(item.unit) === normalizeUnit(unit))
+        .sort((a, b) => `${b.cycle || ''}:${b.evaluatedAt || ''}`.localeCompare(`${a.cycle || ''}:${a.evaluatedAt || ''}`))[0] || null;
+      row.querySelector('[data-p5-unit-guidance]')?.remove();
+      const anchor = row.querySelector('.p5-row-action');
+      anchor?.insertAdjacentHTML('beforebegin', guidanceMarkup(unit, evaluation));
+      if (!row.querySelector('[data-p5-plan-unit]')) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'p5-row-action p5-plan-unit-button';
+        button.dataset.p5PlanUnit = unit;
+        button.textContent = '+ Plano';
+        row.appendChild(button);
+      }
     });
   };
 
@@ -168,7 +217,8 @@
       document.querySelector('[data-p5-plan-modal]')?.remove();
       state.loaded = false;
       await loadPlans(true);
-      renderActions();
+      if (selectedTab() === 'actions') renderActions();
+      if (selectedTab() === 'units') decorateUnitRows();
     } catch (cause) {
       if (error) { error.textContent = cause.message; error.hidden = false; }
       buttons.forEach((button) => { button.disabled = false; });
@@ -224,6 +274,7 @@
     if (event.key === 'Escape') document.querySelector('[data-p5-plan-modal]')?.remove();
   });
 
+  window.PlanetFiveStarsGuidance = Object.freeze({ biggestGap, firstOpenPlan, unitGuidance });
   window.addEventListener('hashchange', schedule);
   window.addEventListener('pmh:view-rendered', schedule);
   window.addEventListener('planet:five-stars-rendered', schedule);
