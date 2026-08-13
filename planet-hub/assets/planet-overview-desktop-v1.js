@@ -60,10 +60,43 @@
 
   const fetchJson = async (url) => {
     const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
-    const payload = await response.json().catch(() => ({}));
+    let payload;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new Error('Resposta inválida da fonte.');
+    }
     if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
     return payload;
   };
+
+  const healthFromPayload = (payload) => {
+    if (payload?.reliability?.stale === true || payload?.reliability?.complete === false || payload?.partial === true) return 'partial';
+    return 'fresh';
+  };
+
+  const settledHealth = (result) => {
+    if (!result || result.status !== 'fulfilled') return 'unavailable';
+    return healthFromPayload(result.value);
+  };
+
+  const radarSourceHealth = (snapshot, key) => {
+    const source = snapshot?.sources?.[key];
+    if (!source) return 'unavailable';
+    if (source.error || source.reliability === 'error') return 'unavailable';
+    if (['partial', 'stale'].includes(source.reliability)) return 'partial';
+    return 'fresh';
+  };
+
+  const combineHealth = (...states) => {
+    const values = states.filter(Boolean);
+    if (!values.length) return 'unavailable';
+    if (values.every((state) => state === 'fresh')) return 'fresh';
+    if (values.every((state) => state === 'unavailable')) return 'unavailable';
+    return 'partial';
+  };
+
+  const healthLabel = (health) => health === 'unavailable' ? 'Indisponível' : health === 'partial' ? 'Dados parciais' : '';
 
   const readLocalCampaigns = () => {
     try {
@@ -87,11 +120,20 @@
         ? campaigns.value.data
         : [];
       const localCampaigns = readLocalCampaigns();
+      const campaignHealth = campaigns.status === 'fulfilled'
+        ? healthFromPayload(campaigns.value)
+        : localCampaigns.length ? 'partial' : 'unavailable';
       extraSnapshot = {
         acquisition: acquisition.status === 'fulfilled' ? acquisition.value : null,
         expansion: expansion.status === 'fulfilled' ? expansion.value : null,
         fiveStars: fiveStars.status === 'fulfilled' ? fiveStars.value : null,
         campaigns: remoteCampaigns.length ? remoteCampaigns : localCampaigns,
+        health: {
+          acquisition: settledHealth(acquisition),
+          expansion: settledHealth(expansion),
+          fiveStars: settledHealth(fiveStars),
+          campaigns: campaignHealth,
+        },
       };
       return extraSnapshot;
     }).finally(() => { extraLoading = null; });
@@ -150,9 +192,10 @@
     return [...base.values()];
   };
 
-  const metricCard = ({ tone = '', eyebrow, value, label, destination }) => `
-    <button type="button" class="aos-op-metric ${tone}" data-overview-destination="${esc(destination)}">
+  const metricCard = ({ tone = '', eyebrow, value, label, destination, health = 'fresh' }) => `
+    <button type="button" class="aos-op-metric ${tone}" data-overview-destination="${esc(destination)}" data-source-health="${esc(health)}">
       <small>${esc(eyebrow)}</small><strong>${esc(value)}</strong><span>${esc(label)}</span>
+      ${health === 'fresh' ? '' : `<em class="aos-op-source-health ${esc(health)}">${esc(healthLabel(health))}</em>`}
     </button>`;
 
   const milestone = (item) => {
@@ -171,6 +214,10 @@
 
   const sortUpcoming = (a, b) => dueMeta(a).weight - dueMeta(b).weight || Number(a.priority ?? 3) - Number(b.priority ?? 3);
 
+  const reliableMetric = (metric, health) => health === 'fresh'
+    ? { ...metric, health }
+    : { ...metric, health, value: '—', label: healthLabel(health), tone: '' };
+
   const buildViewModel = (snapshot, extras) => {
     const items = Array.isArray(snapshot?.items) ? snapshot.items : [];
     const marketing = items.filter((item) => ['demand', 'conteudos'].includes(item.action));
@@ -180,6 +227,18 @@
     const campaigns = directCampaigns.length ? directCampaigns : radarCampaigns;
     const inaugurations = items.filter((item) => item.action === 'inauguracoes');
     const tickets = items.filter((item) => item.action === 'chamados');
+
+    const sourceHealth = {
+      tickets: radarSourceHealth(snapshot, 'tickets'),
+      inaugurations: radarSourceHealth(snapshot, 'inaugurations'),
+      demands: radarSourceHealth(snapshot, 'demands'),
+      contents: radarSourceHealth(snapshot, 'contents'),
+      campaigns: extras?.health?.campaigns || 'partial',
+      acquisition: extras?.health?.acquisition || 'partial',
+      expansion: extras?.health?.expansion || 'partial',
+      fiveStars: extras?.health?.fiveStars || 'partial',
+    };
+    const marketingHealth = combineHealth(sourceHealth.demands, sourceHealth.contents);
 
     const lateTickets = tickets.filter((item) => dueMeta(item).bucket === 'late').length;
     const todayTickets = tickets.filter((item) => dueMeta(item).bucket === 'today').length;
@@ -204,27 +263,59 @@
     const units = latestByUnit(evaluations);
     const p5Average = units.length ? units.reduce((sum, item) => sum + (Number(item.total) || 0), 0) / units.length : null;
 
-    const milestones = [...campaigns, ...inaugurations, ...contentDeliveries]
+    const agendaParts = [];
+    if (sourceHealth.campaigns !== 'unavailable') agendaParts.push(...campaigns);
+    if (sourceHealth.inaugurations !== 'unavailable') agendaParts.push(...inaugurations);
+    if (sourceHealth.contents !== 'unavailable') agendaParts.push(...contentDeliveries);
+    const milestones = agendaParts
       .filter((item) => isUpcoming(item, 30))
       .sort(sortUpcoming)
       .slice(0, 9);
+    const agendaHealth = combineHealth(sourceHealth.campaigns, sourceHealth.inaugurations, sourceHealth.contents);
 
     const campaignMetricLabel = nextCampaign
       ? `${nextCampaign.operational ? nextCampaign.context : nextCampaign.title} · ${dueMeta(nextCampaign).label}`
       : 'sem próxima data';
 
-    return {
-      metrics: [
-        { eyebrow: 'MARKETING', value: String(marketing.length), label: marketing.length === 1 ? 'item em fluxo' : 'itens em fluxo', destination: 'marketing' },
-        { eyebrow: 'CAMPANHAS', value: String(upcomingCampaigns.length), label: campaignMetricLabel, destination: 'calendario' },
-        { eyebrow: 'INAUGURAÇÕES', value: String(inaugurations.length), label: nextOpening ? `${nextOpening.title} · ${dueMeta(nextOpening).label}` : 'nenhum projeto ativo', destination: 'inauguracoes' },
-        { eyebrow: 'CHAMADOS', value: String(tickets.length), label: lateTickets ? `${lateTickets} atrasado${lateTickets === 1 ? '' : 's'}` : todayTickets ? `${todayTickets} vence${todayTickets === 1 ? '' : 'm'} hoje` : 'sem atraso crítico', destination: 'chamados', tone: lateTickets ? 'danger' : '' },
-        { eyebrow: 'AQUISIÇÃO · 7D', value: num(visitors), label: visitors ? `${pct(acquisitionConversion)} até WhatsApp` : 'sem visitas medidas', destination: 'aquisicao' },
-        { eyebrow: 'EXPANSÃO', value: String(activeLeads), label: newLeads ? `${newLeads} novo${newLeads === 1 ? '' : 's'} para olhar` : 'fila sem novos', destination: 'expansao', tone: newLeads ? 'attention' : '' },
-        { eyebrow: '5 ESTRELAS', value: p5Average == null ? '—' : p5Average.toLocaleString('pt-BR', { maximumFractionDigits: 1 }), label: units.length ? `média · ${units.length} unidade${units.length === 1 ? '' : 's'}` : 'aguardando avaliações', destination: '5-estrelas' },
-      ],
-      milestones,
-    };
+    const metrics = [
+      reliableMetric({ eyebrow: 'MARKETING', value: String(marketing.length), label: marketing.length === 1 ? 'item em fluxo' : 'itens em fluxo', destination: 'marketing' }, marketingHealth),
+      reliableMetric({ eyebrow: 'CAMPANHAS', value: String(upcomingCampaigns.length), label: campaignMetricLabel, destination: 'calendario' }, sourceHealth.campaigns),
+      reliableMetric({ eyebrow: 'INAUGURAÇÕES', value: String(inaugurations.length), label: nextOpening ? `${nextOpening.title} · ${dueMeta(nextOpening).label}` : 'nenhum projeto ativo', destination: 'inauguracoes' }, sourceHealth.inaugurations),
+      reliableMetric({ eyebrow: 'CHAMADOS', value: String(tickets.length), label: lateTickets ? `${lateTickets} atrasado${lateTickets === 1 ? '' : 's'}` : todayTickets ? `${todayTickets} vence${todayTickets === 1 ? '' : 'm'} hoje` : 'sem atraso crítico', destination: 'chamados', tone: lateTickets ? 'danger' : '' }, sourceHealth.tickets),
+      reliableMetric({ eyebrow: 'AQUISIÇÃO · 7D', value: num(visitors), label: visitors ? `${pct(acquisitionConversion)} até WhatsApp` : 'sem visitas medidas', destination: 'aquisicao' }, sourceHealth.acquisition),
+      reliableMetric({ eyebrow: 'EXPANSÃO', value: String(activeLeads), label: newLeads ? `${newLeads} novo${newLeads === 1 ? '' : 's'} para olhar` : 'fila sem novos', destination: 'expansao', tone: newLeads ? 'attention' : '' }, sourceHealth.expansion),
+      reliableMetric({ eyebrow: '5 ESTRELAS', value: p5Average == null ? '—' : p5Average.toLocaleString('pt-BR', { maximumFractionDigits: 1 }), label: units.length ? `média · ${units.length} unidade${units.length === 1 ? '' : 's'}` : 'aguardando avaliações', destination: '5-estrelas' }, sourceHealth.fiveStars),
+    ];
+
+    const allHealth = Object.values(sourceHealth);
+    const unavailableCount = allHealth.filter((state) => state === 'unavailable').length;
+    const partialCount = allHealth.filter((state) => state === 'partial').length;
+    const globalHealthLabel = unavailableCount
+      ? `${unavailableCount} fonte${unavailableCount === 1 ? '' : 's'} indisponível${unavailableCount === 1 ? '' : 'is'}`
+      : partialCount ? 'Dados parcialmente disponíveis' : 'Dados atualizados';
+
+    return { metrics, milestones, agendaHealth, sourceHealth, globalHealthLabel };
+  };
+
+  const syncAttentionReliability = (snapshot) => {
+    const root = document.querySelector('[data-planet-overview]');
+    const panel = root?.querySelector('.aos-planet-attention-panel');
+    if (!panel) return;
+    const unavailable = RADAR_SOURCES.filter((key) => radarSourceHealth(snapshot, key) === 'unavailable');
+    let badge = panel.querySelector('[data-overview-attention-health]');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.dataset.overviewAttentionHealth = '1';
+      badge.className = 'aos-overview-attention-health';
+      panel.querySelector('header')?.appendChild(badge);
+    }
+    badge.textContent = unavailable.length ? `${unavailable.length} fonte${unavailable.length === 1 ? '' : 's'} indisponível${unavailable.length === 1 ? '' : 'is'}` : '';
+    badge.hidden = unavailable.length === 0;
+
+    const attentionRoot = panel.querySelector('[data-planet-attention]');
+    if (unavailable.length && attentionRoot?.querySelector('.aos-planet-empty')) {
+      attentionRoot.innerHTML = `<div class="aos-planet-empty"><strong>Leitura parcial da operação</strong><span>${esc(unavailable.length)} fonte${unavailable.length === 1 ? '' : 's'} indisponível${unavailable.length === 1 ? '' : 'is'} neste momento.</span></div>`;
+    }
   };
 
   const render = () => {
@@ -241,17 +332,23 @@
     }
 
     const model = buildViewModel(radarSnapshot, extraSnapshot);
+    const agendaState = model.agendaHealth === 'fresh' ? '' : model.agendaHealth === 'unavailable' ? 'Agenda indisponível' : 'Agenda parcial';
     cockpit.innerHTML = `
       <section class="aos-op-summary">
-        <header><div><small>PANORAMA REAL</small><h3>Operação em uma tela</h3></div><span>dados vivos das áreas</span></header>
+        <header><div><small>PANORAMA REAL</small><h3>Operação em uma tela</h3></div><span class="aos-op-global-health">${esc(model.globalHealthLabel)}</span></header>
         <div class="aos-op-metrics">${model.metrics.map(metricCard).join('')}</div>
       </section>
-      <section class="aos-op-milestones-panel">
-        <header><div><small>AGENDA DA OPERAÇÃO · 30 DIAS</small><h3>O que vem pela frente</h3></div><button type="button" data-overview-destination="radar">Abrir Radar</button></header>
+      <section class="aos-op-milestones-panel" data-agenda-health="${esc(model.agendaHealth)}">
+        <header><div><small>AGENDA DA OPERAÇÃO · 30 DIAS</small><h3>O que vem pela frente</h3></div><div class="aos-op-panel-actions">${agendaState ? `<span class="aos-op-agenda-health">${esc(agendaState)}</span>` : ''}<button type="button" data-overview-destination="radar">Abrir Radar</button></div></header>
         <div class="aos-op-milestones">${model.milestones.length
           ? model.milestones.map(milestone).join('')
-          : '<div class="aos-op-empty">Nenhuma campanha, inauguração ou entrega de conteúdo com data nos próximos 30 dias.</div>'}</div>
+          : model.agendaHealth === 'unavailable'
+            ? '<div class="aos-op-empty">Agenda indisponível no momento.</div>'
+            : model.agendaHealth === 'partial'
+              ? '<div class="aos-op-empty">Nenhum marco disponível nas fontes carregadas; a agenda está parcial.</div>'
+              : '<div class="aos-op-empty">Nenhuma campanha, inauguração ou entrega de conteúdo com data nos próximos 30 dias.</div>'}</div>
       </section>`;
+    syncAttentionReliability(radarSnapshot);
   };
 
   const hydrate = async () => {
@@ -288,6 +385,14 @@
   });
   DESKTOP.addEventListener?.('change', () => {
     if (DESKTOP.matches && location.hash === '#planet') hydrate();
+  });
+
+  window.PlanetOverviewReliability = Object.freeze({
+    healthFromPayload,
+    settledHealth,
+    radarSourceHealth,
+    combineHealth,
+    healthLabel,
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hydrate, { once: true });
