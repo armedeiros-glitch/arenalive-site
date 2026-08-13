@@ -28,6 +28,9 @@
     },
   };
 
+  const ACTIVE_STATUS = new Set(['new', 'in_progress', 'waiting']);
+  const PRIORITY_WEIGHT = Object.freeze({ urgent: 0, high: 1, normal: 2, low: 3 });
+
   const state = {
     items: [],
     revision: null,
@@ -205,6 +208,40 @@
     return Number.isNaN(date.getTime()) ? 'Sem prazo' : new Intl.DateTimeFormat('pt-BR').format(date);
   };
 
+  const dayDiff = (value, reference = todayIso()) => {
+    const due = cleanDate(value);
+    const today = cleanDate(reference);
+    if (!due || !today) return null;
+    const dueDate = new Date(`${due}T12:00:00`);
+    const todayDate = new Date(`${today}T12:00:00`);
+    if (Number.isNaN(dueDate.getTime()) || Number.isNaN(todayDate.getTime())) return null;
+    return Math.round((dueDate - todayDate) / 86400000);
+  };
+
+  const dueMeta = (value, reference = todayIso()) => {
+    const diff = dayDiff(value, reference);
+    if (diff == null) return { label: 'Sem prazo', tone: 'none', weight: 90000 };
+    if (diff < 0) {
+      const elapsed = Math.abs(diff);
+      return { label: `ATRASADA · ${elapsed} ${elapsed === 1 ? 'dia' : 'dias'}`, tone: 'late', weight: diff };
+    }
+    if (diff === 0) return { label: 'VENCE HOJE', tone: 'today', weight: 0 };
+    if (diff <= 7) return { label: `em ${diff} ${diff === 1 ? 'dia' : 'dias'}`, tone: 'soon', weight: diff };
+    return { label: fmtDate(value), tone: 'later', weight: diff };
+  };
+
+  const sortActiveDemands = (items, reference = todayIso()) => (Array.isArray(items) ? items : [])
+    .filter((item) => ACTIVE_STATUS.has(item.status))
+    .sort((a, b) => {
+      const dueA = dueMeta(a.dueDate, reference).weight;
+      const dueB = dueMeta(b.dueDate, reference).weight;
+      if (dueA !== dueB) return dueA - dueB;
+      const priorityA = PRIORITY_WEIGHT[a.priority] ?? PRIORITY_WEIGHT.normal;
+      const priorityB = PRIORITY_WEIGHT[b.priority] ?? PRIORITY_WEIGHT.normal;
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      return Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0);
+    });
+
   const renderPreview = () => {
     if (!state.preview) return '';
     const item = normalizeDemand(state.preview.data || {});
@@ -228,6 +265,31 @@
       </div>
       <footer><span>${state.shared ? 'Será salvo para toda a equipe.' : 'Será salvo neste navegador enquanto o compartilhamento não estiver disponível.'}</span><button type="button" data-demand-cancel>Cancelar</button><button class="primary" type="submit">${state.editingId ? 'Salvar alterações' : 'Confirmar demanda'}</button></footer>
     </form>`;
+  };
+
+  const renderActiveQueue = () => {
+    const active = sortActiveDemands(state.items);
+    return `<section class="pmh-demand-active" data-demand-active-queue>
+      <header><div><small>EXECUÇÃO</small><h3>Demandas em andamento</h3><p>Prazo primeiro, depois prioridade e atualização.</p></div><b>${active.length}</b></header>
+      <div class="pmh-demand-active-list">${active.length ? active.map((item) => {
+        const due = dueMeta(item.dueDate);
+        return `<article class="pmh-demand-active-card status-${esc(item.status)} priority-${esc(item.priority)}">
+          <div class="pmh-demand-active-main">
+            <div class="pmh-demand-active-title"><span>${esc(LABELS.status[item.status] || item.status)}</span><h4>${esc(item.title)}</h4></div>
+            <div class="pmh-demand-active-meta">
+              <span><small>Responsável</small><strong>${esc(item.responsible || 'Sem responsável')}</strong></span>
+              <span><small>Status</small><strong>${esc(LABELS.status[item.status] || item.status)}</strong></span>
+              <span><small>Prioridade</small><strong>${esc(LABELS.priority[item.priority] || item.priority)}</strong></span>
+              <span><small>Prazo</small><strong>${esc(fmtDate(item.dueDate))}</strong></span>
+            </div>
+          </div>
+          <aside>
+            <span class="pmh-demand-due tone-${esc(due.tone)}">${esc(due.label)}</span>
+            <div><button type="button" data-demand-edit="${esc(item.id)}">Editar</button><button type="button" class="primary" data-demand-complete="${esc(item.id)}">Concluir</button></div>
+          </aside>
+        </article>`;
+      }).join('') : '<div class="pmh-demand-active-empty"><strong>Nenhuma demanda ativa no momento.</strong><span>Novas demandas aparecerão aqui assim que forem registradas.</span></div>'}</div>
+    </section>`;
   };
 
   const renderArchive = () => {
@@ -259,6 +321,7 @@
       <footer><span>${esc(state.aiMessage || 'Você revisa tudo antes de salvar.')}</span><button type="button" class="pmh-demand-manual-compact" data-demand-manual>Cadastro manual</button><button type="button" data-demand-organize>✨ Organizar demanda</button></footer>
     </section>
     ${renderPreview()}
+    ${renderActiveQueue()}
     ${renderArchive()}`;
   };
 
@@ -402,6 +465,8 @@
       return toast('Demanda excluída.');
     }
   });
+
+  window.PlanetInternalDemandsQueue = Object.freeze({ dueMeta, sortActiveDemands });
 
   window.addEventListener('pmh:view-rendered', (event) => {
     if (event.detail?.view === 'inicio') mountHome();
