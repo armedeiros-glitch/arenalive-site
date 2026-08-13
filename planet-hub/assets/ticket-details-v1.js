@@ -171,7 +171,11 @@
   }, true);
 
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && drawer) closeDrawer();
+    if (event.key === 'Escape' && drawer) {
+      if (document.querySelector('[data-radar-context-modal]')) return;
+      closeDrawer();
+      return;
+    }
     const card = event.target.closest?.('.pmh-ticket[data-ticket-id]');
     if (card && (event.key === 'Enter' || event.key === ' ')) {
       event.preventDefault();
