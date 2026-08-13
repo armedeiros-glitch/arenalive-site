@@ -10,6 +10,8 @@
     scheduled: 'Retomar em outra data',
   };
 
+  let returnFocus = null;
+
   const radar = () => window.PMHRadarData;
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
@@ -31,8 +33,13 @@
   const close = () => {
     const modal = document.querySelector('[data-radar-context-modal]');
     if (!modal) return;
+    const focusTarget = returnFocus;
+    returnFocus = null;
     modal.classList.remove('visible');
-    setTimeout(() => modal.remove(), 160);
+    setTimeout(() => {
+      modal.remove();
+      if (focusTarget?.isConnected) focusTarget.focus();
+    }, 160);
   };
 
   const fieldsFor = (item) => ({
@@ -63,11 +70,12 @@
     if (!item) return;
 
     document.querySelector('[data-radar-context-modal]')?.remove();
+    returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const values = fieldsFor(item);
     const modal = document.createElement('div');
     modal.className = 'pmh-radar-context-modal';
     modal.dataset.radarContextModal = '1';
-    modal.innerHTML = `<form class="pmh-radar-context-dialog" data-radar-context-form data-item-id="${esc(item.id)}">
+    modal.innerHTML = `<form class="pmh-radar-context-dialog" data-radar-context-form data-item-id="${esc(item.id)}" role="dialog" aria-modal="true">
       <header>
         <div><small>CONTEXTO OPERACIONAL</small><h2>${esc(item.title)}</h2><p>Explique por que esse item está parado. O Radar usará isso para não confundir atraso com trabalho executável.</p></div>
         <button type="button" data-radar-context-close aria-label="Fechar">×</button>
@@ -102,7 +110,10 @@
     </form>`;
 
     document.body.appendChild(modal);
-    requestAnimationFrame(() => modal.classList.add('visible'));
+    requestAnimationFrame(() => {
+      modal.classList.add('visible');
+      modal.querySelector('[name="state"]')?.focus();
+    });
   };
 
   const applySuggestion = (form) => {
@@ -143,10 +154,7 @@
     button.disabled = true;
     button.textContent = 'Salvando…';
     try {
-      await apiJson({
-        method: 'PUT',
-        body: JSON.stringify({ itemId, ...values }),
-      });
+      await apiJson({ method: 'PUT', body: JSON.stringify({ itemId, ...values }) });
       close();
       await refreshRadar();
     } catch (error) {
@@ -184,9 +192,7 @@
     const suggestion = event.target.closest('[data-apply-context-suggestion]');
     if (suggestion) return applySuggestion(suggestion.closest('[data-radar-context-form]'));
 
-    if (event.target.closest('[data-radar-context-close]') || event.target.matches('[data-radar-context-modal]')) {
-      return close();
-    }
+    if (event.target.closest('[data-radar-context-close]') || event.target.matches('[data-radar-context-modal]')) return close();
 
     const clearButton = event.target.closest('[data-radar-context-clear]');
     if (clearButton) return clear(clearButton.closest('[data-radar-context-form]'));
@@ -200,8 +206,11 @@
   });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') close();
-  });
+    if (event.key !== 'Escape' || !document.querySelector('[data-radar-context-modal]')) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    close();
+  }, true);
 
   window.PMHRadarContext = Object.freeze({ open });
 })();
