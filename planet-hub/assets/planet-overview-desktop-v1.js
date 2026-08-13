@@ -97,6 +97,7 @@
   };
 
   const healthLabel = (health) => health === 'unavailable' ? 'Indisponível' : health === 'partial' ? 'Dados parciais' : '';
+  const sourceUnavailableLabel = (count) => `${count} ${count === 1 ? 'fonte indisponível' : 'fontes indisponíveis'}`;
 
   const readLocalCampaigns = () => {
     try {
@@ -291,7 +292,7 @@
     const unavailableCount = allHealth.filter((state) => state === 'unavailable').length;
     const partialCount = allHealth.filter((state) => state === 'partial').length;
     const globalHealthLabel = unavailableCount
-      ? `${unavailableCount} fonte${unavailableCount === 1 ? '' : 's'} indisponível${unavailableCount === 1 ? '' : 'is'}`
+      ? sourceUnavailableLabel(unavailableCount)
       : partialCount ? 'Dados parcialmente disponíveis' : 'Dados atualizados';
 
     return { metrics, milestones, agendaHealth, sourceHealth, globalHealthLabel };
@@ -309,12 +310,12 @@
       badge.className = 'aos-overview-attention-health';
       panel.querySelector('header')?.appendChild(badge);
     }
-    badge.textContent = unavailable.length ? `${unavailable.length} fonte${unavailable.length === 1 ? '' : 's'} indisponível${unavailable.length === 1 ? '' : 'is'}` : '';
+    badge.textContent = unavailable.length ? sourceUnavailableLabel(unavailable.length) : '';
     badge.hidden = unavailable.length === 0;
 
     const attentionRoot = panel.querySelector('[data-planet-attention]');
     if (unavailable.length && attentionRoot?.querySelector('.aos-planet-empty')) {
-      attentionRoot.innerHTML = `<div class="aos-planet-empty"><strong>Leitura parcial da operação</strong><span>${esc(unavailable.length)} fonte${unavailable.length === 1 ? '' : 's'} indisponível${unavailable.length === 1 ? '' : 'is'} neste momento.</span></div>`;
+      attentionRoot.innerHTML = `<div class="aos-planet-empty"><strong>Leitura parcial da operação</strong><span>${esc(sourceUnavailableLabel(unavailable.length))} neste momento.</span></div>`;
     }
   };
 
@@ -393,6 +394,7 @@
     radarSourceHealth,
     combineHealth,
     healthLabel,
+    sourceUnavailableLabel,
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hydrate, { once: true });
