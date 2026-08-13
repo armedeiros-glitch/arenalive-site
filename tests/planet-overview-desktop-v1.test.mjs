@@ -8,8 +8,8 @@ const [index, script, styles] = await Promise.all([
   read('planet-hub/assets/planet-overview-desktop-v1.css'),
 ]);
 
-assert.ok(index.includes('planet-overview-desktop-v1.css?v=20260810-3'));
-assert.ok(index.includes('planet-overview-desktop-v1.js?v=20260810-4'));
+assert.ok(index.includes('planet-overview-desktop-v1.css?v=20260813-1'));
+assert.ok(index.includes('planet-overview-desktop-v1.js?v=20260813-1'));
 
 assert.match(script, /PMHRadarData\.collect/);
 assert.match(script, /\/api\/hub\/planet\/acquisition\/lp-franquias\?period=7d/);
@@ -40,13 +40,15 @@ assert.match(script, /CHAMADOS/);
 assert.match(script, /AQUISIÇÃO · 7D/);
 assert.match(script, /EXPANSÃO/);
 assert.match(script, /5 ESTRELAS/);
+assert.match(script, /data-source-health/);
+assert.match(script, /Agenda parcial/);
 
-assert.match(styles, /@media \(min-width: 821px\)/);
+assert.match(styles, /@media \(min-width:\s*821px\)/);
 assert.doesNotMatch(styles, /max-width:\s*820px/);
 assert.match(styles, /\.aos-planet-desktop-cockpit/);
-assert.match(styles, /\.aos-planet-overview-status[\s\S]*display:\s*none !important/);
+assert.match(styles, /\.aos-planet-overview-status[\s\S]*display:\s*none\s*!important/);
 assert.match(styles, /grid-template-columns:\s*repeat\(7/);
 assert.match(styles, /\.aos-planet-drawers[\s\S]*display:\s*none/);
 assert.match(styles, /\.aos-planet-attention-list[\s\S]*repeat\(3/);
 
-console.log('Cockpit, marcos de campanhas e agenda desktop da Visão Geral Planet validados.');
+console.log('Cockpit, marcos de campanhas, agenda e confiabilidade da Visão Geral Planet validados.');
