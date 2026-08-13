@@ -242,6 +242,14 @@
       return Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0);
     });
 
+  const nextStepMeta = (steps) => {
+    const list = Array.isArray(steps) ? steps : [];
+    if (!list.length) return null;
+    const pending = list.find((step) => step && !step.done && String(step.text || '').trim());
+    if (pending) return { state: 'pending', text: String(pending.text).trim() };
+    return { state: 'completed', text: '' };
+  };
+
   const renderPreview = () => {
     if (!state.preview) return '';
     const item = normalizeDemand(state.preview.data || {});
@@ -273,6 +281,7 @@
       <header><div><small>EXECUÇÃO</small><h3>Demandas em andamento</h3><p>Prazo primeiro, depois prioridade e atualização.</p></div><b>${active.length}</b></header>
       <div class="pmh-demand-active-list">${active.length ? active.map((item) => {
         const due = dueMeta(item.dueDate);
+        const nextStep = nextStepMeta(item.steps);
         return `<article class="pmh-demand-active-card status-${esc(item.status)} priority-${esc(item.priority)}">
           <div class="pmh-demand-active-main">
             <div class="pmh-demand-active-title"><span>${esc(LABELS.status[item.status] || item.status)}</span><h4>${esc(item.title)}</h4></div>
@@ -282,6 +291,7 @@
               <span><small>Prioridade</small><strong>${esc(LABELS.priority[item.priority] || item.priority)}</strong></span>
               <span><small>Prazo</small><strong>${esc(fmtDate(item.dueDate))}</strong></span>
             </div>
+            ${nextStep ? `<div class="pmh-demand-next-step ${nextStep.state === 'completed' ? 'is-complete' : ''}"><small>${nextStep.state === 'completed' ? 'ETAPAS CONCLUÍDAS' : 'PRÓXIMA ETAPA'}</small>${nextStep.state === 'pending' ? `<strong title="${esc(nextStep.text)}">${esc(nextStep.text)}</strong>` : ''}</div>` : ''}
           </div>
           <aside>
             <span class="pmh-demand-due tone-${esc(due.tone)}">${esc(due.label)}</span>
@@ -466,7 +476,7 @@
     }
   });
 
-  window.PlanetInternalDemandsQueue = Object.freeze({ dueMeta, sortActiveDemands });
+  window.PlanetInternalDemandsQueue = Object.freeze({ dueMeta, sortActiveDemands, nextStepMeta });
 
   window.addEventListener('pmh:view-rendered', (event) => {
     if (event.detail?.view === 'inicio') mountHome();
