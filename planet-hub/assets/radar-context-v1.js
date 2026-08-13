@@ -65,6 +65,13 @@
     </section>`;
   };
 
+  const liftAboveTicketDrawer = (modal) => {
+    const drawer = document.querySelector('.pmh-ticket-drawer');
+    if (!drawer) return;
+    const drawerZ = Number.parseInt(getComputedStyle(drawer).zIndex, 10);
+    if (Number.isFinite(drawerZ)) modal.style.zIndex = String(drawerZ + 2);
+  };
+
   const open = (itemId) => {
     const item = getItem(itemId);
     if (!item) return;
@@ -109,6 +116,7 @@
       </footer>
     </form>`;
 
+    liftAboveTicketDrawer(modal);
     document.body.appendChild(modal);
     requestAnimationFrame(() => {
       modal.classList.add('visible');
