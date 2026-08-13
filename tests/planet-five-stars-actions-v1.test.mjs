@@ -65,8 +65,8 @@ assert.match(js, /data-p5-plan-destination/);
 assert.doesNotMatch(js, /localStorage|sessionStorage|MutationObserver|setInterval/);
 assert.doesNotMatch(css, /!important/);
 assert.match(css, /p5-action-list/);
-assert.match(access, /planet-five-stars-actions-v1\.js\?v=20260807-1/);
-assert.match(html, /planet-five-stars-actions-v1\.css\?v=20260807-1/);
+assert.match(access, /planet-five-stars-actions-v1\.js\?v=20260813-1/);
+assert.match(html, /planet-five-stars-actions-v1\.css\?v=20260813-1/);
 assert.match(api, /planet-hub:planet-five-stars-action-plan:v1:/);
 
 console.log('Planos de ação do Planet 5 Estrelas validados.');
