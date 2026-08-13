@@ -4,6 +4,7 @@
   const API = '/api/sults/chamados?start=0&limit=100';
   const CONTEXT_API = '/api/hub/radar-contextos';
   const MY_NAME = 'André Roberto Medeiros';
+  const ACTIVE_SITUATIONS = new Set([1, 4, 5, 6]);
   const STATUS = {
     1: 'Novo chamado',
     2: 'Concluído',
@@ -36,6 +37,8 @@
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim();
+
+  const isActiveTicket = (ticket) => ACTIVE_SITUATIONS.has(Number(ticket?.situation));
 
   const dateValue = (value) => {
     if (!value) return null;
@@ -237,7 +240,9 @@
   const render = (mount, head) => {
     if (!mount?.isConnected || !Array.isArray(state.tickets)) return;
 
-    const base = state.tickets.filter(matchesBaseFilters);
+    const activeTickets = state.tickets.filter(isActiveTicket);
+    if (state.status && !ACTIVE_SITUATIONS.has(Number(state.status))) state.status = '';
+    const base = activeTickets.filter(matchesBaseFilters);
     const actionableBase = base.filter((ticket) => !contextDefers(ticket));
     const counts = {
       late: actionableBase.filter((ticket) => urgencyKey(ticket) === 'late').length,
@@ -253,10 +258,10 @@
       waiting: visible.filter((ticket) => groupKey(ticket) === 'waiting'),
     };
 
-    const units = uniqueSorted(state.tickets.map((ticket) => ticket.unit));
-    const responsibles = uniqueSorted(state.tickets.map((ticket) => ticket.responsible));
-    const subjects = uniqueSorted(state.tickets.map((ticket) => ticket.subject || ticket.department));
-    const statusOptions = uniqueSorted(state.tickets.map((ticket) => String(ticket.situation || '')))
+    const units = uniqueSorted(activeTickets.map((ticket) => ticket.unit));
+    const responsibles = uniqueSorted(activeTickets.map((ticket) => ticket.responsible));
+    const subjects = uniqueSorted(activeTickets.map((ticket) => ticket.subject || ticket.department));
+    const statusOptions = uniqueSorted(activeTickets.map((ticket) => String(ticket.situation || '')))
       .map((value) => ({ value, label: STATUS[Number(value)] || `Status ${value}` }));
 
     if (head) {
