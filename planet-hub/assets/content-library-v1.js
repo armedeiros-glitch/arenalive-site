@@ -63,6 +63,23 @@
     .replace(/\s+/g, ' ')
     .trim();
 
+  const canonicalValues = (items) => {
+    const values = new Map();
+    items.forEach((item) => {
+      const display = String(item || '').trim();
+      const key = normalize(display);
+      if (display && key && !values.has(key)) values.set(key, display);
+    });
+    return [...values.values()].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  };
+
+  const resolveCanonicalValue = (value, suggestions) => {
+    const clean = String(value || '').trim();
+    if (!clean) return '';
+    const key = normalize(clean);
+    return suggestions.find((suggestion) => normalize(suggestion) === key) || clean;
+  };
+
   const readLocal = () => {
     try {
       const parsed = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
@@ -96,9 +113,7 @@
       const id = String(item?.id || '');
       if (!id || state.deletedIds.has(id)) return;
       const current = map.get(id);
-      if (!current || Date.parse(item.updatedAt || 0) >= Date.parse(current.updatedAt || 0)) {
-        map.set(id, item);
-      }
+      if (!current || Date.parse(item.updatedAt || 0) >= Date.parse(current.updatedAt || 0)) map.set(id, item);
     });
     return [...map.values()];
   };
@@ -106,7 +121,6 @@
   const load = async () => {
     if (Array.isArray(state.data)) return state.data;
     if (state.loading) return state.loading;
-
     state.loading = (async () => {
       const local = readLocal();
       try {
@@ -115,16 +129,13 @@
         state.revision = payload.revision || null;
         state.shared = true;
         writeLocal();
-        if (JSON.stringify(payload.data || []) !== JSON.stringify(state.data)) {
-          await save(false);
-        }
+        if (JSON.stringify(payload.data || []) !== JSON.stringify(state.data)) await save(false);
       } catch {
         state.data = local;
         state.shared = false;
       }
       return state.data;
     })().finally(() => { state.loading = null; });
-
     return state.loading;
   };
 
@@ -158,8 +169,7 @@
     return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(date);
   };
 
-  const uniqueSorted = (items) => [...new Set(items.map((item) => String(item || '').trim()).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  const uniqueSorted = (items) => canonicalValues(items);
 
   const safeUrl = (value) => {
     try {
@@ -176,8 +186,8 @@
       .filter((item) => {
         if (state.filters.category && item.category !== state.filters.category) return false;
         if (state.filters.status && item.status !== state.filters.status) return false;
-        if (state.filters.campaign && item.campaign !== state.filters.campaign) return false;
-        if (state.filters.unit && item.unit !== state.filters.unit) return false;
+        if (state.filters.campaign && normalize(item.campaign) !== normalize(state.filters.campaign)) return false;
+        if (state.filters.unit && normalize(item.unit) !== normalize(state.filters.unit)) return false;
         if (!query) return true;
         const haystack = normalize([
           item.title,
@@ -197,17 +207,16 @@
 
   const options = (items, selected, placeholder) => [
     `<option value="">${esc(placeholder)}</option>`,
-    ...items.map((item) => `<option value="${esc(item)}" ${item === selected ? 'selected' : ''}>${esc(item)}</option>`),
+    ...items.map((item) => `<option value="${esc(item)}" ${normalize(item) === normalize(selected) ? 'selected' : ''}>${esc(item)}</option>`),
   ].join('');
+
+  const datalist = (id, items) => `<datalist id="${esc(id)}">${items.map((item) => `<option value="${esc(item)}"></option>`).join('')}</datalist>`;
 
   const card = (item) => {
     const url = safeUrl(item.url);
     const tags = Array.isArray(item.tags) ? item.tags : [];
     return `<article class="pmh-asset-card status-${esc(item.status)}">
-      <header>
-        <div><small>${esc(item.category || 'Outro')} · ${esc(item.format || 'Link')}</small><h3>${esc(item.title || 'Conteúdo sem título')}</h3></div>
-        <span>${esc(STATUS[item.status] || item.status)}</span>
-      </header>
+      <header><div><small>${esc(item.category || 'Outro')} · ${esc(item.format || 'Link')}</small><h3>${esc(item.title || 'Conteúdo sem título')}</h3></div><span>${esc(STATUS[item.status] || item.status)}</span></header>
       <p>${esc(item.description || 'Sem descrição.')}</p>
       <dl>
         <div><dt>Campanha</dt><dd>${esc(item.campaign || 'Não vinculada')}</dd></div>
@@ -226,18 +235,15 @@
 
   const render = () => {
     if (!state.mount?.isConnected || !Array.isArray(state.data)) return;
-
     const visible = filtered();
     const active = state.data.filter((item) => item.status !== 'arquivado');
     const production = active.filter((item) => item.status === 'producao').length;
     const approval = active.filter((item) => item.status === 'aprovacao').length;
     const published = active.filter((item) => item.status === 'publicado').length;
-    const campaigns = uniqueSorted(state.data.map((item) => item.campaign));
-    const units = uniqueSorted(state.data.map((item) => item.unit));
+    const campaigns = canonicalValues(state.data.map((item) => item.campaign));
+    const units = canonicalValues(state.data.map((item) => item.unit));
 
-    if (state.head) {
-      state.head.innerHTML = `<div><small>BIBLIOTECA DO MARKETING</small><h2>Conteúdos e materiais da operação</h2><p>Centralize links, campanhas, unidades, responsáveis e o status de cada material.</p></div><button class="primary" type="button" data-content-new>+ Novo conteúdo</button>`;
-    }
+    if (state.head) state.head.innerHTML = `<div><small>BIBLIOTECA DO MARKETING</small><h2>Conteúdos e materiais da operação</h2><p>Centralize links, campanhas, unidades, responsáveis e o status de cada material.</p></div><button class="primary" type="button" data-content-new>+ Novo conteúdo</button>`;
 
     state.mount.innerHTML = `
       <section class="pmh-assets-metrics">
@@ -246,7 +252,6 @@
         <article><small>EM APROVAÇÃO</small><strong>${approval}</strong><span>Aguardando validação</span></article>
         <article><small>PUBLICADOS</small><strong>${published}</strong><span>Materiais finalizados</span></article>
       </section>
-
       <section class="pmh-assets-filters">
         <label class="search"><span>Buscar</span><input type="search" data-content-filter="search" value="${esc(state.filters.search)}" placeholder="Título, campanha, unidade ou tag"></label>
         <label><span>Categoria</span><select data-content-filter="category">${options(CATEGORIES, state.filters.category, 'Todas')}</select></label>
@@ -255,7 +260,6 @@
         <label><span>Unidade</span><select data-content-filter="unit">${options(units, state.filters.unit, 'Todas')}</select></label>
         <button type="button" data-content-clear>Limpar</button>
       </section>
-
       <section class="pmh-assets-list-head"><div><small>ACERVO</small><h3>${visible.length} ${visible.length === 1 ? 'material encontrado' : 'materiais encontrados'}</h3></div><span>Arquivos continuam no Drive, Canva, YouTube ou origem informada.</span></section>
       <section class="pmh-assets-grid">${visible.length ? visible.map(card).join('') : '<div class="pmh-assets-empty"><strong>Nenhum conteúdo encontrado.</strong><span>Cadastre o primeiro material ou ajuste os filtros.</span></div>'}</section>`;
   };
@@ -267,10 +271,7 @@
     element.textContent = message;
     document.body.appendChild(element);
     requestAnimationFrame(() => element.classList.add('visible'));
-    setTimeout(() => {
-      element.classList.remove('visible');
-      setTimeout(() => element.remove(), 220);
-    }, 2600);
+    setTimeout(() => { element.classList.remove('visible'); setTimeout(() => element.remove(), 220); }, 2600);
   };
 
   const closeModal = () => document.querySelector('.pmh-assets-modal')?.remove();
@@ -278,19 +279,11 @@
   const openModal = (existing = null) => {
     const item = existing || {
       id: `content-${crypto.randomUUID()}`,
-      title: '',
-      description: '',
-      category: 'Campanha',
-      format: 'Arte',
-      status: 'planejamento',
-      campaign: '',
-      unit: '',
-      responsible: '',
-      url: '',
-      tags: [],
-      notes: '',
-      createdAt: new Date().toISOString(),
+      title: '', description: '', category: 'Campanha', format: 'Arte', status: 'planejamento',
+      campaign: '', unit: '', responsible: '', url: '', tags: [], notes: '', createdAt: new Date().toISOString(),
     };
+    const campaignSuggestions = canonicalValues((state.data || []).map((content) => content.campaign));
+    const unitSuggestions = canonicalValues((state.data || []).map((content) => content.unit));
 
     closeModal();
     const modal = document.createElement('div');
@@ -304,8 +297,8 @@
         <label>Formato<select name="format">${FORMATS.map((value) => `<option value="${esc(value)}" ${item.format === value ? 'selected' : ''}>${esc(value)}</option>`).join('')}</select></label>
         <label>Status<select name="status">${Object.entries(STATUS).map(([value, label]) => `<option value="${value}" ${item.status === value ? 'selected' : ''}>${esc(label)}</option>`).join('')}</select></label>
         <label>Responsável<input name="responsible" maxlength="160" value="${esc(item.responsible || '')}"></label>
-        <label>Campanha<input name="campaign" maxlength="180" value="${esc(item.campaign || '')}" placeholder="Ex.: Páscoa Planet"></label>
-        <label>Unidade<input name="unit" maxlength="180" value="${esc(item.unit || '')}" placeholder="Vazio para rede inteira"></label>
+        <label>Campanha<input name="campaign" list="pmh-content-campaigns" maxlength="180" autocomplete="off" value="${esc(item.campaign || '')}" placeholder="Ex.: Páscoa Planet">${datalist('pmh-content-campaigns', campaignSuggestions)}</label>
+        <label>Unidade<input name="unit" list="pmh-content-units" maxlength="180" autocomplete="off" value="${esc(item.unit || '')}" placeholder="Vazio para rede inteira">${datalist('pmh-content-units', unitSuggestions)}</label>
         <label class="wide">Link do material<input name="url" type="url" maxlength="1200" value="${esc(item.url || '')}" placeholder="https://drive.google.com/... ou https://www.canva.com/..."></label>
         <label class="wide">Tags<input name="tags" maxlength="600" value="${esc((item.tags || []).join(', '))}" placeholder="feed, stories, inauguração, vídeo"></label>
         <label class="wide">Observações<textarea name="notes" maxlength="1600">${esc(item.notes || '')}</textarea></label>
@@ -322,7 +315,8 @@
       const button = event.currentTarget.querySelector('[type="submit"]');
       button.disabled = true;
       button.textContent = 'Salvando…';
-
+      const rawCampaign = String(form.get('campaign') || '').trim();
+      const rawUnit = String(form.get('unit') || '').trim();
       const updated = {
         ...item,
         title: String(form.get('title') || '').trim(),
@@ -331,18 +325,16 @@
         format: String(form.get('format') || 'Link'),
         status: String(form.get('status') || 'planejamento'),
         responsible: String(form.get('responsible') || '').trim(),
-        campaign: String(form.get('campaign') || '').trim(),
-        unit: String(form.get('unit') || '').trim(),
+        campaign: existing && rawCampaign === String(item.campaign || '') ? rawCampaign : resolveCanonicalValue(rawCampaign, campaignSuggestions),
+        unit: existing && rawUnit === String(item.unit || '') ? rawUnit : resolveCanonicalValue(rawUnit, unitSuggestions),
         url: String(form.get('url') || '').trim(),
         tags: String(form.get('tags') || '').split(',').map((tag) => tag.trim()).filter(Boolean),
         notes: String(form.get('notes') || '').trim(),
         updatedAt: new Date().toISOString(),
       };
-
       const index = state.data.findIndex((candidate) => candidate.id === updated.id);
       if (index >= 0) state.data[index] = updated;
       else state.data.unshift(updated);
-
       try {
         await save(false);
         closeModal();
@@ -361,18 +353,13 @@
     if (!legacy || legacy.dataset.contentTransforming === '1') return;
     const pageTitle = document.querySelector('[data-title]')?.textContent || '';
     if (!normalize(pageTitle).includes('conteudos')) return;
-
     legacy.dataset.contentTransforming = '1';
-    state.head = legacy.previousElementSibling?.classList.contains('pmh-section-head')
-      ? legacy.previousElementSibling
-      : document.querySelector('.pmh-section-head');
-
+    state.head = legacy.previousElementSibling?.classList.contains('pmh-section-head') ? legacy.previousElementSibling : document.querySelector('.pmh-section-head');
     const mount = document.createElement('section');
     mount.className = 'pmh-assets-library';
     mount.innerHTML = '<div class="pmh-assets-loading">Carregando biblioteca de conteúdos…</div>';
     legacy.replaceWith(mount);
     state.mount = mount;
-
     await load();
     render();
   };
@@ -392,18 +379,13 @@
   });
 
   document.addEventListener('click', async (event) => {
-    if (event.target.closest('[data-content-new]')) {
-      openModal();
-      return;
-    }
-
+    if (event.target.closest('[data-content-new]')) { openModal(); return; }
     const edit = event.target.closest('[data-content-edit]');
     if (edit) {
       const item = state.data.find((candidate) => candidate.id === edit.dataset.contentEdit);
       if (item) openModal(item);
       return;
     }
-
     const remove = event.target.closest('[data-content-delete]');
     if (remove) {
       const item = state.data.find((candidate) => candidate.id === remove.dataset.contentDelete);
@@ -419,13 +401,13 @@
       }
       return;
     }
-
     if (event.target.closest('[data-content-clear]')) {
       state.filters = { search: '', category: '', status: '', campaign: '', unit: '' };
       render();
     }
   });
 
+  window.PlanetContentLibrary = Object.freeze({ canonicalValues, normalize, resolveCanonicalValue });
   const observer = new MutationObserver(transform);
   observer.observe(document.documentElement, { childList: true, subtree: true });
   transform();
