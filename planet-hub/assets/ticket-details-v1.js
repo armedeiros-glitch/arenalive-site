@@ -166,6 +166,7 @@
       return;
     }
 
+    if (event.target.closest('button, a, input, select, textarea, label')) return;
     const card = event.target.closest('.pmh-ticket[data-ticket-id]');
     if (card) openDrawer(card.dataset.ticketId);
   }, true);
