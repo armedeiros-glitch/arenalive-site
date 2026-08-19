@@ -5,6 +5,7 @@ import { onRequestGet, onRequestPost, onRequestDelete } from '../functions/api/h
 
 const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const source = read('planet-hub/assets/ticket-command-v1.js');
+const onboarding = read('planet-hub/assets/ticket-following-empty-discovery-v1.js');
 const backend = read('functions/api/hub/chamados-acompanhados.js');
 const context = read('planet-hub/assets/radar-context-v1.js');
 const ignored = read('functions/api/hub/chamados-ignorados.js');
@@ -19,6 +20,9 @@ assert.match(source, /Remover dos meus chamados/);
 assert.match(source, /data-ticket-context/);
 assert.match(source, /const CONTEXT_API = '\/api\/hub\/radar-contextos'/);
 assert.doesNotMatch(source, /localStorage|sessionStorage/);
+assert.match(onboarding, /\^0 chamados acompanhados\\b/i);
+assert.match(onboarding, /discoveryButton\.click\(\)/);
+assert.match(index, /ticket-following-empty-discovery-v1\.js\?v=20260819-1/);
 assert.match(backend, /planet-hub:chamado-acompanhado:v1:/);
 assert.doesNotMatch(backend, /title:|unit:|situation:|responsible:/,
   'storage de acompanhamento não deve copiar payload do SULTS');
@@ -121,4 +125,4 @@ get = await onRequestGet({ env });
 payload = await get.json();
 assert.deepEqual(payload.data, [], 'remover acompanhamento tira ID da seleção sem tocar no SULTS');
 
-console.log('Chamados: seleção per-item, descoberta, status ativos e persistência mínima validados.');
+console.log('Chamados: seleção per-item, descoberta inicial, status ativos e persistência mínima validados.');
