@@ -39,12 +39,13 @@ reading = [{ id: 'x', situation: 4 }];
 assert.equal(reading.filter(isActiveTicket).length, 1);
 
 assert.match(source, /const activeTickets = state\.tickets\.filter\(isActiveTicket\);/);
-assert.match(source, /const base = activeTickets\.filter\(matchesBaseFilters\);/);
-assert.match(source, /uniqueSorted\(activeTickets\.map\(\(ticket\) => String\(ticket\.situation \|\| ''\)\)\)/);
+assert.match(source, /const followedActiveTickets = activeTickets\.filter\(isFollowed\);/);
+assert.match(source, /const base = followedActiveTickets\.filter\(matchesBaseFilters\);/);
+assert.match(source, /const optionSource = state\.discovery \? activeTickets : followedActiveTickets/);
 assert.match(source, /!ACTIVE_SITUATIONS\.has\(Number\(state\.status\)\)/);
 assert.doesNotMatch(source, /fetch\(API,[\s\S]{0,180}method:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/);
 assert.doesNotMatch(source, /localStorage|sessionStorage/);
 assert.match(ignored, /ignored|ignorado/i);
 assert.match(readings, /ticket-readings|readings|leitura/i);
 
-console.log('Chamados: status terminais do SULTS ficam fora da fila ativa, KPIs e filtros.');
+console.log('Chamados: status terminais do SULTS ficam fora da fila acompanhada, KPIs e filtros.');
