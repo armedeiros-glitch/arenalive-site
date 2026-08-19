@@ -22,7 +22,10 @@ assert.match(source, /const CONTEXT_API = '\/api\/hub\/radar-contextos'/);
 assert.doesNotMatch(source, /localStorage|sessionStorage/);
 assert.match(onboarding, /\^0 chamados acompanhados\\b/i);
 assert.match(onboarding, /discoveryButton\.click\(\)/);
-assert.match(index, /ticket-following-empty-discovery-v1\.js\?v=20260819-1/);
+assert.match(onboarding, /:has\(\[data-command-discovery-list\]\) \.pmh-command-metrics\{display:none!important;\}/,
+  'KPIs de meus chamados devem ficar ocultos enquanto a descoberta estiver aberta');
+assert.doesNotMatch(onboarding, /head\.innerHTML|metrics\.hidden|dataset\.emptyDiscovery/,
+  'helper não deve reescrever apresentação após cada render');
 assert.match(backend, /planet-hub:chamado-acompanhado:v1:/);
 assert.doesNotMatch(backend, /title:|unit:|situation:|responsible:/,
   'storage de acompanhamento não deve copiar payload do SULTS');
@@ -33,6 +36,7 @@ assert.match(ignored, /chamados-ignorados/);
 assert.match(details, /event\.target\.closest\('button, a, input, select, textarea, label'\)/,
   'ações dentro do card não devem abrir o drawer');
 assert.match(index, /ticket-command-v1\.js\?v=20260807-2&rev=20260819-1/);
+assert.match(index, /ticket-following-empty-discovery-v1\.js\?v=20260819-4/);
 
 const sandbox = {
   console,
@@ -125,4 +129,4 @@ get = await onRequestGet({ env });
 payload = await get.json();
 assert.deepEqual(payload.data, [], 'remover acompanhamento tira ID da seleção sem tocar no SULTS');
 
-console.log('Chamados: seleção per-item, descoberta inicial, status ativos e persistência mínima validados.');
+console.log('Chamados: seleção per-item, descoberta inicial estável, status ativos e persistência mínima validados.');
