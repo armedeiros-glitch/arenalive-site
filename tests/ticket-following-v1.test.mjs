@@ -8,6 +8,8 @@ const source = read('planet-hub/assets/ticket-command-v1.js');
 const backend = read('functions/api/hub/chamados-acompanhados.js');
 const context = read('planet-hub/assets/radar-context-v1.js');
 const ignored = read('functions/api/hub/chamados-ignorados.js');
+const details = read('planet-hub/assets/ticket-details-v1.js');
+const index = read('index.html');
 
 assert.match(source, /const FOLLOWING_API = '\/api\/hub\/chamados-acompanhados'/);
 assert.match(source, /const followedActiveTickets = activeTickets\.filter\(isFollowed\)/);
@@ -24,6 +26,9 @@ assert.doesNotMatch(backend, /api\/sults|fetch\(/,
   'backend de acompanhamento não escreve nem consulta SULTS');
 assert.match(context, /radar-contextos/);
 assert.match(ignored, /chamados-ignorados/);
+assert.match(details, /event\.target\.closest\('button, a, input, select, textarea, label'\)/,
+  'ações dentro do card não devem abrir o drawer');
+assert.match(index, /ticket-command-v1\.js\?v=20260807-2&rev=20260819-1/);
 
 const sandbox = {
   console,
