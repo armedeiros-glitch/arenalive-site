@@ -1,1 +1,0 @@
-Controle visual explícito para sair de um projeto de inauguração no desktop. Mantém o botão de retorno existente e acrescenta Fechar projeto + Escape.

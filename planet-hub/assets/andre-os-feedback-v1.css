@@ -1,5 +1,0 @@
-/* André OS · feedback global e avisos transitórios */
-body .pmh-alert{position:fixed;z-index:1400;top:108px;right:24px;width:min(430px,calc(100vw - 32px));margin:0;padding:14px var(--os-space-4);border:1px solid color-mix(in srgb,var(--os-danger) 42%,var(--os-border));border-radius:var(--os-radius-md);color:var(--os-danger);background:var(--os-danger-soft);box-shadow:var(--os-shadow-md);pointer-events:none;animation:aos-feedback-toast-lifecycle 5s ease forwards}
-@keyframes aos-feedback-toast-lifecycle{0%{opacity:0;transform:translate3d(0,-10px,0)}8%,82%{opacity:1;transform:translate3d(0,0,0)}100%{opacity:0;visibility:hidden;transform:translate3d(0,-8px,0)}}
-@media(max-width:760px){body .pmh-alert{top:72px;right:12px;width:calc(100vw - 24px)}}
-@media(prefers-reduced-motion:reduce){body .pmh-alert{animation-name:aos-feedback-toast-fade}@keyframes aos-feedback-toast-fade{0%,82%{opacity:1}100%{opacity:0;visibility:hidden}}}

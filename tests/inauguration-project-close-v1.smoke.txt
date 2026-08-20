@@ -1,1 +1,0 @@
-Smoke target: desktop inauguration project must expose Fechar projeto and Escape return to the project list.
