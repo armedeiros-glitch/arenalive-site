@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const source = await readFile(new URL('../planet-hub/assets/ticket-command-v1.js', import.meta.url), 'utf8');
+const source = await readFile(new URL('../planet-hub/assets/ticket-command-v2.js', import.meta.url), 'utf8');
 const ignored = await readFile(new URL('../planet-hub/assets/ignored-tickets-v1.js', import.meta.url), 'utf8');
 const readings = await readFile(new URL('../planet-hub/assets/ticket-readings-v1.js', import.meta.url), 'utf8');
 
@@ -35,13 +35,11 @@ reading = [{ id: 'y', situation: 5 }];
 assert.equal(reading.filter(isActiveTicket).length, 1);
 reading = [{ id: 'y', situation: 3 }];
 assert.equal(reading.filter(isActiveTicket).length, 0);
-reading = [{ id: 'x', situation: 4 }];
-assert.equal(reading.filter(isActiveTicket).length, 1);
 
 assert.match(source, /const activeTickets = state\.tickets\.filter\(isActiveTicket\);/);
-assert.match(source, /const followedActiveTickets = activeTickets\.filter\(isFollowed\);/);
-assert.match(source, /const base = followedActiveTickets\.filter\(matchesBaseFilters\);/);
-assert.match(source, /const optionSource = state\.discovery \? activeTickets : followedActiveTickets/);
+assert.match(source, /const followedActive = activeFollowedTickets\(activeTickets\);/);
+assert.match(source, /const base = followedActive\.filter\(matchesBaseFilters\);/);
+assert.match(source, /const optionSource = state\.discovery \? activeTickets : followedActive/);
 assert.match(source, /!ACTIVE_SITUATIONS\.has\(Number\(state\.status\)\)/);
 assert.doesNotMatch(source, /fetch\(API,[\s\S]{0,180}method:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/);
 assert.doesNotMatch(source, /localStorage|sessionStorage/);

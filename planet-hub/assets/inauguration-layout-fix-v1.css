@@ -1,0 +1,23 @@
+/* Correção funcional: cada card precisa de largura compatível com a grade interna. */
+@media (min-width: 821px) {
+  .pmh-inauguration-project-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(620px, 100%), 1fr));
+  }
+
+  .pmh-inauguration-project-row {
+    grid-template-columns: minmax(0, 1.35fr) minmax(150px, .7fr) 126px auto;
+    gap: 14px;
+  }
+
+  .pmh-inauguration-project-row-main,
+  .pmh-inauguration-project-row-progress,
+  .pmh-inauguration-project-row-date {
+    overflow: hidden;
+  }
+}
+
+@media (min-width: 821px) and (max-width: 1320px) {
+  .pmh-inauguration-project-grid {
+    grid-template-columns: 1fr;
+  }
+}

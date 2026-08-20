@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const details = await readFile(new URL('../planet-hub/assets/ticket-details-v1.js', import.meta.url), 'utf8');
-const command = await readFile(new URL('../planet-hub/assets/ticket-command-v1.js', import.meta.url), 'utf8');
+const command = await readFile(new URL('../planet-hub/assets/ticket-command-v2.js', import.meta.url), 'utf8');
 const ignored = await readFile(new URL('../planet-hub/assets/ignored-tickets-v1.js', import.meta.url), 'utf8');
 
 assert.equal(details.includes('activeFilter'), false, 'ticket-details não deve manter estado de filtro legado');
@@ -22,7 +22,8 @@ assert.ok(command.includes('data-command-filter="unit"'), 'ticket-command manté
 assert.ok(command.includes('data-command-filter="responsible"'), 'ticket-command mantém filtro por responsável');
 assert.ok(command.includes('data-command-filter="subject"'), 'ticket-command mantém filtro por assunto');
 assert.ok(command.includes('data-command-filter="status"'), 'ticket-command mantém filtro por status');
-assert.ok(command.includes('data-command-mine'), 'ticket-command mantém filtro "Só os meus"');
+assert.ok(command.includes('data-command-discovery'), 'ticket-command mantém descoberta de chamados no SULTS');
+assert.ok(command.includes('data-command-follow'), 'ticket-command mantém seleção explícita de acompanhamento');
 assert.ok(command.includes('data-command-urgency'), 'ticket-command mantém filtros de urgência');
 
 assert.ok(details.includes("const card = event.target.closest('.pmh-ticket[data-ticket-id]')"), 'clique no card continua abrindo detalhe');
@@ -42,4 +43,4 @@ assert.ok(ignored.includes("document.querySelectorAll('.pmh-ticket-drawer-panel'
 assert.ok(ignored.includes("actions.querySelector('[data-ignore-ticket]')"), 'ignored-tickets evita botão duplicado no drawer');
 assert.ok(ignored.includes("button.textContent = 'Excluir do Hub'"), 'botão de excluir continua sendo adicionado ao drawer');
 
-console.log('Chamados: ticket-command é owner único dos filtros; ticket-details preserva drawer, teclado, API e integração do ignore.');
+console.log('Chamados: ticket-command v2 é owner dos filtros e acompanhamento; ticket-details preserva drawer, teclado, API e ignore.');

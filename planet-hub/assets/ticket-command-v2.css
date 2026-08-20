@@ -1,0 +1,50 @@
+.pmh-ticket-follow-button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--os-border, #dedbe6);
+  border-radius: 9px;
+  color: var(--os-accent, #6957ff);
+  background: var(--os-surface, #fff);
+  font: 800 10px Inter, Arial, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pmh-ticket-follow-button:hover {
+  border-color: color-mix(in srgb, var(--os-accent, #6957ff) 38%, var(--os-border, #dedbe6));
+  background: var(--os-accent-soft, #f2f0ff);
+}
+
+.pmh-ticket-follow-button.is-followed {
+  color: var(--os-text-muted, #766f83);
+  background: var(--os-surface-subtle, #f7f6fa);
+}
+
+.pmh-ticket-follow-button:disabled {
+  opacity: .58;
+  cursor: wait;
+}
+
+.pmh-command-following-empty {
+  display: grid;
+  gap: 6px;
+}
+
+.pmh-command-following-empty strong,
+.pmh-command-following-empty span {
+  display: block;
+}
+
+.pmh-command-following-empty strong {
+  color: var(--os-text-strong, #221e29);
+}
+
+.pmh-command-following-empty span {
+  color: var(--os-text-muted, #766f83);
+}
+
+@media (max-width: 820px) {
+  .pmh-ticket-follow-button {
+    width: 100%;
+  }
+}
