@@ -22,5 +22,19 @@ export async function onRequest({ request, env, next }) {
     }, 401);
   }
 
+  // A tela "Chamados do Marketing" deve espelhar a caixa Recebido do SULTS.
+  // Chamados em fila podem não possuir `responsavel`, então scope=mine por pessoa
+  // perde itens que aparecem normalmente no Recebido. Para esta rota, traduzimos
+  // o escopo pessoal para o escopo do departamento de Marketing, mantendo a API
+  // geral e os demais endpoints sem alteração.
+  if (request.method === 'GET') {
+    const url = new URL(request.url);
+    if (url.pathname === '/api/sults/chamados' && url.searchParams.get('scope') === 'mine') {
+      url.searchParams.set('scope', 'marketing');
+      url.searchParams.set('includeIgnored', '1');
+      return next(new Request(url.toString(), request));
+    }
+  }
+
   return next();
 }
