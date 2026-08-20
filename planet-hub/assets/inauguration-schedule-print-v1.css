@@ -1,0 +1,20 @@
+.pmh-inauguration-project-detail-head .pmh-inauguration-schedule-export {
+  margin-left: auto;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--os-border);
+  border-radius: var(--os-radius-sm);
+  color: var(--os-text);
+  background: var(--os-surface);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pmh-inauguration-project-detail-head .pmh-inauguration-schedule-export:hover,
+.pmh-inauguration-project-detail-head .pmh-inauguration-schedule-export:focus-visible {
+  border-color: var(--os-accent);
+  color: var(--os-accent);
+  background: var(--os-accent-soft);
+  outline: 0;
+}

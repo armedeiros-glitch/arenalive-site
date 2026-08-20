@@ -1,0 +1,981 @@
+/* André OS · mobile shell v3
+   Camada base e refinamentos compartilhados do mobile. Ativada por andre-os-mobile-shell-v2.js; não altera desktop. */
+
+.aos-mobile-nav-label { min-width: 0; }
+
+html.aos-mobile {
+  --aos-mobile-pad: 16px;
+  --aos-mobile-dock-h: 76px;
+  --aos-mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
+  background: #f4f4f8;
+  scroll-padding-top: 76px;
+}
+
+html.aos-mobile,
+html.aos-mobile body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+html.aos-mobile body {
+  min-width: 320px;
+  padding: 0;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(115, 92, 255, .07), transparent 24rem),
+    #f4f4f8;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.aos-mobile .pmh-sidebar {
+  display: none !important;
+}
+
+html:not(.aos-mobile) .aos-mobile-dock {
+  display: none !important;
+}
+
+/* App shell */
+html.aos-mobile .pmh-main {
+  min-height: 100dvh;
+  margin-left: 0 !important;
+  padding-bottom: calc(var(--aos-mobile-dock-h) + var(--aos-mobile-safe-bottom) + 18px);
+}
+
+html.aos-mobile .pmh-topbar {
+  position: sticky !important;
+  inset: 0 0 auto 0 !important;
+  z-index: 55 !important;
+  display: flex !important;
+  min-height: 64px !important;
+  padding: 8px var(--aos-mobile-pad) !important;
+  gap: 12px !important;
+  border-bottom: 1px solid rgba(221, 220, 230, .9) !important;
+  background: rgba(248, 248, 251, .93) !important;
+  box-shadow: 0 8px 24px rgba(28, 24, 49, .05);
+  backdrop-filter: blur(22px) saturate(1.25);
+}
+
+html.aos-mobile .pmh-topbar > div:first-child {
+  min-width: 0;
+}
+
+html.aos-mobile .pmh-topbar > div:first-child > small {
+  display: block !important;
+  margin: 0 0 3px !important;
+  color: transparent !important;
+  font-size: 0 !important;
+}
+
+html.aos-mobile .pmh-topbar > div:first-child > small::before {
+  content: 'PLANET CHOCOLATE' !important;
+  color: var(--aos-accent) !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  letter-spacing: .13em !important;
+}
+
+html.aos-mobile .pmh-topbar h1 {
+  max-width: calc(100vw - 88px);
+  margin: 0 !important;
+  overflow: hidden;
+  color: var(--aos-ink) !important;
+  font-size: clamp(21px, 5.7vw, 25px) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -.045em !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.aos-mobile .pmh-top-actions {
+  flex: 0 0 auto;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+html.aos-mobile .pmh-top-actions label {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-top-actions > button {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  border: 1px solid var(--aos-line) !important;
+  border-radius: 12px !important;
+  color: var(--aos-accent) !important;
+  background: #fff !important;
+  box-shadow: 0 8px 20px rgba(31, 28, 52, .07);
+  font-size: 17px !important;
+}
+
+html.aos-mobile .pmh-content {
+  width: 100%;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 14px var(--aos-mobile-pad) 24px !important;
+}
+
+/* Bottom dock */
+html.aos-mobile .aos-mobile-dock {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 100;
+  display: block;
+  min-height: calc(var(--aos-mobile-dock-h) + var(--aos-mobile-safe-bottom));
+  padding: 7px 4px calc(7px + var(--aos-mobile-safe-bottom));
+  border-top: 1px solid rgba(221, 220, 230, .94);
+  background: rgba(255, 255, 255, .95);
+  box-shadow: 0 -16px 42px rgba(24, 20, 42, .14);
+  backdrop-filter: blur(24px) saturate(1.35);
+}
+
+html.aos-mobile .aos-mobile-dock nav {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  grid-auto-flow: column !important;
+  gap: 1px !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+
+html.aos-mobile .aos-mobile-dock nav button {
+  position: relative;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 58px !important;
+  gap: 2px !important;
+  padding: 5px 1px 4px !important;
+  border: 0 !important;
+  border-radius: 15px !important;
+  color: #817f8d !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+html.aos-mobile .aos-mobile-dock nav button i {
+  display: grid !important;
+  place-items: center;
+  width: 24px !important;
+  height: 22px !important;
+  color: #7668d8 !important;
+  font-size: 17px !important;
+  font-style: normal !important;
+  line-height: 1 !important;
+}
+
+html.aos-mobile .aos-mobile-dock .aos-mobile-nav-label {
+  display: block;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+html.aos-mobile .aos-mobile-dock nav button b {
+  position: absolute !important;
+  top: 1px !important;
+  right: max(2px, calc(50% - 25px)) !important;
+  display: grid !important;
+  place-items: center;
+  min-width: 17px !important;
+  height: 17px !important;
+  padding: 0 4px !important;
+  border: 2px solid #fff !important;
+  border-radius: 999px !important;
+  color: #fff !important;
+  background: var(--aos-coral) !important;
+  font-size: 8px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+
+html.aos-mobile .aos-mobile-dock nav button.active {
+  color: var(--aos-accent-strong) !important;
+  background: linear-gradient(180deg, rgba(115, 92, 255, .14), rgba(115, 92, 255, .055)) !important;
+}
+
+html.aos-mobile .aos-mobile-dock nav button.active::after {
+  content: '';
+  position: absolute;
+  inset: auto 18% 2px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--aos-accent);
+}
+
+html.aos-mobile .aos-mobile-dock nav button.active i {
+  color: var(--aos-accent-strong) !important;
+  transform: translateY(-1px);
+}
+
+/* Alerts and empty states */
+html.aos-mobile .pmh-alert {
+  margin: 0 0 12px !important;
+  padding: 12px 13px !important;
+  border-radius: 15px !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+
+html.aos-mobile .pmh-loading,
+html.aos-mobile .pmh-empty {
+  padding: 26px 16px !important;
+  border-radius: 16px !important;
+  font-size: 13px !important;
+}
+
+/* Main decision cockpit */
+html.aos-mobile .pmh-decision-cockpit {
+  margin: 0 0 12px !important;
+  padding: 18px !important;
+  overflow: hidden !important;
+  border-radius: 22px !important;
+  background:
+    radial-gradient(circle at 105% -10%, rgba(131, 101, 255, .34), transparent 44%),
+    radial-gradient(circle at 0% 110%, rgba(255, 107, 95, .13), transparent 36%),
+    linear-gradient(145deg, #17141f 0%, #24203a 100%) !important;
+  box-shadow: 0 22px 48px rgba(24, 19, 43, .21) !important;
+}
+
+html.aos-mobile .pmh-decision-top {
+  grid-template-columns: 1fr !important;
+  gap: 15px !important;
+}
+
+html.aos-mobile .pmh-decision-main > small {
+  font-size: 9px !important;
+  letter-spacing: .09em !important;
+}
+
+html.aos-mobile .pmh-decision-main h2 {
+  margin: 7px 0 0 !important;
+  font-size: clamp(24px, 7vw, 29px) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -.04em !important;
+}
+
+html.aos-mobile .pmh-decision-main > p {
+  margin: 9px 0 0 !important;
+  color: rgba(255, 255, 255, .72) !important;
+  font-size: 14px !important;
+  line-height: 1.48 !important;
+}
+
+html.aos-mobile .pmh-decision-next {
+  margin-top: 14px !important;
+  padding: 13px 14px !important;
+  border-radius: 15px !important;
+  background: rgba(255, 255, 255, .075) !important;
+}
+
+html.aos-mobile .pmh-decision-next small {
+  font-size: 9px !important;
+}
+
+html.aos-mobile .pmh-decision-next strong {
+  margin-top: 5px !important;
+  font-size: 14px !important;
+  line-height: 1.42 !important;
+}
+
+html.aos-mobile .pmh-decision-meta {
+  gap: 6px !important;
+  margin-top: 12px !important;
+}
+
+html.aos-mobile .pmh-decision-meta > span:not(.pmh-active-origin),
+html.aos-mobile .pmh-decision-meta time {
+  padding: 6px 8px !important;
+  font-size: 10px !important;
+}
+
+html.aos-mobile .pmh-decision-actions {
+  grid-template-columns: 1fr 1fr !important;
+  gap: 7px !important;
+  min-width: 0 !important;
+}
+
+html.aos-mobile .pmh-decision-actions button,
+html.aos-mobile .pmh-decision-actions button.primary {
+  min-height: 39px !important;
+  padding: 0 9px !important;
+  border-radius: 10px !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+}
+
+html.aos-mobile .pmh-decision-actions button.primary {
+  grid-column: 1 / -1;
+}
+
+html.aos-mobile .pmh-decision-signals {
+  flex-wrap: nowrap !important;
+  gap: 7px !important;
+  margin-top: 15px !important;
+  padding-top: 13px !important;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+html.aos-mobile .pmh-decision-signals::-webkit-scrollbar,
+html.aos-mobile .pmh-active-filters::-webkit-scrollbar,
+html.aos-mobile .pmh-calendar-legend::-webkit-scrollbar,
+html.aos-mobile .pmh-ticket-filters::-webkit-scrollbar {
+  display: none;
+}
+
+html.aos-mobile .pmh-decision-signals span {
+  flex: 0 0 auto;
+  padding: 8px 10px !important;
+  font-size: 10.5px !important;
+}
+
+/* KPI cards and shortcuts */
+html.aos-mobile .pmh-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  margin-top: 12px !important;
+}
+
+html.aos-mobile .pmh-metric,
+html.aos-mobile .pmh-metric:nth-child(1),
+html.aos-mobile .pmh-metric:nth-child(2),
+html.aos-mobile .pmh-metric:nth-child(3),
+html.aos-mobile .pmh-metric:nth-child(4) {
+  grid-column: span 1 !important;
+  min-height: 118px !important;
+  padding: 16px !important;
+  border-radius: 18px !important;
+}
+
+html.aos-mobile .pmh-metric small {
+  min-height: 27px;
+  font-size: 10.5px !important;
+  line-height: 1.25 !important;
+  letter-spacing: .025em !important;
+}
+
+html.aos-mobile .pmh-metric strong {
+  margin-top: 6px !important;
+  font-size: 30px !important;
+}
+
+html.aos-mobile .pmh-metric span {
+  max-width: 100% !important;
+  margin-top: 6px !important;
+  font-size: 11.5px !important;
+  line-height: 1.28 !important;
+}
+
+html.aos-mobile .pmh-shortcuts {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  margin-top: 10px !important;
+}
+
+html.aos-mobile .pmh-shortcuts button,
+html.aos-mobile .pmh-shortcuts button:nth-child(1),
+html.aos-mobile .pmh-shortcuts button:nth-child(2),
+html.aos-mobile .pmh-shortcuts button:nth-child(3),
+html.aos-mobile .pmh-shortcuts button:nth-child(4) {
+  grid-column: span 1 !important;
+  grid-template-columns: 34px minmax(0, 1fr) !important;
+  gap: 2px 8px !important;
+  min-height: 70px !important;
+  padding: 10px !important;
+  border-radius: 17px !important;
+}
+
+html.aos-mobile .pmh-shortcuts i {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 11px !important;
+  font-size: 16px !important;
+}
+
+html.aos-mobile .pmh-shortcuts strong {
+  font-size: 12px !important;
+}
+
+html.aos-mobile .pmh-shortcuts span {
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+}
+
+/* Generic cards and section headers */
+html.aos-mobile .pmh-home-grid {
+  grid-template-columns: 1fr !important;
+  gap: 11px !important;
+  margin-top: 11px !important;
+}
+
+html.aos-mobile .pmh-panel,
+html.aos-mobile .pmh-projects,
+html.aos-mobile .pmh-inauguration-card,
+html.aos-mobile [data-active-workstream] {
+  border-radius: 19px !important;
+  box-shadow: 0 11px 30px rgba(31, 28, 52, .055) !important;
+}
+
+html.aos-mobile .pmh-panel,
+html.aos-mobile .pmh-projects {
+  padding: 17px !important;
+}
+
+html.aos-mobile .pmh-panel h3,
+html.aos-mobile .pmh-projects h3 {
+  font-size: 18px !important;
+}
+
+html.aos-mobile .pmh-list {
+  margin-top: 8px !important;
+}
+
+html.aos-mobile .pmh-list button {
+  grid-template-columns: 8px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  min-height: 64px !important;
+  padding: 11px 5px !important;
+}
+
+html.aos-mobile .pmh-list button time {
+  grid-column: 2;
+  justify-self: start;
+}
+
+html.aos-mobile .pmh-section-head,
+html.aos-mobile .pmh-hero {
+  min-height: 0 !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 15px !important;
+  padding: 20px 18px !important;
+  border-radius: 20px !important;
+}
+
+html.aos-mobile .pmh-section-head h2,
+html.aos-mobile .pmh-hero h2 {
+  font-size: 27px !important;
+  line-height: 1.08 !important;
+}
+
+html.aos-mobile .pmh-section-head p,
+html.aos-mobile .pmh-hero p {
+  margin-top: 8px !important;
+  font-size: 14px !important;
+  line-height: 1.48 !important;
+}
+
+html.aos-mobile .pmh-section-head button,
+html.aos-mobile .pmh-hero > button {
+  align-self: flex-start !important;
+  width: auto !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
+  border-radius: 11px !important;
+  font-size: 12px !important;
+}
+
+/* Active workstream becomes a card list */
+html.aos-mobile .pmh-active-head {
+  align-items: flex-start !important;
+  gap: 10px !important;
+  padding: 16px 16px 13px !important;
+}
+
+html.aos-mobile .pmh-active-head h2 {
+  font-size: 20px !important;
+}
+
+html.aos-mobile .pmh-active-head p {
+  display: block !important;
+  margin-top: 4px !important;
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+}
+
+html.aos-mobile .pmh-active-head > b {
+  padding: 6px 9px !important;
+  font-size: 11px !important;
+}
+
+html.aos-mobile .pmh-active-filters,
+html.aos-mobile .pmh-ticket-filters {
+  display: flex !important;
+  gap: 7px !important;
+  padding: 10px 12px !important;
+  overflow-x: auto !important;
+  scrollbar-width: none;
+}
+
+html.aos-mobile .pmh-active-filters button,
+html.aos-mobile .pmh-ticket-filters button {
+  flex: 0 0 auto !important;
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  font-size: 11px !important;
+}
+
+html.aos-mobile .pmh-active-list {
+  gap: 9px !important;
+  padding: 10px !important;
+  background: #f1f0f6 !important;
+}
+
+html.aos-mobile .pmh-active-entry {
+  grid-template-columns: 1fr !important;
+  overflow: hidden;
+  border: 1px solid var(--aos-line) !important;
+  border-radius: 15px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 22px rgba(31, 28, 52, .045);
+}
+
+html.aos-mobile .pmh-active-row {
+  grid-template-columns: 1fr auto !important;
+  gap: 8px 10px !important;
+  min-height: 0 !important;
+  padding: 14px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+html.aos-mobile .pmh-active-origin {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  max-width: 150px !important;
+  padding: 6px 8px !important;
+  font-size: 9px !important;
+}
+
+html.aos-mobile .pmh-active-main {
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+}
+
+html.aos-mobile .pmh-active-main strong {
+  overflow: visible !important;
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+}
+
+html.aos-mobile .pmh-active-main small {
+  margin-top: 5px !important;
+  overflow: visible !important;
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+}
+
+html.aos-mobile .pmh-active-person {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-active-status {
+  grid-column: 1 / -1 !important;
+  grid-row: 3 !important;
+  overflow: visible !important;
+  font-size: 11px !important;
+  white-space: normal !important;
+}
+
+html.aos-mobile .pmh-active-row time {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  align-self: start;
+  justify-self: end !important;
+  font-size: 9px !important;
+}
+
+html.aos-mobile .pmh-active-context {
+  width: 100% !important;
+  min-height: 34px !important;
+  border: 0 !important;
+  border-top: 1px solid var(--aos-line) !important;
+  font-size: 10px !important;
+}
+
+/* Tickets and kanban */
+html.aos-mobile .pmh-kanban {
+  gap: 12px !important;
+  margin: 12px calc(var(--aos-mobile-pad) * -1) 0 !important;
+  padding: 2px var(--aos-mobile-pad) 15px !important;
+  scroll-padding-inline: var(--aos-mobile-pad);
+  scroll-snap-type: x mandatory !important;
+}
+
+html.aos-mobile .pmh-lane {
+  flex: 0 0 calc(100vw - (var(--aos-mobile-pad) * 2) - 8px) !important;
+  max-width: 430px;
+  padding: 12px !important;
+  border-radius: 18px !important;
+  scroll-snap-align: center !important;
+}
+
+html.aos-mobile .pmh-ticket {
+  padding: 15px !important;
+  border-radius: 15px !important;
+}
+
+html.aos-mobile .pmh-ticket h4 {
+  font-size: 15px !important;
+}
+
+html.aos-mobile .pmh-ticket dl {
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+}
+
+html.aos-mobile .pmh-ticket-drawer-panel {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  border-radius: 22px 22px 0 0 !important;
+}
+
+html.aos-mobile .pmh-ticket-drawer-header,
+html.aos-mobile .pmh-ticket-drawer-body,
+html.aos-mobile .pmh-ticket-drawer-actions {
+  padding-inline: 16px !important;
+}
+
+/* Inaugurations */
+html.aos-mobile .pmh-tracked {
+  gap: 12px !important;
+  margin-top: 12px !important;
+}
+
+html.aos-mobile .pmh-inauguration-card {
+  padding: 17px !important;
+}
+
+html.aos-mobile .pmh-inauguration-card > header {
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+html.aos-mobile .pmh-inauguration-card h3 {
+  font-size: 21px !important;
+}
+
+html.aos-mobile .pmh-date {
+  text-align: left !important;
+}
+
+html.aos-mobile .pmh-progress-label {
+  font-size: 11.5px !important;
+}
+
+html.aos-mobile .pmh-checklist label {
+  grid-template-columns: 20px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  min-height: 58px !important;
+  padding: 11px 12px !important;
+}
+
+html.aos-mobile .pmh-checklist em {
+  grid-column: 2;
+  justify-self: start;
+}
+
+html.aos-mobile .pmh-finance,
+html.aos-mobile .pmh-action-grid {
+  grid-template-columns: 1fr 1fr !important;
+}
+
+html.aos-mobile .pmh-action > header {
+  grid-template-columns: 20px minmax(0, 1fr) !important;
+}
+
+html.aos-mobile .pmh-action .use {
+  grid-column: 2;
+  justify-self: start;
+}
+
+html.aos-mobile .pmh-projects > div {
+  grid-template-columns: 1fr !important;
+}
+
+/* Calendar and content library */
+html.aos-mobile .pmh-calendar-legend {
+  flex-wrap: nowrap !important;
+  margin: 12px calc(var(--aos-mobile-pad) * -1) 0 !important;
+  padding: 0 var(--aos-mobile-pad) 3px !important;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+html.aos-mobile .pmh-calendar-legend span {
+  flex: 0 0 auto;
+}
+
+html.aos-mobile .pmh-calendar,
+html.aos-mobile .pmh-library {
+  grid-template-columns: 1fr !important;
+  gap: 11px !important;
+  margin-top: 12px !important;
+}
+
+html.aos-mobile .pmh-calendar > section,
+html.aos-mobile .pmh-library article {
+  border-radius: 18px !important;
+}
+
+html.aos-mobile .pmh-library article {
+  min-height: 0 !important;
+  padding: 18px !important;
+}
+
+html.aos-mobile .pmh-library p {
+  min-height: 0 !important;
+}
+
+/* Finance */
+html.aos-mobile .pmh-finance-kpis,
+html.aos-mobile .pmh-payment-row,
+html.aos-mobile .pmh-finance-grid {
+  grid-template-columns: 1fr !important;
+}
+
+html.aos-mobile .pmh-finance-form {
+  grid-template-columns: 1fr !important;
+}
+
+html.aos-mobile .pmh-finance-form .wide,
+html.aos-mobile .pmh-finance-form footer {
+  grid-column: 1 !important;
+}
+
+/* Modals become bottom sheets */
+html.aos-mobile .pmh-modal,
+html.aos-mobile .pmh-finance-modal,
+html.aos-mobile .pmh-radar-context-modal {
+  align-items: end !important;
+  padding: 0 !important;
+}
+
+html.aos-mobile .pmh-modal > section,
+html.aos-mobile .pmh-finance-dialog,
+html.aos-mobile .pmh-radar-context-dialog {
+  width: 100% !important;
+  max-width: none !important;
+  max-height: min(88dvh, 820px) !important;
+  border-radius: 24px 24px 0 0 !important;
+}
+
+html.aos-mobile .pmh-modal section > header,
+html.aos-mobile .pmh-finance-dialog > header,
+html.aos-mobile .pmh-radar-context-dialog > header {
+  padding: 19px 17px 15px !important;
+}
+
+html.aos-mobile .pmh-modal h2,
+html.aos-mobile .pmh-finance-dialog h2,
+html.aos-mobile .pmh-radar-context-dialog header h2 {
+  font-size: 23px !important;
+}
+
+html.aos-mobile .pmh-modal form,
+html.aos-mobile .pmh-finance-form,
+html.aos-mobile .pmh-radar-context-dialog > main {
+  grid-template-columns: 1fr !important;
+  padding: 17px !important;
+}
+
+html.aos-mobile .pmh-modal .wide,
+html.aos-mobile .pmh-modal form footer,
+html.aos-mobile .pmh-radar-context-dialog label.wide,
+html.aos-mobile .pmh-radar-context-dialog aside {
+  grid-column: 1 !important;
+}
+
+html.aos-mobile .pmh-modal form footer,
+html.aos-mobile .pmh-finance-form footer,
+html.aos-mobile .pmh-radar-context-dialog > footer {
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  padding: 14px 17px calc(16px + var(--aos-mobile-safe-bottom)) !important;
+}
+
+html.aos-mobile .pmh-modal form footer button,
+html.aos-mobile .pmh-finance-form footer button,
+html.aos-mobile .pmh-radar-context-dialog footer button {
+  min-height: 44px !important;
+}
+
+/* Thinking assistant and toasts */
+html.aos-mobile .aos-thinking-floating-trigger,
+html.aos-mobile .aos-thinking-trigger.floating {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+html.aos-mobile .pmh-top-actions .aos-thinking-trigger,
+html.aos-mobile .aos-thinking-trigger:not(.floating) {
+  position: static !important;
+  inset: auto !important;
+  order: -1;
+  display: grid !important;
+  place-items: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 7px 18px rgba(31, 28, 52, .07) !important;
+  transform: none !important;
+}
+
+html.aos-mobile .pmh-top-actions .aos-thinking-trigger .aos-thinking-orb,
+html.aos-mobile .aos-thinking-trigger:not(.floating) .aos-thinking-orb {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 9px !important;
+  font-size: 15px !important;
+}
+
+html.aos-mobile .pmh-top-actions .aos-thinking-trigger > span:last-child:not(.aos-thinking-orb),
+html.aos-mobile .aos-thinking-trigger:not(.floating) > span:last-child:not(.aos-thinking-orb) {
+  display: none !important;
+}
+
+html.aos-mobile .aos-thinking-drawer,
+html.aos-mobile .aos-thinking-panel {
+  bottom: calc(var(--aos-mobile-dock-h) + var(--aos-mobile-safe-bottom)) !important;
+  max-height: calc(100dvh - var(--aos-mobile-dock-h) - var(--aos-mobile-safe-bottom) - 18px) !important;
+}
+
+html.aos-mobile .pmh-sults-toast,
+html.aos-mobile .pmh-ignore-toast {
+  bottom: calc(var(--aos-mobile-dock-h) + var(--aos-mobile-safe-bottom) + 16px) !important;
+  max-width: calc(100vw - 28px) !important;
+}
+
+/* Demand capture compact belongs to the mobile base until the module migration pass. */
+html.aos-mobile .pmh-internal-demands {
+  gap: 8px !important;
+  margin: 10px 0 !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+  padding: 12px !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 24px rgba(31, 28, 52, .05) !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact > div {
+  grid-column: 1 / -1 !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact h3,
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact p {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact small {
+  display: block !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  letter-spacing: .08em !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact textarea {
+  grid-column: 1 !important;
+  width: 100% !important;
+  min-height: 54px !important;
+  height: 54px !important;
+  max-height: 96px !important;
+  padding: 10px 11px !important;
+  border-radius: 11px !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  resize: vertical !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact footer {
+  grid-column: 2 !important;
+  align-self: stretch !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  justify-content: flex-end !important;
+  gap: 0 !important;
+  margin: 0 !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact footer > span,
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact [data-demand-manual] {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact [data-demand-organize] {
+  width: auto !important;
+  max-width: 112px !important;
+  min-height: 54px !important;
+  height: 54px !important;
+  padding: 0 12px !important;
+  border-radius: 11px !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+  white-space: normal !important;
+}
+
+/* Small phones */
+@media (max-width: 380px) {
+  html.aos-mobile {
+    --aos-mobile-pad: 12px;
+  }
+
+  html.aos-mobile .aos-mobile-dock {
+    padding-inline: 5px;
+  }
+
+  html.aos-mobile .aos-mobile-dock nav button {
+    font-size: 9px !important;
+  }
+
+  html.aos-mobile .pmh-metrics,
+  html.aos-mobile .pmh-shortcuts,
+  html.aos-mobile .pmh-finance,
+  html.aos-mobile .pmh-action-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  html.aos-mobile .pmh-metric,
+  html.aos-mobile .pmh-metric:nth-child(1),
+  html.aos-mobile .pmh-metric:nth-child(2),
+  html.aos-mobile .pmh-metric:nth-child(3),
+  html.aos-mobile .pmh-metric:nth-child(4),
+  html.aos-mobile .pmh-shortcuts button,
+  html.aos-mobile .pmh-shortcuts button:nth-child(1),
+  html.aos-mobile .pmh-shortcuts button:nth-child(2),
+  html.aos-mobile .pmh-shortcuts button:nth-child(3),
+  html.aos-mobile .pmh-shortcuts button:nth-child(4) {
+    grid-column: 1 !important;
+  }
+}

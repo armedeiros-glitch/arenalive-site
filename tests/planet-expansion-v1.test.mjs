@@ -1,0 +1,39 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+const moduleSource = read('planet-hub/assets/planet-expansion-v1.js');
+const moduleStyles = read('planet-hub/assets/planet-expansion-v1.css');
+const accessSource = read('planet-hub/assets/hub-access-v1.js');
+const indexSource = read('index.html');
+const apiSource = read('functions/api/hub/planet/leads.js');
+const leadCore = read('functions/_lib/planet-leads.js');
+
+assert.match(accessSource, /planet-expansion-v1\.js\?v=20260811-1/);
+assert.doesNotMatch(accessSource, /planet-lead-hunter/);
+assert.match(accessSource, /value\.includes\('expans'\)/);
+assert.match(indexSource, /planet-expansion-v1\.css\?v=20260806-1/);
+assert.doesNotMatch(indexSource, /planet-lead-hunter/);
+assert.match(moduleSource, /const VIEW = 'expansao'/);
+assert.match(moduleSource, /const API = '\/api\/hub\/planet\/leads'/);
+assert.match(moduleSource, /data-expansion-nav/);
+assert.match(moduleSource, /data-expansion-badge/);
+assert.match(moduleSource, /data-lead-whatsapp/);
+assert.match(moduleSource, /data-lead-status/);
+assert.match(moduleSource, /Expansão e Leads/);
+assert.match(moduleSource, /NÃO VISUALIZADOS/);
+assert.match(moduleSource, /events\.on\('notifications\.updated'/);
+assert.match(moduleSource, /planet:open-lead/);
+assert.doesNotMatch(moduleSource, /caca-lead|Caça Lead|data-lead-hunter-root|planet:open-candidate|planet:expansion-section-rendered/);
+assert.doesNotMatch(moduleSource, /injectStyles|createElement\('style'\)|insertAdjacentElement|setTimeout\(activate/);
+assert.match(moduleStyles, /pmh-expansion-shell/);
+assert.doesNotMatch(moduleStyles, /!important/);
+assert.match(apiSource, /PLANET_HUB_DATA/);
+assert.match(apiSource, /upsertLead/);
+assert.match(leadCore, /tenantId: 'planet'/);
+assert.match(leadCore, /rd_station/);
+assert.match(leadCore, /reactivated/);
+assert.match(leadCore, /duplicate: true/);
+assert.match(leadCore, /O lead precisa ter telefone ou e-mail/);
+
+console.log('Planet Expansion com leads reais: tests passed');

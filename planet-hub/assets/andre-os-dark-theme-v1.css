@@ -1,0 +1,542 @@
+/* André OS · tema escuro consolidado
+   Dono único de tokens, paleta e superfícies compartilhadas no tema escuro.
+   Não altera estrutura, dados ou navegação. */
+
+:root { color-scheme: light dark; }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --aos-ink: #f4f2fb;
+    --aos-ink-soft: #d9d5e6;
+    --aos-sidebar: #111015;
+    --aos-sidebar-soft: #1c1925;
+    --aos-accent: #917bff;
+    --aos-accent-strong: #7a62f4;
+    --aos-accent-soft: #2b2544;
+    --aos-coral: #ff8177;
+    --aos-coral-soft: #3b2427;
+    --aos-green: #55d3a2;
+    --aos-green-soft: #19372f;
+    --aos-amber: #f0b65c;
+    --aos-amber-soft: #3b3020;
+    --aos-blue: #76a5ff;
+    --aos-blue-soft: #202d49;
+    --aos-page: #0d0c11;
+    --aos-surface: #17151c;
+    --aos-surface-soft: #201c27;
+    --aos-line: #393340;
+    --aos-line-strong: #4a4254;
+    --aos-text: #f4f1f8;
+    --aos-muted: #aaa4b2;
+    --aos-muted-2: #7f7988;
+    --aos-shadow: 0 18px 50px rgba(0, 0, 0, .24);
+    --aos-shadow-strong: 0 26px 70px rgba(0, 0, 0, .42);
+    color: var(--aos-text);
+    background: var(--aos-page);
+  }
+
+  html, body, #root, #pmh-app, .pmh-main, .pmh-content {
+    background-color: var(--aos-page);
+    color: var(--aos-text);
+  }
+
+  .pmh-topbar {
+    border-bottom-color: rgba(78, 73, 88, .82);
+    background: rgba(17, 16, 21, .88);
+  }
+
+  .pmh-topbar h1,
+  .pmh-section-head h2,
+  .pmh-section-head h3,
+  .pmh-section-head strong,
+  .pmh-metric strong,
+  .pmh-shortcuts strong,
+  .pmh-card h2,
+  .pmh-card h3,
+  .pmh-card h4,
+  .pmh-lane h3,
+  .pmh-ticket h4,
+  .pmh-inauguration-card h3,
+  .pmh-projects h3,
+  .pmh-calendar h3,
+  .pmh-calendar h4,
+  .pmh-library h3,
+  .pmh-modal h2,
+  .pmh-modal h3,
+  .pmh-global-search-state strong {
+    color: var(--aos-text);
+  }
+
+  .pmh-top-actions label,
+  .pmh-top-actions > button,
+  .pmh-loading,
+  .pmh-empty,
+  .pmh-metric,
+  .pmh-shortcuts > button,
+  .pmh-card,
+  .pmh-lane,
+  .pmh-ticket,
+  .pmh-inauguration-card,
+  .pmh-projects,
+  .pmh-calendar > section,
+  .pmh-calendar article,
+  .pmh-library article,
+  .pmh-modal,
+  .pmh-access-card,
+  .pmh-global-search-results,
+  .pmh-demand-card,
+  .pmh-active-card,
+  .pmh-radar-card,
+  .pmh-thinking-card,
+  .pmh-feedback-card,
+  details,
+  fieldset {
+    border-color: var(--aos-line);
+    background-color: var(--aos-surface);
+    color: var(--aos-text);
+    box-shadow: var(--aos-shadow);
+  }
+
+  .pmh-top-actions label { background: rgba(27, 25, 33, .96); }
+  .pmh-top-actions > button { background: var(--aos-surface); }
+  .pmh-top-actions > button:hover { border-color: #665c82; background: var(--aos-accent-soft); }
+
+  input,
+  select,
+  textarea,
+  .pmh-modal input,
+  .pmh-modal select,
+  .pmh-modal textarea,
+  .pmh-action input,
+  .pmh-action select,
+  .pmh-action textarea {
+    border-color: var(--aos-line);
+    color: var(--aos-text);
+    background-color: #17151c;
+  }
+
+  input::placeholder,
+  textarea::placeholder { color: #777281; }
+  select { color-scheme: dark; }
+
+  .pmh-section-head p,
+  .pmh-card p,
+  .pmh-card small,
+  .pmh-ticket p,
+  .pmh-ticket dt,
+  .pmh-ticket dd,
+  .pmh-inauguration-card p,
+  .pmh-inauguration-card small,
+  .pmh-projects small,
+  .pmh-calendar p,
+  .pmh-library p,
+  .pmh-global-search-item em,
+  .pmh-global-search-state,
+  .pmh-modal p,
+  .pmh-modal small { color: var(--aos-muted); }
+
+  .pmh-loading,
+  .pmh-empty { background: rgba(27, 25, 33, .76); }
+
+  .pmh-metric,
+  .pmh-shortcuts > button,
+  .pmh-ticket,
+  .pmh-calendar article,
+  .pmh-library article,
+  .pmh-projects article,
+  .pmh-checklist label,
+  .pmh-action,
+  .pmh-finance article { background: var(--aos-surface); }
+
+  .pmh-metric:hover,
+  .pmh-shortcuts > button:hover,
+  .pmh-ticket:hover,
+  .pmh-projects article:hover,
+  .pmh-library article:hover {
+    background: var(--aos-surface-soft);
+    border-color: #50495f;
+  }
+
+  .pmh-lane > header,
+  .pmh-projects > header,
+  .pmh-calendar > section > header,
+  .pmh-inauguration-card > header,
+  .pmh-action > header,
+  details > summary {
+    border-color: var(--aos-line);
+    background-color: var(--aos-surface-soft);
+    color: var(--aos-text);
+  }
+
+  .pmh-global-search-results {
+    border-color: rgba(154, 135, 255, .24);
+    background: rgba(27, 25, 33, .98);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, .46);
+  }
+
+  .pmh-global-search-item { color: var(--aos-text); }
+  .pmh-global-search-item:hover,
+  .pmh-global-search-item.active { background: #2b2544; }
+  .pmh-global-search-item > b { color: #888292; }
+
+  .pmh-alert {
+    border-color: #75444a;
+    color: #ffaaa2;
+    background: var(--aos-coral-soft);
+  }
+
+  .pmh-modal-backdrop,
+  .pmh-backdrop,
+  [data-mobile-backdrop] { background: rgba(0, 0, 0, .66); }
+
+  .pmh-modal,
+  .pmh-access-card {
+    background: #1b1921;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, .58);
+  }
+
+  .pmh-checklist label.done,
+  .pmh-action.done { background: #172820; }
+  .pmh-action.disabled { opacity: .56; }
+  .pmh-progress,
+  progress { background: #302c38; }
+  .pmh-calendar article.past { opacity: .46; }
+
+  .pmh-calendar-legend span,
+  .pmh-ticket small,
+  .pmh-date,
+  .pmh-progress-label,
+  .pmh-projects > header span { border-color: var(--aos-line); }
+
+  .pmh-priority-counter { border-color: #42394e; color: #c5becd; background: #201c27; }
+  .pmh-priority-dots button { background: #514b59; }
+
+  html.aos-mobile .pmh-sidebar {
+    border-right-color: rgba(255, 255, 255, .08);
+    color: #f5f2fb;
+    background:
+      radial-gradient(circle at 6% 0%, rgba(115, 92, 255, .19), transparent 32%),
+      linear-gradient(180deg, #17141f 0%, #111015 100%);
+  }
+
+  .pmh-priority-card,
+  .pmh-desktop-priority-card,
+  .pmh-decision-main { color: #fff; }
+
+  .pmh-payment-document,
+  .pmh-payment-document *,
+  [data-payment-document],
+  [data-payment-document] * { color-scheme: light; }
+
+  /* Mobile dark: substitui cores fixas do legado sem alterar layout. */
+  html.aos-mobile,
+  html.aos-mobile body,
+  html.aos-mobile #root,
+  html.aos-mobile #pmh-app,
+  html.aos-mobile .pmh-main,
+  html.aos-mobile .pmh-content {
+    background: var(--aos-page) !important;
+    color: var(--aos-text) !important;
+  }
+
+  html.aos-mobile .pmh-topbar {
+    border-bottom-color: #2e2a35 !important;
+    background: rgba(13, 12, 17, .96) !important;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .28) !important;
+  }
+
+  html.aos-mobile .pmh-topbar h1,
+  html.aos-mobile .pmh-active-head h2,
+  html.aos-mobile .pmh-demand-capture h3,
+  html.aos-mobile .pmh-demand-preview h3,
+  html.aos-mobile .pmh-active-main strong { color: #f5f2fb !important; }
+
+  html.aos-mobile .pmh-top-actions label,
+  html.aos-mobile .pmh-top-actions > button {
+    border-color: #3b3545 !important;
+    background: #1a171f !important;
+    color: #f3effa !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture,
+  html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact {
+    border-color: var(--aos-line) !important;
+    background:
+      radial-gradient(circle at 92% 10%, rgba(145, 123, 255, .13), transparent 34%),
+      linear-gradient(145deg, #1b1822 0%, #15131a 100%) !important;
+    color: var(--aos-text) !important;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, .22) !important;
+  }
+
+  html.aos-mobile .pmh-demand-preview,
+  html.aos-mobile .pmh-demand-archive,
+  html.aos-mobile [data-active-workstream] {
+    border-color: #332e3b !important;
+    background: #17151c !important;
+    color: var(--aos-text) !important;
+    box-shadow: 0 16px 42px rgba(0, 0, 0, .24) !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture textarea,
+  html.aos-mobile .pmh-demand-capture.pmh-demand-capture-compact textarea,
+  html.aos-mobile .pmh-demand-form-grid input,
+  html.aos-mobile .pmh-demand-form-grid select,
+  html.aos-mobile .pmh-demand-form-grid textarea {
+    border-color: #41394b !important;
+    background: #0f0e13 !important;
+    color: #f4f1f8 !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .015) !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture textarea::placeholder { color: #777180 !important; }
+  html.aos-mobile .pmh-demand-capture small,
+  html.aos-mobile .pmh-demand-capture h3 { color: #a998ff !important; }
+
+  html.aos-mobile .pmh-demand-capture footer button,
+  html.aos-mobile .pmh-demand-preview footer button,
+  html.aos-mobile .pmh-demand-archive button {
+    border-color: #494153 !important;
+    background: #211e29 !important;
+    color: #f2eef8 !important;
+  }
+
+  html.aos-mobile .pmh-demand-capture footer [data-demand-organize],
+  html.aos-mobile .pmh-demand-preview footer button.primary {
+    border-color: var(--aos-accent) !important;
+    background: linear-gradient(145deg, #9b87ff, #8068f2) !important;
+    color: #fff !important;
+    box-shadow: 0 10px 24px rgba(94, 72, 218, .25) !important;
+  }
+
+  html.aos-mobile .pmh-demand-preview > header,
+  html.aos-mobile .pmh-demand-preview > footer,
+  html.aos-mobile .pmh-active-filters,
+  html.aos-mobile .pmh-active-demand-actions {
+    border-color: #332e3b !important;
+    background: #1d1a23 !important;
+  }
+
+  html.aos-mobile .pmh-active-list { background: #332e3b !important; }
+
+  html.aos-mobile .pmh-active-entry,
+  html.aos-mobile .pmh-active-row,
+  html.aos-mobile .pmh-active-empty,
+  html.aos-mobile .pmh-demand-archive article {
+    background: #17151c !important;
+    color: var(--aos-text) !important;
+  }
+
+  html.aos-mobile .pmh-active-row:hover,
+  html.aos-mobile .pmh-demand-archive article:hover { background: #211e29 !important; }
+
+  html.aos-mobile .pmh-active-filters button,
+  html.aos-mobile .pmh-active-context,
+  html.aos-mobile .pmh-active-demand-actions button,
+  html.aos-mobile .pmh-demand-preview > header > button {
+    border-color: #403a49 !important;
+    background: #211e29 !important;
+    color: #b9b3c3 !important;
+  }
+
+  html.aos-mobile .pmh-active-filters button.active {
+    border-color: var(--aos-accent) !important;
+    background: var(--aos-accent) !important;
+    color: #fff !important;
+  }
+
+  html.aos-mobile .pmh-active-head p,
+  html.aos-mobile .pmh-active-main small,
+  html.aos-mobile .pmh-active-status,
+  html.aos-mobile .pmh-demand-capture p,
+  html.aos-mobile .pmh-demand-preview header p,
+  html.aos-mobile .pmh-demand-capture footer span,
+  html.aos-mobile .pmh-demand-preview footer span,
+  html.aos-mobile .pmh-demand-archive small { color: #aaa5b5 !important; }
+
+  html.aos-mobile .pmh-active-row time { color: #d0cad8 !important; background: #2a2630 !important; }
+  html.aos-mobile .pmh-active-row time.today { color: #ffd697 !important; background: #49351e !important; }
+  html.aos-mobile .pmh-active-row time.late { color: #ffaaa2 !important; background: #46272b !important; }
+  html.aos-mobile .pmh-active-row time.soon { color: #a9c7ff !important; background: #202d49 !important; }
+  html.aos-mobile .pmh-active-row time.later { color: #c5baff !important; background: #2b2544 !important; }
+
+  html.aos-mobile .pmh-global-search-results {
+    background: rgba(20, 18, 25, .99) !important;
+    border-color: #42394f !important;
+  }
+
+  /* Superfícies operacionais mobile antes cobertas por dark-surfaces. */
+  html.aos-mobile .pmh-section-head,
+  html.aos-mobile .pmh-command-metric,
+  html.aos-mobile .pmh-command-filters,
+  html.aos-mobile .pmh-command-group,
+  html.aos-mobile .pmh-command-group > header,
+  html.aos-mobile .pmh-command-empty,
+  html.aos-mobile .pmh-command-loading,
+  html.aos-mobile .pmh-command-error,
+  html.aos-mobile .pmh-command-ticket-facts > div,
+  html.aos-mobile .pmh-campaign-storage,
+  html.aos-mobile .pmh-campaign-metric,
+  html.aos-mobile .pmh-campaign-focus-card:nth-child(2),
+  html.aos-mobile .pmh-campaign-timeline,
+  html.aos-mobile .pmh-campaign-annual,
+  html.aos-mobile .pmh-campaign-timeline-card,
+  html.aos-mobile .pmh-campaign-date-block,
+  html.aos-mobile .pmh-campaign-next-step,
+  html.aos-mobile .pmh-campaign-months > section,
+  html.aos-mobile .pmh-campaign-annual-card,
+  html.aos-mobile .pmh-campaign-month-empty,
+  html.aos-mobile .pmh-campaign-empty,
+  html.aos-mobile .pmh-campaign-loading,
+  html.aos-mobile .pmh-expansion-head,
+  html.aos-mobile .pmh-expansion-metrics article,
+  html.aos-mobile .pmh-expansion-lead,
+  html.aos-mobile .pmh-expansion-empty {
+    border-color: #3a3442 !important;
+    background: #19171f !important;
+    color: #f2eef8 !important;
+    box-shadow: 0 14px 36px rgba(0,0,0,.22) !important;
+  }
+
+  html.aos-mobile .pmh-section-head { background: linear-gradient(145deg,#1d1925,#141218) !important; }
+
+  html.aos-mobile .pmh-section-head h2,
+  html.aos-mobile .pmh-section-head h3,
+  html.aos-mobile .pmh-command-metric strong,
+  html.aos-mobile .pmh-command-filter-title strong,
+  html.aos-mobile .pmh-command-group h3,
+  html.aos-mobile .pmh-campaign-metric strong,
+  html.aos-mobile .pmh-campaign-focus-card:nth-child(2) h3,
+  html.aos-mobile .pmh-campaign-timeline h3,
+  html.aos-mobile .pmh-campaign-timeline-main h4,
+  html.aos-mobile .pmh-campaign-date-block strong,
+  html.aos-mobile .pmh-campaign-next-step strong,
+  html.aos-mobile .pmh-campaign-annual summary strong,
+  html.aos-mobile .pmh-campaign-months h3,
+  html.aos-mobile .pmh-campaign-annual-card h4,
+  html.aos-mobile .pmh-expansion-head h2,
+  html.aos-mobile .pmh-expansion-metrics strong,
+  html.aos-mobile .pmh-expansion-lead strong,
+  html.aos-mobile .pmh-expansion-empty b { color: #f4f1f8 !important; }
+
+  html.aos-mobile .pmh-section-head p,
+  html.aos-mobile .pmh-command-metric small,
+  html.aos-mobile .pmh-command-metric span,
+  html.aos-mobile .pmh-command-filter-title span,
+  html.aos-mobile .pmh-command-group header p,
+  html.aos-mobile .pmh-campaign-storage,
+  html.aos-mobile .pmh-campaign-metric small,
+  html.aos-mobile .pmh-campaign-metric span,
+  html.aos-mobile .pmh-campaign-focus-card:nth-child(2) p,
+  html.aos-mobile .pmh-campaign-focus-card:nth-child(2) footer,
+  html.aos-mobile .pmh-campaign-focus-card:nth-child(2) em,
+  html.aos-mobile .pmh-campaign-timeline > header > span,
+  html.aos-mobile .pmh-campaign-date-block span,
+  html.aos-mobile .pmh-campaign-timeline-main p,
+  html.aos-mobile .pmh-campaign-timeline-meta > span:last-child,
+  html.aos-mobile .pmh-campaign-next-step small,
+  html.aos-mobile .pmh-campaign-next-step span,
+  html.aos-mobile .pmh-campaign-annual summary > span,
+  html.aos-mobile .pmh-campaign-annual-card small,
+  html.aos-mobile .pmh-campaign-annual-card p,
+  html.aos-mobile .pmh-campaign-annual-card footer > span:last-child,
+  html.aos-mobile .pmh-expansion-head p,
+  html.aos-mobile .pmh-expansion-head-actions small,
+  html.aos-mobile .pmh-expansion-metrics small,
+  html.aos-mobile .pmh-expansion-lead small,
+  html.aos-mobile .pmh-expansion-empty span { color: #aaa4b3 !important; }
+
+  html.aos-mobile .pmh-command-metric::after,
+  html.aos-mobile .pmh-campaign-metric::after { opacity: .72; }
+
+  html.aos-mobile .pmh-command-filters select,
+  html.aos-mobile .pmh-command-filters button,
+  html.aos-mobile .pmh-expansion-refresh {
+    border-color: #47404f !important;
+    background: #211e29 !important;
+    color: #e9e4f0 !important;
+  }
+
+  html.aos-mobile .pmh-command-clear { background: #25212c !important; color: #aaa4b3 !important; }
+  html.aos-mobile .pmh-command-list { background: #19171f !important; }
+
+  html.aos-mobile .pmh-command-ticket-facts > div,
+  html.aos-mobile .pmh-campaign-date-block,
+  html.aos-mobile .pmh-campaign-next-step { background: #211e29 !important; }
+
+  html.aos-mobile .pmh-campaign-focus-card:nth-child(2) { background: linear-gradient(145deg,#211d2b,#18151f) !important; }
+
+  html.aos-mobile .pmh-campaign-timeline-card:hover,
+  html.aos-mobile .pmh-campaign-annual-card:hover,
+  html.aos-mobile .pmh-expansion-lead:hover,
+  html.aos-mobile .pmh-expansion-lead.selected {
+    border-color: #675b7b !important;
+    background: #231f2c !important;
+  }
+
+  html.aos-mobile .pmh-expansion-head { background: linear-gradient(145deg,#211b26,#17141b) !important; }
+  html.aos-mobile .pmh-expansion-status { background: #2b2544 !important; color: #c9bdff !important; }
+
+  /* Paleta prioritária mobile antes coberta por dark-palette-polish. */
+  html.aos-mobile .aos-mobile-menu-toggle {
+    border-color: #42394e !important;
+    color: #b4a6ff !important;
+    background: #201c27 !important;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .28) !important;
+  }
+
+  html.aos-mobile .aos-mobile-menu-toggle:active { background: #282131 !important; }
+
+  html.aos-mobile .pmh-priority-focus {
+    border-color: rgba(180, 166, 255, .16) !important;
+    background:
+      radial-gradient(circle at 102% -18%, rgba(145, 123, 255, .20), transparent 46%),
+      linear-gradient(145deg, #211820 0%, #342229 100%) !important;
+  }
+
+  html.aos-mobile .pmh-priority-focus.tone-risk,
+  html.aos-mobile .pmh-priority-focus.tone-follow-up {
+    background:
+      radial-gradient(circle at 102% -18%, rgba(180, 112, 92, .18), transparent 46%),
+      linear-gradient(145deg, #24191f 0%, #392329 100%) !important;
+  }
+
+  html.aos-mobile .pmh-priority-other {
+    border-color: rgba(180, 166, 255, .18) !important;
+    background:
+      radial-gradient(circle at 102% -18%, rgba(145, 123, 255, .22), transparent 48%),
+      linear-gradient(145deg, #2e2936 0%, #403748 100%) !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .18) !important;
+  }
+
+  html.aos-mobile .pmh-priority-other.tone-risk,
+  html.aos-mobile .pmh-priority-other.tone-follow-up {
+    background:
+      radial-gradient(circle at 102% -18%, rgba(189, 125, 104, .18), transparent 48%),
+      linear-gradient(145deg, #352a30 0%, #49383f 100%) !important;
+  }
+
+  html.aos-mobile .pmh-priority-other.tone-approval {
+    background:
+      radial-gradient(circle at 102% -18%, rgba(104, 198, 158, .16), transparent 48%),
+      linear-gradient(145deg, #283530 0%, #384940 100%) !important;
+  }
+
+  html.aos-mobile .pmh-priority-card .pmh-priority-movement {
+    border-color: rgba(180, 166, 255, .15) !important;
+    background: rgba(19, 16, 24, .30) !important;
+  }
+
+  html.aos-mobile .pmh-priority-kind,
+  html.aos-mobile .pmh-priority-movement small,
+  html.aos-mobile .pmh-priority-section-head small { color: #b4a6ff !important; }
+
+  html.aos-mobile .pmh-priority-open {
+    background: linear-gradient(145deg, #9a87ff, #8068f2) !important;
+    box-shadow: 0 9px 22px rgba(94, 72, 218, .28) !important;
+  }
+}
+
+@media print {
+  :root { color-scheme: light; }
+  html, body { background: #fff !important; color: #111 !important; }
+}

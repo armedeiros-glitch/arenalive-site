@@ -1,0 +1,84 @@
+.pmh-radar-reliability {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(190, 126, 22, .28);
+  border-radius: 14px;
+  background: rgba(255, 247, 229, .92);
+  color: #5d4217;
+  box-shadow: 0 10px 26px rgba(100, 72, 24, .06);
+}
+
+.pmh-radar-reliability > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pmh-radar-reliability strong,
+.pmh-radar-reliability p {
+  display: block;
+  margin: 0;
+}
+
+.pmh-radar-reliability p {
+  margin-top: 3px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #7b5b27;
+}
+
+.pmh-radar-reliability button,
+.pmh-radar-paused button {
+  flex: 0 0 auto;
+  border: 1px solid rgba(93, 66, 23, .2);
+  border-radius: 11px;
+  padding: 10px 13px;
+  font-weight: 700;
+  color: inherit;
+  background: rgba(255, 255, 255, .78);
+}
+
+.pmh-radar-reliability.is-retrying button {
+  opacity: .65;
+  pointer-events: none;
+}
+
+.pmh-radar-paused {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+}
+
+.pmh-radar-paused small {
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.pmh-radar-paused h2 {
+  margin: 8px 0 6px;
+}
+
+.pmh-radar-paused p {
+  max-width: 720px;
+  margin: 0;
+  opacity: .82;
+}
+
+@media (max-width: 760px) {
+  .pmh-radar-reliability,
+  .pmh-radar-paused {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pmh-radar-reliability button,
+  .pmh-radar-paused button {
+    width: 100%;
+  }
+}

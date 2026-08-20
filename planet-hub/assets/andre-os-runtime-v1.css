@@ -1,0 +1,130 @@
+/* Login */
+html.pmh-access-pending body { visibility: hidden; }
+.pmh-access-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(115,92,255,.38), transparent 28%),
+    radial-gradient(circle at 88% 85%, rgba(255,107,95,.18), transparent 26%),
+    #14121c;
+}
+.pmh-access-card {
+  width: min(460px,100%);
+  padding: 36px;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 28px;
+  background: rgba(29,26,41,.9);
+  box-shadow: 0 36px 100px rgba(0,0,0,.42);
+  backdrop-filter: blur(18px);
+}
+.pmh-access-brand { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+.pmh-access-brand > span { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; color: #fff; background: linear-gradient(145deg,#8d79ff,#5f48e9); box-shadow: 0 16px 34px rgba(97,72,235,.4); font-size: 22px; font-weight: 900; }
+.pmh-access-brand strong, .pmh-access-brand small { display: block; }
+.pmh-access-brand strong { font-size: 20px; }
+.pmh-access-brand small { margin-top: 3px; color: #aaa6ba; font-size: 12px; letter-spacing: .08em; }
+.pmh-access-card h1 { margin: 0; font-size: 31px; letter-spacing: -.04em; }
+.pmh-access-card p { margin: 11px 0 24px; color: #aaa7b7; font-size: 15px; line-height: 1.55; }
+.pmh-access-card label { display: block; color: #e5e2eb; font-size: 14px; font-weight: 800; }
+.pmh-access-card input { width: 100%; height: 50px; margin-top: 8px; padding: 0 14px; border: 1px solid rgba(255,255,255,.15); border-radius: 13px; color: #fff; background: rgba(255,255,255,.06); font-size: 16px; outline: none; }
+.pmh-access-card input:focus { border-color: #9583ff; box-shadow: 0 0 0 4px rgba(115,92,255,.16); }
+.pmh-access-card button { width: 100%; height: 50px; margin-top: 15px; border: 0; border-radius: 13px; color: #fff; background: linear-gradient(135deg,#806cff,#6048e9); font-size: 15px; font-weight: 850; cursor: pointer; }
+.pmh-access-error { margin-top: 14px !important; padding: 12px 13px; border: 1px solid rgba(255,123,113,.38); border-radius: 11px; color: #ffc2bd !important; background: rgba(255,107,95,.1); font-size: 14px !important; }
+.pmh-access-card button:disabled { opacity: .65; cursor: wait; }
+
+/* Drawer and late-injected additions */
+body .pmh-ticket-drawer { background: rgba(17,15,28,.66) !important; backdrop-filter: blur(7px) !important; }
+body .pmh-ticket-drawer-panel { color: var(--aos-text) !important; background: var(--aos-page) !important; box-shadow: -26px 0 80px rgba(12,10,22,.28) !important; }
+body .pmh-ticket-drawer-header { border-bottom-color: var(--aos-line) !important; }
+body .pmh-ticket-drawer-header small, body .pmh-ticket-timeline > header small { color: var(--aos-accent) !important; }
+body [data-ticket-close], body .pmh-ticket-drawer-actions a, body .pmh-ticket-drawer-actions button { border-color: var(--aos-line-strong) !important; color: var(--aos-text) !important; background: #fff !important; }
+body .pmh-ticket-drawer-actions a { border-color: var(--aos-accent) !important; color: #fff !important; background: var(--aos-accent) !important; }
+body .pmh-ticket-summary article, body .pmh-ticket-event { border-color: var(--aos-line) !important; background: #fff !important; }
+body .pmh-ticket-event.internal { border-color: #d5ceff !important; background: #f5f2ff !important; }
+body .pmh-ticket-summary small { color: var(--aos-muted-2) !important; }
+body .pmh-ticket-meta-row span { color: #555465 !important; background: #eae9f0 !important; }
+body .pmh-ticket-labels span { background: #fff !important; }
+body .pmh-ticket-attachments a, body .pmh-ticket-attachments span { color: #4d4b5e !important; background: #ecebf2 !important; }
+body .pmh-sults-toast { color: #fff !important; background: #1f1b2c !important; box-shadow: 0 20px 52px rgba(17,14,30,.32) !important; }
+
+/* Motion */
+.pmh-content button { transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+.pmh-content button:active { transform: translateY(0); }
+
+/* Responsive content. The mobile shell itself is controlled by html.aos-mobile. */
+@media (max-width: 1180px) {
+  .pmh-metric:nth-child(1), .pmh-metric:nth-child(2), .pmh-metric:nth-child(3), .pmh-metric:nth-child(4) { grid-column: span 6; }
+  .pmh-shortcuts button:nth-child(1), .pmh-shortcuts button:nth-child(2), .pmh-shortcuts button:nth-child(3), .pmh-shortcuts button:nth-child(4) { grid-column: span 6; }
+  .pmh-calendar { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .pmh-library { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .pmh-finance { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .pmh-action-grid { grid-template-columns: 1fr 1fr; }
+  .pmh-finance-grid { grid-template-columns: 1fr; }
+  .pmh-payment-row { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 820px) {
+  .pmh-topbar { min-height: 82px; padding: 14px 16px; }
+  .pmh-content { padding: 20px 15px 46px; }
+  .pmh-hero, .pmh-section-head { min-height: 0; align-items: stretch; flex-direction: column; padding: 26px 24px; }
+  .pmh-hero h2, .pmh-section-head h2 { font-size: 31px; }
+  .pmh-home-grid { grid-template-columns: 1fr; }
+  .pmh-projects > div { grid-template-columns: 1fr; }
+  .pmh-inauguration-card > header { flex-direction: column; }
+  .pmh-date { text-align: left; }
+  .pmh-modal form, .pmh-finance-form { grid-template-columns: 1fr; padding-inline: 19px; }
+  .pmh-finance-form { padding-inline: 0; }
+  .pmh-modal .wide, .pmh-finance-form .wide, .pmh-modal form footer, .pmh-finance-form footer { grid-column: 1; }
+  .pmh-top-actions label { width: 42vw; }
+  .pmh-finance-kpis { grid-template-columns: repeat(2,1fr); }
+}
+
+@media (max-width: 560px) {
+  .pmh-topbar h1 { font-size: 24px; }
+  .pmh-top-actions label { display: none; }
+  .pmh-metric:nth-child(1), .pmh-metric:nth-child(2), .pmh-metric:nth-child(3), .pmh-metric:nth-child(4),
+  .pmh-shortcuts button:nth-child(1), .pmh-shortcuts button:nth-child(2), .pmh-shortcuts button:nth-child(3), .pmh-shortcuts button:nth-child(4) { grid-column: span 12; }
+  .pmh-calendar, .pmh-library, .pmh-finance-kpis { grid-template-columns: 1fr; }
+  .pmh-finance, .pmh-action-grid { grid-template-columns: 1fr; }
+  .pmh-payment-row { grid-template-columns: 1fr; }
+  .pmh-ticket-drawer-panel { width: 100% !important; padding: 20px !important; }
+}
+
+/* Compatibility with ignored-ticket and copy-link controls added on 2026-08-04 */
+body .pmh-ignore-card-button {
+  border-color: rgba(255,107,95,.28) !important;
+  color: #c64c45 !important;
+  background: var(--aos-coral-soft) !important;
+  box-shadow: 0 7px 18px rgba(255,107,95,.08) !important;
+}
+body .pmh-ignore-card-button:hover,
+body .pmh-ignore-card-button:focus-visible {
+  border-color: var(--aos-coral) !important;
+  color: #fff !important;
+  background: var(--aos-coral) !important;
+}
+body .pmh-ignore-ticket-button {
+  border-color: rgba(255,107,95,.34) !important;
+  color: #b94740 !important;
+  background: var(--aos-coral-soft) !important;
+}
+body .pmh-ignore-ticket-button:hover,
+body .pmh-ignore-ticket-button:focus-visible {
+  border-color: var(--aos-coral) !important;
+  color: #fff !important;
+  background: var(--aos-coral) !important;
+}
+body .pmh-ignore-toast {
+  color: #fff !important;
+  background: var(--aos-ink-soft) !important;
+  box-shadow: 0 20px 52px rgba(17,14,30,.32) !important;
+}
+body .pmh-ignore-toast.success { background: #187d59 !important; }
+body .pmh-ignore-toast.error { background: #bd493f !important; }
+body [data-sults-copy-link-ready] {
+  border-color: var(--aos-accent) !important;
+  color: #fff !important;
+  background: var(--aos-accent) !important;
+}

@@ -1,0 +1,456 @@
+/* André OS · mobile shell navigation v3
+   Uma navegação própria para celular: ambientes primeiro, gavetas depois. */
+
+html:not(.aos-mobile) .aos-mobile-menu-toggle,
+html:not(.aos-mobile) .aos-mobile-sidebar-close,
+html:not(.aos-mobile) .aos-mobile-backdrop,
+html:not(.aos-mobile) [data-mobile-navigation] {
+  display: none !important;
+}
+
+html.aos-mobile {
+  --aos-mobile-sidebar-width: min(88vw, 340px);
+  --aos-mobile-drawer-duration: 240ms;
+  --aos-mobile-nav-text: #f5f2fa;
+  --aos-mobile-nav-muted: #9d98aa;
+  --aos-mobile-nav-line: rgba(255, 255, 255, .075);
+  --aos-mobile-nav-accent: #9b8bff;
+  --aos-mobile-nav-accent-soft: rgba(123, 99, 255, .13);
+}
+
+html.aos-mobile .aos-mobile-dock {
+  display: none !important;
+}
+
+html.aos-mobile .pmh-main {
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+html.aos-mobile .pmh-topbar > div:first-child {
+  display: grid !important;
+  grid-template-columns: 40px minmax(0, 1fr) !important;
+  grid-template-rows: auto auto !important;
+  align-items: center !important;
+  column-gap: 10px !important;
+}
+
+html.aos-mobile .pmh-topbar > div:first-child > .aos-mobile-menu-toggle {
+  grid-column: 1 !important;
+  grid-row: 1 / 3 !important;
+}
+
+html.aos-mobile .pmh-topbar > div:first-child > small,
+html.aos-mobile .pmh-topbar > div:first-child > h1 {
+  grid-column: 2 !important;
+}
+
+html.aos-mobile .pmh-topbar h1 {
+  max-width: calc(100vw - 160px) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+html.aos-mobile .aos-mobile-menu-toggle {
+  position: relative;
+  display: grid !important;
+  place-items: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, .09) !important;
+  border-radius: 12px !important;
+  color: #ece8f4 !important;
+  background: rgba(255, 255, 255, .045) !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.aos-mobile .aos-mobile-menu-toggle > span,
+html.aos-mobile .aos-mobile-menu-toggle::before,
+html.aos-mobile .aos-mobile-menu-toggle::after {
+  position: absolute;
+  left: 11px;
+  width: 17px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  content: '';
+}
+
+html.aos-mobile .aos-mobile-menu-toggle > span { top: 19px; }
+html.aos-mobile .aos-mobile-menu-toggle::before { top: 13px; }
+html.aos-mobile .aos-mobile-menu-toggle::after { top: 25px; }
+
+html.aos-mobile .pmh-sidebar {
+  position: fixed !important;
+  inset: 0 auto 0 0 !important;
+  z-index: 310 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: var(--aos-mobile-sidebar-width) !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  overflow: hidden !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(115, 92, 255, .2), transparent 31%),
+    linear-gradient(180deg, #191620 0%, #141219 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, .075) !important;
+  box-shadow: 24px 0 64px rgba(10, 8, 18, .3) !important;
+  transform: translate3d(-102%, 0, 0);
+  transition: transform var(--aos-mobile-drawer-duration) cubic-bezier(.22, .8, .28, 1);
+  will-change: transform;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+html.aos-mobile.aos-mobile-sidebar-open .pmh-sidebar {
+  transform: translate3d(0, 0, 0);
+}
+
+html.aos-mobile .pmh-sidebar .pmh-brand {
+  position: relative;
+  display: flex !important;
+  align-items: center !important;
+  gap: 11px !important;
+  min-height: 58px !important;
+  padding: 0 2px 14px !important;
+  border-bottom: 1px solid var(--aos-mobile-nav-line) !important;
+}
+
+html.aos-mobile .pmh-sidebar .pmh-brand > span:first-child {
+  flex: 0 0 42px !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 13px !important;
+  color: #fff !important;
+  background: linear-gradient(145deg, #826fff, #624be6) !important;
+  box-shadow: 0 10px 24px rgba(92, 69, 237, .26) !important;
+  font-size: 19px !important;
+  font-weight: 900 !important;
+}
+
+html.aos-mobile .pmh-sidebar .pmh-brand strong,
+html.aos-mobile .pmh-sidebar .pmh-brand small {
+  display: block !important;
+}
+
+html.aos-mobile .pmh-sidebar .pmh-brand strong {
+  color: #fff !important;
+  font-size: 16px !important;
+  line-height: 1.08 !important;
+}
+
+html.aos-mobile .pmh-sidebar .pmh-brand small {
+  margin-top: 4px !important;
+  color: #9d99ad !important;
+  font-size: 8px !important;
+  letter-spacing: .14em !important;
+}
+
+html.aos-mobile .aos-mobile-sidebar-close {
+  flex: 0 0 36px;
+  display: grid !important;
+  place-items: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  margin-left: auto !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, .09) !important;
+  border-radius: 11px !important;
+  color: #d9d5e3 !important;
+  background: rgba(255, 255, 255, .045) !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+}
+
+html.aos-mobile .pmh-sidebar > nav {
+  flex: 1 1 auto;
+  display: block !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  padding: 10px 0 4px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.aos-mobile .pmh-sidebar > nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* A navegação antiga permanece no DOM para compatibilidade, mas não disputa o mobile. */
+html.aos-mobile .pmh-sidebar > nav > :not([data-mobile-navigation]) {
+  display: none !important;
+}
+
+html.aos-mobile .aos-mobile-navigation {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+html.aos-mobile .aos-mobile-nav-panel {
+  display: grid !important;
+  gap: 2px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+html.aos-mobile .aos-mobile-nav-section-label {
+  padding: 17px 10px 7px !important;
+  color: #777284 !important;
+  font-size: 8px !important;
+  font-weight: 900 !important;
+  letter-spacing: .14em !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: 32px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 50px !important;
+  margin: 0 !important;
+  padding: 6px 9px !important;
+  border: 0 !important;
+  border-radius: 11px !important;
+  color: #c3becd !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-align: left !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.aos-mobile .aos-mobile-nav-row + .aos-mobile-nav-row:not(.environment),
+html.aos-mobile .aos-mobile-nav-route-list .aos-mobile-nav-row + .aos-mobile-nav-row {
+  border-top: 1px solid rgba(255, 255, 255, .045) !important;
+  border-radius: 0 !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row > i {
+  display: grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 10px !important;
+  color: #a89cff !important;
+  background: rgba(126, 101, 255, .09) !important;
+  font-style: normal !important;
+  font-size: 15px !important;
+  line-height: 1 !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row > span {
+  display: grid !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row strong {
+  overflow: hidden !important;
+  color: inherit !important;
+  font-size: 13px !important;
+  font-weight: 760 !important;
+  line-height: 1.18 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row small {
+  overflow: hidden !important;
+  color: #858091 !important;
+  font-size: 8px !important;
+  font-weight: 850 !important;
+  letter-spacing: .09em !important;
+  line-height: 1.2 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row > b {
+  display: grid !important;
+  place-items: center !important;
+  width: 22px !important;
+  height: 22px !important;
+  color: #6f6a79 !important;
+  background: transparent !important;
+  font-size: 20px !important;
+  font-weight: 400 !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row > b[hidden] {
+  display: none !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row.environment {
+  min-height: 61px !important;
+  margin-top: 3px !important;
+  border: 1px solid rgba(255, 255, 255, .055) !important;
+  background: rgba(255, 255, 255, .018) !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row.environment + .aos-mobile-nav-row.environment {
+  border-top: 1px solid rgba(255, 255, 255, .055) !important;
+  border-radius: 11px !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row.environment > i {
+  width: 34px !important;
+  height: 34px !important;
+  background: rgba(126, 101, 255, .12) !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row.environment strong {
+  color: var(--aos-mobile-nav-text) !important;
+  font-size: 13.5px !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row.active {
+  color: #fff !important;
+  background: var(--aos-mobile-nav-accent-soft) !important;
+}
+
+html.aos-mobile .aos-mobile-nav-row.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 999px 999px 0;
+  background: var(--aos-mobile-nav-accent);
+}
+
+html.aos-mobile .aos-mobile-nav-row.active > i {
+  color: #d3ccff !important;
+  background: rgba(126, 101, 255, .18) !important;
+}
+
+html.aos-mobile .aos-mobile-nav-context {
+  display: grid !important;
+  grid-template-columns: 36px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 55px !important;
+  margin-bottom: 5px !important;
+  padding: 3px 3px 10px !important;
+  border-bottom: 1px solid var(--aos-mobile-nav-line) !important;
+}
+
+html.aos-mobile .aos-mobile-nav-context > button {
+  display: grid !important;
+  place-items: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, .08) !important;
+  border-radius: 11px !important;
+  color: #e7e2ee !important;
+  background: rgba(255, 255, 255, .04) !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+}
+
+html.aos-mobile .aos-mobile-nav-context > span {
+  display: grid !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+}
+
+html.aos-mobile .aos-mobile-nav-context small {
+  color: #8f85cf !important;
+  font-size: 8px !important;
+  font-weight: 900 !important;
+  letter-spacing: .12em !important;
+}
+
+html.aos-mobile .aos-mobile-nav-context strong {
+  overflow: hidden !important;
+  color: var(--aos-mobile-nav-text) !important;
+  font-size: 15px !important;
+  line-height: 1.1 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+html.aos-mobile .aos-mobile-nav-route-list {
+  display: grid !important;
+  gap: 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, .035) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .035) !important;
+}
+
+html.aos-mobile .aos-mobile-nav-route-list .aos-mobile-nav-row {
+  min-height: 48px !important;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+}
+
+html.aos-mobile .pmh-sidebar > footer {
+  display: none !important;
+}
+
+html.aos-mobile .aos-mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background: rgba(12, 10, 20, .54);
+  backdrop-filter: blur(2px);
+  transition: opacity 220ms ease, visibility 220ms ease;
+  touch-action: none;
+}
+
+html.aos-mobile.aos-mobile-sidebar-open .aos-mobile-backdrop {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+html.aos-mobile.aos-mobile-sidebar-open body {
+  overflow: hidden !important;
+}
+
+@media (max-width: 380px) {
+  html.aos-mobile {
+    --aos-mobile-sidebar-width: min(91vw, 325px);
+  }
+
+  html.aos-mobile .pmh-topbar h1 {
+    max-width: calc(100vw - 150px) !important;
+  }
+
+  html.aos-mobile .aos-mobile-nav-row.environment {
+    min-height: 57px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.aos-mobile {
+    --aos-mobile-drawer-duration: 1ms;
+  }
+
+  html.aos-mobile .pmh-sidebar,
+  html.aos-mobile .aos-mobile-backdrop {
+    transition-duration: 1ms !important;
+  }
+}

@@ -1,0 +1,192 @@
+.pmh-calendar-operations { margin-top: var(--os-space-5); }
+
+.pmh-campaign-storage {
+  display: inline-flex; align-items: center; gap: var(--os-space-2); min-height: 38px;
+  padding: 0 var(--os-space-3); border: 1px solid var(--os-border); border-radius: var(--os-radius-pill);
+  color: var(--os-text-muted); background: var(--os-surface); font-size: 12px; font-weight: 800; white-space: nowrap;
+}
+.pmh-campaign-storage i { width: 8px; height: 8px; border-radius: 50%; background: var(--os-text-faint); }
+.pmh-campaign-storage i.shared { background: var(--os-success); box-shadow: 0 0 0 5px var(--os-success-soft); }
+.pmh-campaign-storage i.local { background: var(--os-warning); box-shadow: 0 0 0 5px var(--os-warning-soft); }
+
+.pmh-campaign-metrics { display: grid; grid-template-columns: repeat(12,minmax(0,1fr)); gap: var(--os-space-4); }
+.pmh-campaign-metric {
+  position: relative; grid-column: span 3; min-height: 138px; overflow: hidden; padding: var(--os-space-5);
+  border: 1px solid var(--os-border); border-radius: var(--os-radius-xl); background: var(--os-surface); box-shadow: var(--os-shadow-sm);
+}
+.pmh-campaign-metric::before { content:''; position:absolute; inset:0 auto 0 0; width:5px; background:var(--campaign-tone,var(--os-accent)); }
+.pmh-campaign-metric::after { content:''; position:absolute; right:-30px; bottom:-42px; width:120px; height:120px; border-radius:36px; transform:rotate(27deg); background:var(--campaign-soft,var(--os-accent-soft)); }
+.pmh-campaign-metric.green { --campaign-tone:var(--os-success); --campaign-soft:var(--os-success-soft); }
+.pmh-campaign-metric.purple { --campaign-tone:var(--os-accent); --campaign-soft:var(--os-accent-soft); }
+.pmh-campaign-metric.blue { --campaign-tone:var(--os-info); --campaign-soft:var(--os-info-soft); }
+.pmh-campaign-metric.orange { --campaign-tone:var(--os-warning); --campaign-soft:var(--os-warning-soft); }
+.pmh-campaign-metric small,.pmh-campaign-metric strong,.pmh-campaign-metric span { position:relative; z-index:1; display:block; }
+.pmh-campaign-metric small { color:var(--os-text-muted); font-size:11px; font-weight:900; letter-spacing:.07em; text-transform:uppercase; }
+.pmh-campaign-metric strong { margin-top:11px; color:var(--os-text-strong); font-size:clamp(25px,2.5vw,38px); line-height:1.04; letter-spacing:-.045em; }
+.pmh-campaign-metric span { max-width:78%; margin-top:9px; color:var(--os-text-faint); font-size:12px; line-height:1.35; }
+
+.pmh-campaign-focus { display:grid; grid-template-columns:1.15fr .85fr; gap:var(--os-space-4); margin-top:var(--os-space-4); }
+.pmh-campaign-focus-card {
+  position:relative; min-height:235px; overflow:hidden; padding:var(--os-space-6); border:1px solid color-mix(in srgb,var(--os-accent) 25%,transparent);
+  border-radius:var(--os-radius-2xl); color:#fff; background:linear-gradient(135deg,#1b1827,#30264f 58%,#513b91); text-align:left; box-shadow:var(--os-shadow-lg);
+}
+.pmh-campaign-focus-card:nth-child(2) { color:var(--os-text); border-color:var(--os-border); background:linear-gradient(145deg,var(--os-surface),var(--os-accent-soft)); box-shadow:var(--os-shadow-md); }
+.pmh-campaign-focus-card::after { content:''; position:absolute; right:-45px; bottom:-65px; width:210px; height:210px; border:45px solid rgba(255,255,255,.055); border-radius:50%; }
+.pmh-campaign-focus-card:nth-child(2)::after { border-color:color-mix(in srgb,var(--os-accent) 9%,transparent); }
+.pmh-campaign-focus-card > small { position:relative; z-index:1; color:#bdb2ff; font-size:11px; font-weight:900; letter-spacing:.13em; }
+.pmh-campaign-focus-card:nth-child(2) > small { color:var(--os-accent); }
+.pmh-campaign-focus-head { position:relative; z-index:1; display:flex; align-items:flex-start; justify-content:space-between; gap:var(--os-space-5); margin-top:14px; }
+.pmh-campaign-focus-card h3 { margin:0; font-size:clamp(25px,2.4vw,37px); line-height:1.05; letter-spacing:-.045em; }
+.pmh-campaign-focus-card p { position:relative; z-index:1; max-width:680px; margin:13px 0 0; color:rgba(255,255,255,.7); font-size:14px; line-height:1.55; }
+.pmh-campaign-focus-card:nth-child(2) p,.pmh-campaign-focus-card:nth-child(2) footer,.pmh-campaign-focus-card:nth-child(2) em { color:var(--os-text-muted); }
+.pmh-campaign-focus-card footer { position:relative; z-index:1; display:flex; justify-content:space-between; gap:14px; margin-top:26px; color:rgba(255,255,255,.76); font-size:12px; }
+.pmh-campaign-focus-card footer b { color:#fff; }
+.pmh-campaign-focus-card:nth-child(2) footer b { color:var(--os-accent); }
+.pmh-campaign-focus-card em { position:relative; z-index:1; display:inline-block; margin-top:12px; color:rgba(255,255,255,.72); font-size:12px; font-style:normal; font-weight:750; }
+.pmh-campaign-focus-card.empty { opacity:.72; }
+
+.pmh-campaign-status { display:inline-flex; align-items:center; min-height:29px; padding:0 10px; border-radius:var(--os-radius-pill); color:var(--os-text-muted); background:var(--os-surface-subtle); font-size:11px; font-weight:900; white-space:nowrap; }
+.pmh-campaign-status.status-planejamento { color:var(--os-accent); background:var(--os-accent-soft); }
+.pmh-campaign-status.status-producao { color:var(--os-info); background:var(--os-info-soft); }
+.pmh-campaign-status.status-aprovacao { color:var(--os-warning); background:var(--os-warning-soft); }
+.pmh-campaign-status.status-ativa { color:var(--os-success); background:var(--os-success-soft); }
+.pmh-campaign-status.status-concluida { color:var(--os-text-muted); background:var(--os-surface-subtle); }
+
+.pmh-campaign-timeline,.pmh-campaign-annual { margin-top:var(--os-space-4); border:1px solid var(--os-border); border-radius:var(--os-radius-xl); background:var(--os-surface); box-shadow:var(--os-shadow-sm); }
+.pmh-campaign-timeline { padding:var(--os-space-5); }
+.pmh-campaign-timeline > header { display:flex; align-items:end; justify-content:space-between; gap:var(--os-space-4); }
+.pmh-campaign-timeline header small,.pmh-campaign-annual summary small { color:var(--os-accent); font-size:11px; font-weight:900; letter-spacing:.1em; }
+.pmh-campaign-timeline h3 { margin:6px 0 0; color:var(--os-text-strong); font-size:22px; }
+.pmh-campaign-timeline > header > span { color:var(--os-text-muted); font-size:12px; }
+.pmh-campaign-timeline > div { display:grid; gap:9px; margin-top:14px; }
+.pmh-campaign-timeline-card { display:grid; grid-template-columns:120px minmax(0,1fr) minmax(220px,.65fr); gap:15px; align-items:center; min-height:116px; padding:14px; border:1px solid var(--os-border); border-left:5px solid var(--campaign-type,var(--os-border-strong)); border-radius:var(--os-radius-md); background:var(--os-surface); color:var(--os-text); text-align:left; transition:.16s ease; }
+.pmh-campaign-timeline-card:hover,.pmh-campaign-annual-card:hover { transform:translateY(-2px); border-color:color-mix(in srgb,var(--os-accent) 42%,var(--os-border)); box-shadow:var(--os-shadow-sm); }
+.pmh-campaign-timeline-card.principal,.pmh-campaign-annual-card.principal { --campaign-type:var(--os-accent); }
+.pmh-campaign-timeline-card.apoio,.pmh-campaign-annual-card.apoio { --campaign-type:var(--os-warning); }
+.pmh-campaign-timeline-card.data,.pmh-campaign-annual-card.data { --campaign-type:var(--os-info); }
+.pmh-campaign-timeline-card.institucional,.pmh-campaign-annual-card.institucional { --campaign-type:var(--os-danger); }
+.pmh-campaign-date-block { align-self:stretch; display:grid; align-content:center; padding:12px; border-radius:var(--os-radius-md); background:var(--os-surface-subtle); }
+.pmh-campaign-date-block strong { color:var(--os-text-strong); font-size:18px; }
+.pmh-campaign-date-block span { margin-top:5px; color:var(--os-text-muted); font-size:11px; line-height:1.35; }
+.pmh-campaign-timeline-main { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; min-width:0; }
+.pmh-campaign-timeline-main > div:first-child { min-width:0; }
+.pmh-campaign-timeline-main small { color:var(--campaign-type); font-size:10px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+.pmh-campaign-timeline-main h4 { margin:5px 0 4px; color:var(--os-text-strong); font-size:17px; }
+.pmh-campaign-timeline-main p,.pmh-campaign-timeline-meta > span:last-child { color:var(--os-text-muted); }
+.pmh-campaign-timeline-main p { margin:0; font-size:12px; line-height:1.45; }
+.pmh-campaign-timeline-meta { display:flex; align-items:flex-end; gap:7px; flex-direction:column; }
+.pmh-campaign-timeline-meta > span:last-child { font-size:11px; }
+.pmh-campaign-next-step { min-height:78px; padding:12px; border:1px solid var(--os-border); border-radius:var(--os-radius-md); background:var(--os-surface-subtle); }
+.pmh-campaign-next-step small,.pmh-campaign-next-step strong,.pmh-campaign-next-step span { display:block; }
+.pmh-campaign-next-step small { color:var(--os-text-faint); font-size:10px; font-weight:900; letter-spacing:.08em; }
+.pmh-campaign-next-step strong { margin-top:6px; color:var(--os-text); font-size:13px; line-height:1.35; }
+.pmh-campaign-next-step span { margin-top:5px; color:var(--os-text-muted); font-size:11px; }
+
+.pmh-campaign-annual { overflow:hidden; }
+.pmh-campaign-annual > summary { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:19px 21px; cursor:pointer; list-style:none; }
+.pmh-campaign-annual > summary::-webkit-details-marker { display:none; }
+.pmh-campaign-annual summary strong { display:block; margin-top:5px; color:var(--os-text-strong); font-size:19px; }
+.pmh-campaign-annual summary > span { color:var(--os-text-muted); font-size:12px; }
+.pmh-campaign-months { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; padding:0 18px 18px; }
+.pmh-campaign-months > section { padding:15px; border:1px solid var(--os-border); border-radius:var(--os-radius-lg); background:var(--os-surface-subtle); }
+.pmh-campaign-months section > header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; text-transform:capitalize; }
+.pmh-campaign-months h3 { margin:0; color:var(--os-text-strong); font-size:17px; }
+.pmh-campaign-months header b { min-width:27px; padding:4px 7px; border-radius:var(--os-radius-pill); color:var(--os-text); background:var(--os-surface); text-align:center; font-size:11px; }
+.pmh-campaign-months section > div { display:grid; gap:8px; }
+.pmh-campaign-annual-card { display:block; width:100%; padding:12px; border:1px solid var(--os-border); border-left:4px solid var(--campaign-type,var(--os-border-strong)); border-radius:var(--os-radius-md); color:var(--os-text); background:var(--os-surface); text-align:left; transition:.16s ease; }
+.pmh-campaign-annual-card.past { opacity:.42; filter:grayscale(.22); }
+.pmh-campaign-annual-card small { color:var(--os-text-faint); font-size:10px; }
+.pmh-campaign-annual-card h4 { margin:5px 0 4px; color:var(--os-text-strong); font-size:14px; }
+.pmh-campaign-annual-card p { margin:0; min-height:34px; color:var(--os-text-muted); font-size:11px; line-height:1.4; }
+.pmh-campaign-annual-card footer { display:flex; align-items:center; justify-content:space-between; gap:7px; margin-top:9px; }
+.pmh-campaign-annual-card footer > span:last-child { overflow:hidden; color:var(--os-text-muted); font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+.pmh-campaign-month-empty,.pmh-campaign-empty,.pmh-campaign-loading { padding:24px; border:1px dashed var(--os-border-strong); border-radius:var(--os-radius-md); color:var(--os-text-muted); background:var(--os-surface-subtle); text-align:center; font-size:13px; }
+.pmh-campaign-month-empty { margin:0; padding:15px; }
+
+.pmh-campaign-modal { position:fixed; inset:0; z-index:1000005; display:grid; place-items:center; padding:22px; background:rgba(18,16,30,.68); backdrop-filter:blur(8px); }
+.pmh-campaign-modal > section { width:min(780px,100%); max-height:calc(100vh - 44px); overflow:auto; border:1px solid var(--os-border); border-radius:var(--os-radius-2xl); background:var(--os-surface); box-shadow:var(--os-shadow-lg); }
+.pmh-campaign-modal > section > header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:23px 25px 18px; border-bottom:1px solid var(--os-border); }
+.pmh-campaign-modal header small { color:var(--os-accent); font-size:11px; font-weight:900; letter-spacing:.1em; }
+.pmh-campaign-modal h2 { margin:6px 0 0; color:var(--os-text-strong); font-size:28px; line-height:1.15; }
+.pmh-campaign-modal header p { margin:6px 0 0; color:var(--os-text-muted); font-size:13px; }
+.pmh-campaign-modal header button { flex:0 0 40px; width:40px; height:40px; border:1px solid var(--os-border); border-radius:var(--os-radius-md); color:var(--os-text); background:var(--os-surface-subtle); font-size:21px; }
+.pmh-campaign-modal form { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:22px 25px 25px; }
+.pmh-campaign-modal label { display:grid; gap:7px; color:var(--os-text-muted); font-size:12px; font-weight:850; text-transform:uppercase; }
+.pmh-campaign-modal .wide { grid-column:1/-1; }
+.pmh-campaign-modal input,.pmh-campaign-modal select,.pmh-campaign-modal textarea { width:100%; min-height:45px; padding:10px 12px; border:1px solid var(--os-border-strong); border-radius:var(--os-radius-md); color:var(--os-text); background:var(--os-surface-subtle); font-size:14px; text-transform:none; }
+.pmh-campaign-modal textarea { min-height:92px; resize:vertical; }
+.pmh-campaign-modal form footer { display:flex; align-items:center; justify-content:flex-end; gap:9px; }
+.pmh-campaign-modal form footer span { margin-right:auto; color:var(--os-text-muted); font-size:12px; text-transform:none; }
+.pmh-campaign-modal form footer button { min-height:43px; padding:0 15px; border:1px solid var(--os-border-strong); border-radius:var(--os-radius-md); color:var(--os-text); background:var(--os-surface); font-size:13px; font-weight:800; }
+.pmh-campaign-modal form footer .primary { border-color:var(--os-accent); color:#fff; background:var(--os-accent); }
+.pmh-campaign-modal form footer button:disabled { cursor:wait; opacity:.65; }
+
+.pmh-campaign-toast { position:fixed; right:24px; bottom:24px; z-index:1000007; max-width:min(440px,calc(100vw - 32px)); padding:14px 17px; border-radius:var(--os-radius-md); color:#fff; background:var(--os-success); box-shadow:var(--os-shadow-lg); font-size:14px; font-weight:800; opacity:0; transform:translateY(12px); transition:opacity .2s ease,transform .2s ease; }
+.pmh-campaign-toast.error { background:var(--os-danger); }
+.pmh-campaign-toast.visible { opacity:1; transform:translateY(0); }
+
+@media (max-width:1050px) {
+  .pmh-campaign-metric { grid-column:span 6; }
+  .pmh-campaign-timeline-card { grid-template-columns:105px minmax(0,1fr); }
+  .pmh-campaign-next-step { grid-column:1/-1; }
+  .pmh-campaign-months { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:760px) {
+  .pmh-campaign-focus,.pmh-campaign-timeline-card { grid-template-columns:1fr; }
+  .pmh-campaign-timeline-main { display:grid; }
+  .pmh-campaign-timeline-meta { align-items:flex-start; flex-direction:row; flex-wrap:wrap; }
+  .pmh-campaign-months,.pmh-campaign-modal form { grid-template-columns:1fr; }
+  .pmh-campaign-modal .wide { grid-column:auto; }
+  .pmh-campaign-modal form footer { align-items:stretch; flex-direction:column; }
+  .pmh-campaign-modal form footer span { margin-right:0; }
+}
+@media (max-width:520px) {
+  .pmh-campaign-metric { grid-column:span 12; }
+  .pmh-campaign-focus-card { min-height:220px; padding:21px; }
+  .pmh-campaign-focus-head { display:grid; }
+  .pmh-campaign-focus-card footer { align-items:flex-start; flex-direction:column; }
+}
+
+/* Mobile ownership: density and responsive presentation of Campaigns. */
+html.aos-mobile .pmh-calendar-operations { margin-top: 8px !important; }
+html.aos-mobile .pmh-campaign-storage { min-height: 30px !important; padding: 0 9px !important; font-size: 9px !important; }
+html.aos-mobile .pmh-campaign-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px !important; }
+html.aos-mobile .pmh-campaign-metric { grid-column: auto !important; min-height: 62px !important; padding: 8px !important; border-radius: 12px !important; }
+html.aos-mobile .pmh-campaign-metric::before { width: 3px !important; }
+html.aos-mobile .pmh-campaign-metric::after { display: none !important; }
+html.aos-mobile .pmh-campaign-metric small { font-size: 7px !important; letter-spacing: .04em !important; }
+html.aos-mobile .pmh-campaign-metric strong { margin-top: 4px !important; font-size: 19px !important; }
+html.aos-mobile .pmh-campaign-metric span { display: none !important; }
+html.aos-mobile .pmh-campaign-focus { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5px !important; margin-top: 7px !important; }
+html.aos-mobile .pmh-campaign-focus-card { min-height: 96px !important; padding: 10px !important; border-radius: 14px !important; }
+html.aos-mobile .pmh-campaign-focus-card::after { display: none !important; }
+html.aos-mobile .pmh-campaign-focus-card > small { font-size: 7px !important; }
+html.aos-mobile .pmh-campaign-focus-head { gap: 5px !important; margin-top: 5px !important; }
+html.aos-mobile .pmh-campaign-focus-card h3 { font-size: 14px !important; line-height: 1.08 !important; }
+html.aos-mobile .pmh-campaign-focus-card p { display: none !important; }
+html.aos-mobile .pmh-campaign-focus-card footer { margin-top: 8px !important; font-size: 8px !important; }
+html.aos-mobile .pmh-campaign-focus-card em { margin-top: 5px !important; font-size: 8px !important; }
+html.aos-mobile .pmh-campaign-status { min-height: 23px !important; padding: 0 7px !important; font-size: 8px !important; }
+html.aos-mobile .pmh-campaign-timeline,
+html.aos-mobile .pmh-campaign-annual { margin-top: 7px !important; border-radius: 14px !important; }
+html.aos-mobile .pmh-campaign-timeline { padding: 9px !important; }
+html.aos-mobile .pmh-campaign-timeline h3 { margin-top: 2px !important; font-size: 16px !important; }
+html.aos-mobile .pmh-campaign-timeline > header > span { font-size: 9px !important; }
+html.aos-mobile .pmh-campaign-timeline > div { gap: 5px !important; margin-top: 7px !important; }
+html.aos-mobile .pmh-campaign-timeline-card { grid-template-columns: 74px minmax(0, 1fr) !important; gap: 8px !important; min-height: 72px !important; padding: 7px !important; border-left-width: 3px !important; }
+html.aos-mobile .pmh-campaign-date-block { padding: 7px !important; }
+html.aos-mobile .pmh-campaign-date-block strong { font-size: 12px !important; }
+html.aos-mobile .pmh-campaign-date-block span { margin-top: 2px !important; font-size: 8px !important; }
+html.aos-mobile .pmh-campaign-timeline-main small { font-size: 7px !important; }
+html.aos-mobile .pmh-campaign-timeline-main h4 { margin: 2px 0 !important; font-size: 12px !important; }
+html.aos-mobile .pmh-campaign-timeline-main p { overflow: hidden !important; font-size: 9px !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+html.aos-mobile .pmh-campaign-timeline-meta { display: none !important; }
+html.aos-mobile .pmh-campaign-next-step { display: none !important; }
+html.aos-mobile .pmh-campaign-annual > summary { padding: 10px 11px !important; }
+html.aos-mobile .pmh-campaign-annual summary strong { margin-top: 2px !important; font-size: 14px !important; }
+html.aos-mobile .pmh-campaign-annual summary > span { font-size: 9px !important; }
+html.aos-mobile .pmh-campaign-months { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; padding: 0 8px 8px !important; }
+html.aos-mobile .pmh-campaign-months > section { padding: 8px !important; border-radius: 11px !important; }
+html.aos-mobile .pmh-campaign-months h3 { font-size: 12px !important; }
+html.aos-mobile .pmh-campaign-annual-card { padding: 7px !important; }
+html.aos-mobile .pmh-campaign-annual-card p { display: none !important; }

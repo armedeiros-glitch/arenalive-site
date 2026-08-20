@@ -1,0 +1,98 @@
+.pmh-kanban.is-paginated {
+  display: grid;
+  grid-auto-flow: initial;
+  grid-template-columns: repeat(var(--pmh-kanban-columns, 4), minmax(0, 1fr));
+  gap: 13px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pmh-kanban.is-paginated .pmh-kanban-lane {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.pmh-kanban.is-paginated .pmh-kanban-cards {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.pmh-kanban.is-paginated .pmh-ticket-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.pmh-kanban.is-paginated .pmh-kanban-lane[hidden] {
+  display: none !important;
+}
+
+.pmh-kanban-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 14px 0 2px;
+}
+
+.pmh-kanban-pagination button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--pmh-line);
+  border-radius: 11px;
+  color: var(--pmh-chocolate);
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.pmh-kanban-pagination button:hover:not(:disabled) {
+  border-color: #d7bfb2;
+  background: var(--pmh-paper);
+}
+
+.pmh-kanban-pagination button:disabled {
+  cursor: default;
+  opacity: .35;
+}
+
+.pmh-kanban-pagination span {
+  min-width: 96px;
+  color: var(--pmh-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (max-width: 1180px) {
+  .pmh-kanban.is-paginated {
+    --pmh-kanban-columns: 3 !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .pmh-kanban.is-paginated {
+    --pmh-kanban-columns: 2 !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .pmh-kanban.is-paginated {
+    --pmh-kanban-columns: 1 !important;
+  }
+
+  .pmh-kanban-pagination {
+    justify-content: center;
+  }
+}
