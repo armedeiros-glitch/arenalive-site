@@ -53,7 +53,7 @@
 
       const candidates = [...row.querySelectorAll('span, small, em')];
       const ownerNode = candidates.find((node) => /franquead/i.test(node.textContent || ''));
-      if (ownerNode) ownerNode.textContent = expected;
+      if (ownerNode && ownerNode.textContent !== expected) ownerNode.textContent = expected;
     });
   };
 
@@ -64,6 +64,9 @@
 
   document.addEventListener('click', (event) => {
     if (event.target.closest?.('[data-inauguration-schedule-export]')) normalizeStore();
+    if (event.target.closest?.('[data-inauguration-open], [data-inauguration-browser-detail], [data-inauguration-workspace]')) {
+      requestAnimationFrame(applyDom);
+    }
   }, true);
 
   window.addEventListener('pmh:view-rendered', (event) => {
@@ -73,9 +76,6 @@
   window.addEventListener('storage', (event) => {
     if (event.key === TRACKED_KEY) refresh();
   });
-
-  const observer = new MutationObserver(() => applyDom());
-  observer.observe(document.documentElement, { childList: true, subtree: true });
 
   refresh();
 
