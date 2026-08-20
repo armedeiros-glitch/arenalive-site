@@ -6,17 +6,17 @@ type LoginPageProps = {
 };
 
 const MESSAGES: Record<string, string> = {
-  sent: "Pronto. Enviamos seu link de acesso por e-mail.",
-  "invalid-email": "Confira o e-mail informado.",
-  "send-error": "Não foi possível enviar o acesso agora. Tente novamente em instantes.",
+  sent: "Link enviado. Dá uma olhada no seu e-mail para continuar.",
+  "invalid-email": "Informe um e-mail válido.",
+  "send-error": "Não foi possível enviar o acesso agora.",
 };
 
 function safeNextPath(value?: string) {
-  if (!value) return "/";
+  if (!value) return "/account";
   if (value === "/cotacao") return value;
   if (value === "/supplier/opportunities" || value.startsWith("/supplier/opportunities/")) return value;
   if (value === "/account" || value === "/") return value;
-  return "/";
+  return "/account";
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
@@ -24,46 +24,44 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const message = status ? MESSAGES[status] : null;
   const next = safeNextPath(requestedNext);
   const supplierFlow = next.startsWith("/supplier/opportunities");
-  const buyerFlow = next === "/cotacao";
 
   return (
-    <main className="min-h-screen bg-[#f6f2e9] px-5 py-8 text-[#17191d]">
+    <main className="min-h-screen bg-[#f4efe5] px-5 py-7 text-[#17191d]">
       <div className="mx-auto max-w-md">
-        <Link href="/" className="text-xl font-black tracking-tight">Cota<span className="text-orange-600">Peça</span></Link>
+        <Link href="/" className="text-xl font-black tracking-[-.04em]">
+          Cota<span className="text-orange-600">Peça</span>
+        </Link>
 
-        <section className="mt-12 rounded-[2rem] border border-black/10 bg-white p-6 shadow-sm sm:p-8">
-          <p className="text-xs font-black uppercase tracking-[.2em] text-orange-600">
-            {supplierFlow ? "Acesso fornecedor" : buyerFlow ? "Começar cotação" : "Acesso CotaPeça"}
-          </p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight">Entre com seu e-mail.</h1>
-          <p className="mt-3 leading-7 text-black/55">
-            Sem senha para decorar. Você recebe um link seguro e continua de onde parou.
-          </p>
-
-          <form action={requestMagicLink} className="mt-7 flex flex-col gap-3">
-            <input type="hidden" name="next" value={next} />
-            <label htmlFor="email" className="text-sm font-black">E-mail</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              placeholder="voce@exemplo.com"
-              className="h-13 rounded-2xl border border-black/15 bg-white px-4 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-            />
-            <button type="submit" className="mt-2 h-13 rounded-2xl bg-[#17191d] px-4 font-black text-white transition hover:bg-black">
-              ENVIAR LINK DE ACESSO
-            </button>
-          </form>
-
-          {message ? (
-            <p className={`mt-5 rounded-2xl px-4 py-3 text-sm font-semibold ${status === "sent" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
-              {message}
+        <section className="relative mt-10 overflow-hidden rounded-[2rem] border border-black/10 bg-white p-6 shadow-[0_22px_60px_rgba(23,25,29,.08)] sm:p-8">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-orange-500/15 blur-2xl" />
+          <div className="relative">
+            <p className="text-[11px] font-black uppercase tracking-[.2em] text-orange-600">
+              {supplierFlow ? "Acesso fornecedor" : "Começar cotação"}
             </p>
-          ) : null}
+            <h1 className="mt-3 text-4xl font-black leading-[.95] tracking-[-.04em]">
+              {supplierFlow ? "Entre no painel." : "Vamos achar essa peça."}
+            </h1>
+            <p className="mt-4 leading-7 text-black/52">
+              Sem senha para decorar. Digite seu e-mail e a gente manda um link seguro para continuar.
+            </p>
 
-          <p className="mt-6 text-xs leading-5 text-black/40">Ao entrar, você concorda com o uso dos dados necessários para operar sua cotação com segurança.</p>
+            <form action={requestMagicLink} className="mt-7 flex flex-col gap-3">
+              <input type="hidden" name="next" value={next} />
+              <label htmlFor="email" className="text-sm font-black">E-mail</label>
+              <input id="email" name="email" type="email" autoComplete="email" required placeholder="voce@exemplo.com" className="input" />
+              <button type="submit" className="mt-2 min-h-13 rounded-2xl bg-[#17191d] px-4 font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-black">
+                ENVIAR LINK DE ACESSO →
+              </button>
+            </form>
+
+            {message ? (
+              <div className="mt-5 rounded-2xl bg-orange-50 px-4 py-3 text-sm font-bold text-orange-800">{message}</div>
+            ) : null}
+
+            <p className="mt-6 text-xs leading-5 text-black/36">
+              Seus dados são usados somente para operar a cotação e manter o acesso seguro.
+            </p>
+          </div>
         </section>
       </div>
     </main>
