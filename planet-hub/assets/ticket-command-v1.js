@@ -1,7 +1,8 @@
 (() => {
   'use strict';
 
-  const API = '/api/sults/chamados?start=0&limit=100';
+  const MINE_API = '/api/sults/chamados?scope=mine&includeIgnored=1';
+  const ALL_API = '/api/sults/chamados?scope=all&includeIgnored=1';
   const CONTEXT_API = '/api/hub/radar-contextos';
   const MY_NAME = 'André Roberto Medeiros';
   const ACTIVE_SITUATIONS = new Set([1, 4, 5, 6]);
@@ -16,7 +17,9 @@
 
   const state = {
     tickets: null,
+    allTickets: null,
     loading: null,
+    allLoading: null,
     contexts: new Map(),
     contextsLoading: null,
     discovery: false,
@@ -48,6 +51,7 @@
   };
 
   const dueDate = (ticket) => ticket.stipulatedResolutionAt || ticket.plannedResolutionAt || null;
+
   const dayDifference = (value) => {
     const due = dateValue(value);
     if (!due) return null;
@@ -71,6 +75,18 @@
   const ticketId = (ticket) => String(ticket.sultsTicketId || ticket.id || '');
   const ticketItemId = (ticket) => `ticket-${ticketId(ticket)}`;
   const contextFor = (ticket) => state.contexts.get(ticketItemId(ticket)) || null;
+
+  const supportNames = (ticket) => (Array.isArray(ticket.support) ? ticket.support : [])
+    .map((item) => item?.pessoa?.nome || item?.person?.name || item?.nome || item?.name || '')
+    .filter(Boolean);
+
+  // Mantido apenas para leitura/decoração e compatibilidade.
+  // A fila principal NÃO depende mais deste filtro no navegador.
+  const isMine = (ticket) => {
+    const target = normalize(MY_NAME);
+    return normalize(ticket.responsible) === target
+      || supportNames(ticket).some((name) => normalize(name) === target);
+  };
 
   const contextDefers = (ticket) => {
     const context = contextFor(ticket);
@@ -104,13 +120,16 @@
     return 'later';
   };
 
-  const waitingTicket = (ticket) => contextDefers(ticket) || Number(ticket.situation) === 5 || Number(ticket.situation) === 6;
+  const waitingTicket = (ticket) =>
+    contextDefers(ticket) || Number(ticket.situation) === 5 || Number(ticket.situation) === 6;
 
   const groupKey = (ticket) => {
     if (contextDefers(ticket)) return 'waiting';
     const situation = Number(ticket.situation);
     const urgency = urgencyKey(ticket);
-    if (urgency === 'late' || urgency === 'today' || situation === 1 || situation === 6 || !ticket.responsible) return 'action';
+    if (urgency === 'late' || urgency === 'today' || situation === 1 || situation === 6 || !ticket.responsible) {
+      return 'action';
+    }
     if (situation === 5) return 'waiting';
     return 'progress';
   };
@@ -123,15 +142,6 @@
     if (diff === 1) return { text: 'Vence amanhã', tone: 'week' };
     if (diff <= 7) return { text: `Vence em ${diff} dias`, tone: 'week' };
     return { text: fmtDate(dueDate(ticket)), tone: 'later' };
-  };
-
-  const supportNames = (ticket) => (Array.isArray(ticket.support) ? ticket.support : [])
-    .map((item) => item?.pessoa?.nome || item?.person?.name || item?.nome || item?.name || '')
-    .filter(Boolean);
-
-  const isMine = (ticket) => {
-    const target = normalize(MY_NAME);
-    return normalize(ticket.responsible) === target || supportNames(ticket).some((name) => normalize(name) === target);
   };
 
   const searchQuery = () => normalize(document.querySelector('[data-search-wrap] input')?.value || '');
@@ -152,6 +162,7 @@
       context?.nextAction,
       ...supportNames(ticket),
     ].join(' '));
+
     if (query && !haystack.includes(query)) return false;
     if (state.unit && String(ticket.unit || '') !== state.unit) return false;
     if (state.responsible && String(ticket.responsible || '') !== state.responsible) return false;
@@ -167,8 +178,9 @@
     return urgencyKey(ticket) === state.urgency;
   };
 
-  const uniqueSorted = (items) => [...new Set(items.filter(Boolean).map((item) => String(item).trim()).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  const uniqueSorted = (items) => [...new Set(
+    items.filter(Boolean).map((item) => String(item).trim()).filter(Boolean),
+  )].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
 
   const optionList = (items, selected, placeholder) => [
     `<option value="">${esc(placeholder)}</option>`,
@@ -182,14 +194,14 @@
       const aFollow = aContext?.followUpDate || '9999-12-31';
       const bFollow = bContext?.followUpDate || '9999-12-31';
       if (aFollow !== bFollow) return aFollow.localeCompare(bFollow);
-      return new Date(a.lastChangeAt || a.lastUpdatedAt || a.openedAt || 0).getTime()
-        - new Date(b.lastChangeAt || b.lastUpdatedAt || b.openedAt || 0).getTime();
     }
+
     const aDiff = dayDifference(dueDate(a));
     const bDiff = dayDifference(dueDate(b));
     const safeA = aDiff == null ? 99999 : aDiff;
     const safeB = bDiff == null ? 99999 : bDiff;
     if (safeA !== safeB) return safeA - safeB;
+
     return new Date(b.lastChangeAt || b.lastUpdatedAt || b.openedAt || 0).getTime()
       - new Date(a.lastChangeAt || a.lastUpdatedAt || a.openedAt || 0).getTime();
   });
@@ -205,7 +217,7 @@
     const contextStatus = context ? (followUpNow ? 'Contexto para revisar' : contextLabel(context)) : '';
 
     return `<article class="pmh-ticket pmh-command-ticket ${deadline.tone === 'late' ? 'late' : ''} ${deferred ? 'has-operational-context' : ''}" data-ticket-id="${esc(id)}">
-      <small>#${esc(id)}${isMine(ticket) ? ' · André no chamado' : ''}</small>
+      <small>#${esc(id)}</small>
       <div class="pmh-command-ticket-head">
         <div><h4>${esc(ticket.title || 'Chamado sem título')}</h4><p>${esc(ticket.unit || 'Unidade não informada')}</p></div>
         <div class="pmh-command-ticket-badges">
@@ -233,24 +245,32 @@
   </section>`;
 
   const renderDiscovery = (tickets) => `<section class="pmh-command-group group-progress" data-command-discovery-list>
-    <header><div><span></span><div><h3>Todos os chamados ativos do SULTS</h3><p>Consulta geral. A fila principal continua mostrando apenas os chamados em que André está como responsável ou apoio.</p></div></div><b>${tickets.length}</b></header>
+    <header><div><span></span><div><h3>Todos os chamados ativos do SULTS</h3><p>Consulta geral do SULTS, separada da sua fila pessoal.</p></div></div><b>${tickets.length}</b></header>
     <div class="pmh-command-list">${tickets.length
       ? sortTickets('progress', tickets).map(renderTicket).join('')
       : '<div class="pmh-command-empty">Nenhum chamado ativo encontrado com estes filtros.</div>'}</div>
   </section>`;
 
-  const metricButton = (key, label, count, note, tone) => `<button type="button" class="pmh-command-metric ${tone} ${state.urgency === key ? 'active' : ''}" data-command-urgency="${key}">
-    <small>${esc(label)}</small><strong>${count}</strong><span>${esc(note)}</span>
-  </button>`;
+  const metricButton = (key, label, count, note, tone) =>
+    `<button type="button" class="pmh-command-metric ${tone} ${state.urgency === key ? 'active' : ''}" data-command-urgency="${key}">
+      <small>${esc(label)}</small><strong>${count}</strong><span>${esc(note)}</span>
+    </button>`;
+
+  const currentSource = () => state.discovery ? state.allTickets : state.tickets;
 
   const render = (mount, head) => {
-    if (!mount?.isConnected || !Array.isArray(state.tickets)) return;
+    if (!mount?.isConnected) return;
 
-    const activeTickets = state.tickets.filter(isActiveTicket);
-    const myActiveTickets = activeTickets.filter(isMine);
+    const source = currentSource();
+    if (!Array.isArray(source)) {
+      mount.innerHTML = `<div class="pmh-command-loading">${state.discovery ? 'Carregando chamados do SULTS…' : 'Carregando meus chamados…'}</div>`;
+      return;
+    }
+
+    const activeTickets = source.filter(isActiveTicket);
     if (state.status && !ACTIVE_SITUATIONS.has(Number(state.status))) state.status = '';
 
-    const base = myActiveTickets.filter(matchesBaseFilters);
+    const base = activeTickets.filter(matchesBaseFilters);
     const actionableBase = base.filter((ticket) => !contextDefers(ticket));
     const counts = {
       late: actionableBase.filter((ticket) => urgencyKey(ticket) === 'late').length,
@@ -259,22 +279,23 @@
       waiting: base.filter(waitingTicket).length,
       'no-date': actionableBase.filter((ticket) => urgencyKey(ticket) === 'no-date').length,
     };
+
     const visible = base.filter(matchesUrgency);
     const groups = {
       action: visible.filter((ticket) => groupKey(ticket) === 'action'),
       progress: visible.filter((ticket) => groupKey(ticket) === 'progress'),
       waiting: visible.filter((ticket) => groupKey(ticket) === 'waiting'),
     };
-    const discoveryTickets = state.discovery ? activeTickets.filter(matchesBaseFilters) : [];
-    const optionSource = state.discovery ? activeTickets : myActiveTickets;
-    const units = uniqueSorted(optionSource.map((ticket) => ticket.unit));
-    const responsibles = uniqueSorted(optionSource.map((ticket) => ticket.responsible));
-    const subjects = uniqueSorted(optionSource.map((ticket) => ticket.subject || ticket.department));
-    const statusOptions = uniqueSorted(optionSource.map((ticket) => String(ticket.situation || '')))
+
+    const units = uniqueSorted(activeTickets.map((ticket) => ticket.unit));
+    const responsibles = uniqueSorted(activeTickets.map((ticket) => ticket.responsible));
+    const subjects = uniqueSorted(activeTickets.map((ticket) => ticket.subject || ticket.department));
+    const statusOptions = uniqueSorted(activeTickets.map((ticket) => String(ticket.situation || '')))
       .map((value) => ({ value, label: STATUS[Number(value)] || `Status ${value}` }));
 
     if (head) {
-      head.innerHTML = `<div><small>CENTRAL DE DECISÃO</small><h2>Meus chamados</h2><p>${myActiveTickets.length} chamado${myActiveTickets.length === 1 ? '' : 's'} ativo${myActiveTickets.length === 1 ? '' : 's'} no SULTS com André como responsável ou apoio.</p></div>`;
+      const total = Array.isArray(state.tickets) ? state.tickets.filter(isActiveTicket).length : 0;
+      head.innerHTML = `<div><small>CENTRAL DE DECISÃO</small><h2>Meus chamados</h2><p>${total} chamado${total === 1 ? '' : 's'} aberto${total === 1 ? '' : 's'} no SULTS em que André está vinculado.</p></div>`;
     }
 
     mount.innerHTML = `
@@ -287,7 +308,7 @@
       </section>`}
 
       <section class="pmh-command-filters">
-        <div class="pmh-command-filter-title"><strong>${state.discovery ? 'Explorar SULTS' : 'Filtrar meus chamados'}</strong><span>${state.discovery ? discoveryTickets.length : visible.length} exibidos</span></div>
+        <div class="pmh-command-filter-title"><strong>${state.discovery ? 'Explorar SULTS' : 'Filtrar meus chamados'}</strong><span>${visible.length} exibidos</span></div>
         <select data-command-filter="unit" aria-label="Filtrar por unidade">${optionList(units, state.unit, 'Todas as unidades')}</select>
         <select data-command-filter="responsible" aria-label="Filtrar por responsável">${optionList(responsibles, state.responsible, 'Todos os responsáveis')}</select>
         <select data-command-filter="subject" aria-label="Filtrar por assunto">${optionList(subjects, state.subject, 'Todos os assuntos')}</select>
@@ -299,25 +320,42 @@
         <button type="button" class="pmh-command-clear" data-command-clear>Limpar filtros</button>
       </section>
 
-      ${state.discovery ? renderDiscovery(discoveryTickets) : `<section class="pmh-command-groups">
+      ${state.discovery ? renderDiscovery(visible) : `<section class="pmh-command-groups">
         ${renderGroup('action', 'Precisa de ação', 'Atrasados, vencendo hoje, novos ou aguardando responsável.', groups.action)}
         ${renderGroup('progress', 'Em andamento', 'Demandas em execução com prazo controlado.', groups.progress)}
         ${renderGroup('waiting', 'Aguardando / contextualizados', 'Dependem de retorno ou têm contexto registrado para revisão.', groups.waiting)}
       </section>`}`;
   };
 
+  const fetchTicketList = async (url) => {
+    const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
+    return Array.isArray(payload.data) ? payload.data : [];
+  };
+
   const loadTickets = async (force = false) => {
     if (Array.isArray(state.tickets) && !force) return state.tickets;
     if (state.loading && !force) return state.loading;
-    state.loading = fetch(API, { headers: { Accept: 'application/json' }, cache: 'no-store' })
-      .then(async (response) => {
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
-        state.tickets = Array.isArray(payload.data) ? payload.data : [];
-        return state.tickets;
+    state.loading = fetchTicketList(MINE_API)
+      .then((tickets) => {
+        state.tickets = tickets;
+        return tickets;
       })
       .finally(() => { state.loading = null; });
     return state.loading;
+  };
+
+  const loadAllTickets = async (force = false) => {
+    if (Array.isArray(state.allTickets) && !force) return state.allTickets;
+    if (state.allLoading && !force) return state.allLoading;
+    state.allLoading = fetchTicketList(ALL_API)
+      .then((tickets) => {
+        state.allTickets = tickets;
+        return tickets;
+      })
+      .finally(() => { state.allLoading = null; });
+    return state.allLoading;
   };
 
   const loadContexts = async (force = false) => {
@@ -340,33 +378,46 @@
   const contextsFromRadar = (snapshot) => {
     const items = Array.isArray(snapshot?.items) ? snapshot.items : [];
     const next = new Map();
-    items.filter((item) => item.origin === 'SULTS' && String(item.id || '').startsWith('ticket-')).forEach((item) => {
-      const hasContext = item.contextUpdatedAt || item.blockerReason || item.dependsOn || item.nextAction || item.followUpDate || item.operationalState !== 'actionable';
-      if (!hasContext) return;
-      next.set(String(item.id), {
-        itemId: String(item.id),
-        state: item.operationalState || 'actionable',
-        reason: item.blockerReason || '',
-        dependsOn: item.dependsOn || '',
-        nextAction: item.nextAction || '',
-        followUpDate: item.followUpDate || '',
-        updatedAt: item.contextUpdatedAt || '',
+
+    items
+      .filter((item) => item.origin === 'SULTS' && String(item.id || '').startsWith('ticket-'))
+      .forEach((item) => {
+        const hasContext = item.contextUpdatedAt
+          || item.blockerReason
+          || item.dependsOn
+          || item.nextAction
+          || item.followUpDate
+          || item.operationalState !== 'actionable';
+        if (!hasContext) return;
+
+        next.set(String(item.id), {
+          itemId: String(item.id),
+          state: item.operationalState || 'actionable',
+          reason: item.blockerReason || '',
+          dependsOn: item.dependsOn || '',
+          nextAction: item.nextAction || '',
+          followUpDate: item.followUpDate || '',
+          updatedAt: item.contextUpdatedAt || '',
+        });
       });
-    });
+
     state.contexts = next;
   };
 
   const transform = async () => {
     const kanban = document.querySelector('.pmh-kanban');
     if (!kanban || kanban.dataset.commandTransforming === '1') return;
+
     const pageTitle = document.querySelector('[data-title]')?.textContent || '';
     if (!normalize(pageTitle).includes('chamados')) return;
 
     kanban.dataset.commandTransforming = '1';
     document.querySelector('[data-ticket-filters]')?.remove();
+
     const head = kanban.previousElementSibling?.classList.contains('pmh-section-head')
       ? kanban.previousElementSibling
       : document.querySelector('.pmh-section-head');
+
     const mount = document.createElement('section');
     mount.className = 'pmh-ticket-command';
     mount.innerHTML = '<div class="pmh-command-loading">Carregando meus chamados…</div>';
@@ -387,12 +438,28 @@
     render(document.querySelector('.pmh-ticket-command'), document.querySelector('.pmh-section-head'));
   });
 
-  document.addEventListener('click', (event) => {
+  document.addEventListener('click', async (event) => {
     const discovery = event.target.closest('[data-command-discovery]');
     if (discovery) {
       state.discovery = !state.discovery;
       state.urgency = 'all';
-      render(document.querySelector('.pmh-ticket-command'), document.querySelector('.pmh-section-head'));
+      state.unit = '';
+      state.responsible = '';
+      state.subject = '';
+      state.status = '';
+
+      const mount = document.querySelector('.pmh-ticket-command');
+      const head = document.querySelector('.pmh-section-head');
+      render(mount, head);
+
+      if (state.discovery && !Array.isArray(state.allTickets)) {
+        try {
+          await loadAllTickets();
+          render(mount, head);
+        } catch (error) {
+          mount.innerHTML = `<div class="pmh-command-error"><strong>Não foi possível carregar todos os chamados.</strong><span>${esc(error instanceof Error ? error.message : String(error))}</span></div>`;
+        }
+      }
       return;
     }
 
@@ -416,7 +483,9 @@
 
     if (event.target.closest('[data-refresh]')) {
       state.tickets = null;
+      state.allTickets = null;
       state.loading = null;
+      state.allLoading = null;
       state.contexts = new Map();
       state.contextsLoading = null;
     }
@@ -432,7 +501,8 @@
     isActiveTicket,
     isMine,
     ticketId,
-    activeMineTickets: (tickets) => (tickets || []).filter((ticket) => isActiveTicket(ticket) && isMine(ticket)),
+    // A lista já vem filtrada do backend por scope=mine.
+    activeMineTickets: (tickets) => (tickets || []).filter(isActiveTicket),
   });
 
   const observer = new MutationObserver(() => transform());
