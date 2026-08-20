@@ -13,15 +13,16 @@ const isActiveTicket = (ticket) => activeSituations.has(Number(ticket?.situation
 for (const situation of [1, 4, 5, 6]) assert.equal(isActiveTicket({ situation }), true);
 for (const situation of [2, 3]) assert.equal(isActiveTicket({ situation }), false);
 
-assert.match(source, /const activeTickets = state\.tickets\.filter\(isActiveTicket\);/);
-assert.match(source, /const myActiveTickets = activeTickets\.filter\(isMine\);/);
-assert.match(source, /const base = myActiveTickets\.filter\(matchesBaseFilters\);/);
-assert.match(source, /const optionSource = state\.discovery \? activeTickets : myActiveTickets/);
+assert.match(source, /const MINE_API = '\/api\/sults\/chamados\?scope=mine&includeIgnored=1';/);
+assert.match(source, /const ALL_API = '\/api\/sults\/chamados\?scope=all&includeIgnored=1';/);
+assert.match(source, /const activeTickets = source\.filter\(isActiveTicket\);/);
+assert.match(source, /const base = activeTickets\.filter\(matchesBaseFilters\);/);
+assert.doesNotMatch(source, /activeTickets\.filter\(isMine\)/);
 assert.match(source, /!ACTIVE_SITUATIONS\.has\(Number\(state\.status\)\)/);
-assert.match(source, /responsável ou apoio/);
+assert.match(source, /em que André está vinculado/);
 assert.doesNotMatch(source, /FOLLOWING_API|chamados-acompanhados|data-command-follow/);
 assert.doesNotMatch(source, /localStorage|sessionStorage/);
 assert.match(ignored, /ignored|ignorado/i);
 assert.match(readings, /ticket-readings|readings|leitura/i);
 
-console.log('Chamados: status terminais fora da fila e vínculo SULTS preservado.');
+console.log('Chamados: backend scope=mine é source of truth e status terminais ficam fora da fila.');
