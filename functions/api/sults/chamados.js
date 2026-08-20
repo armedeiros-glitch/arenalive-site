@@ -313,7 +313,7 @@ const filterTickets = ({
     if (ignoredIds.has(String(ticket.id))) return false;
     if (scope === 'all') return true;
     if (scope === 'marketing') return departmentIsIncluded(ticket, departmentId);
-    if (scope === 'mine') return personIsIncluded(ticket, personId, personName);
+    if (scope === 'mine') return departmentIsIncluded(ticket, departmentId) || personIsIncluded(ticket, personId, personName);
     return brandIsIncluded(ticket, brandTerm);
   })
   .sort((a, b) =>
@@ -332,10 +332,10 @@ const filtersPayload = ({
   scope,
   includeIgnored,
   brandTerm: scope === 'planet' ? brandTerm : null,
-  departmentId: scope === 'marketing' ? departmentId : null,
+  departmentId: scope === 'marketing' || scope === 'mine' ? departmentId : null,
   personId: scope === 'mine' ? personId : null,
   personName: scope === 'mine' ? personName : null,
-  membership: scope === 'mine' ? ['responsible', 'support'] : null,
+  membership: scope === 'mine' ? ['marketing-inbox', 'responsible', 'support'] : null,
 });
 
 const safeFailure = (error) => ({

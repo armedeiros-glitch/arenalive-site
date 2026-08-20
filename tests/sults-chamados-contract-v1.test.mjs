@@ -118,7 +118,27 @@ try {
     assert.equal(body.reliability.liveFailure.status, 503);
   }
 
-  console.log('SULTS chamados: contrato de token, leitura ao vivo e fallback por snapshot validado.');
+  
+  {
+    const kv = makeKv();
+    globalThis.fetch = async (url) => {
+      const parsed = new URL(url);
+      const situation = Number(parsed.searchParams.get('situacao') || 1);
+      const inQueue = ticket(`queue-${situation}`, situation);
+      inQueue.responsavel = null;
+      return new Response(JSON.stringify({ data: [inQueue] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    };
+    const response = await onRequestGet({
+      env: { SULTS_API_TOKEN: 'test-token', PLANET_HUB_DATA: kv },
+      request: requestFor('?scope=mine&includeIgnored=1'),
+    });
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.data.length, 4, 'scope mine deve incluir chamados em fila do Marketing mesmo sem responsavel');
+    assert.deepEqual(body.filters.membership, ['marketing-inbox', 'responsible', 'support']);
+  }
+
+console.log('SULTS chamados: contrato de token, leitura ao vivo e fallback por snapshot validado.');
 } finally {
   globalThis.fetch = originalFetch;
 }
