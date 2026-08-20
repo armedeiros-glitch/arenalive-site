@@ -1,7 +1,7 @@
 import { requestMagicLink } from "./actions";
 
 type LoginPageProps = {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; next?: string }>;
 };
 
 const MESSAGES: Record<string, string> = {
@@ -10,21 +10,31 @@ const MESSAGES: Record<string, string> = {
   "send-error": "Não foi possível enviar o acesso agora.",
 };
 
+function safeNextPath(value?: string) {
+  if (!value) return "/account";
+  if (value === "/supplier/opportunities" || value.startsWith("/supplier/opportunities/")) return value;
+  if (value === "/account" || value === "/") return value;
+  return "/account";
+}
+
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { status } = await searchParams;
+  const { status, next: requestedNext } = await searchParams;
   const message = status ? MESSAGES[status] : null;
+  const next = safeNextPath(requestedNext);
+  const supplierFlow = next.startsWith("/supplier/opportunities");
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-5 px-6 py-10">
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-neutral-500">
-        Acesso CotaPeça
+        {supplierFlow ? "Acesso fornecedor" : "Acesso CotaPeça"}
       </p>
       <h1 className="text-3xl font-black tracking-tight">Entrar sem senha</h1>
       <p className="text-neutral-700">
-        Informe seu e-mail. Este fluxo valida a autenticação passwordless da fundação e será reaproveitado no ponto correto do funil do comprador.
+        Informe seu e-mail. Você receberá um link seguro para continuar.
       </p>
 
       <form action={requestMagicLink} className="flex flex-col gap-3">
+        <input type="hidden" name="next" value={next} />
         <label htmlFor="email" className="text-sm font-semibold">
           E-mail
         </label>
