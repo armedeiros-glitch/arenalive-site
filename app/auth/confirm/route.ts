@@ -3,10 +3,11 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 function safeNextPath(value: string | null) {
-  if (!value) return "/account";
+  if (!value) return "/";
+  if (value === "/cotacao") return value;
   if (value === "/supplier/opportunities" || value.startsWith("/supplier/opportunities/")) return value;
   if (value === "/account" || value === "/") return value;
-  return "/account";
+  return "/";
 }
 
 export async function GET(request: NextRequest) {
@@ -23,9 +24,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
 
-    if (!error) {
-      return NextResponse.redirect(redirectTo);
-    }
+    if (!error) return NextResponse.redirect(redirectTo);
   }
 
   redirectTo.pathname = "/auth/error";
