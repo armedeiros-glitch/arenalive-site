@@ -12,7 +12,7 @@ assert.match(command, /\/api\/hub\/radar-contextos/);
 assert.match(command, /data-ticket-context/);
 assert.match(command, /contextDefers/);
 assert.match(command, /Aguardando \/ contextualizados/);
-assert.match(command, /scope=mine&includeIgnored=1/);
+assert.match(command, /\/api\/sults\/chamados\?start=0&limit=100/);
 assert.match(bridge, /PMHRadarContext/);
 assert.match(bridge, /PMHRadarData/);
 assert.match(bridge, /CONTEXTO ANDRÉ OS/);
@@ -30,7 +30,7 @@ assert.match(css.slice(mobileIndex), /\.pmh-ticket-compact-active \.pmh-ticket-d
 
 assert.match(html, /ticket-context-compact-v1\.css\?v=20260808-1/);
 assert.match(html, /ticket-context-compact-v1\.js\?v=20260807-1/);
-assert.match(html, /ticket-command-v1\.js\?v=20260820-2/);
+assert.match(html, /ticket-command-v1\.js\?v=20260820-3/);
 assert.doesNotMatch(html, /ticket-command-v2\.js/);
 
 console.log('Contexto rápido preservado com owner único de Chamados.');
