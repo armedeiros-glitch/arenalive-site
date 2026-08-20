@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "verify:foundation": "node scripts/verify-foundation.mjs",
     "check": "npm run verify:foundation && npm run typecheck && npm run lint && npm run test && npm run build",
     "supabase:start": "npx supabase start",
@@ -27,6 +28,7 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
