@@ -1,13 +1,23 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 function safeNextPath(value: FormDataEntryValue | null) {
-  if (typeof value !== "string") return "/account";
+  if (typeof value !== "string") return "/";
+  if (value === "/cotacao") return value;
   if (value === "/supplier/opportunities" || value.startsWith("/supplier/opportunities/")) return value;
   if (value === "/account" || value === "/") return value;
-  return "/account";
+  return "/";
+}
+
+async function currentOrigin() {
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  const proto = requestHeaders.get("x-forwarded-proto") ?? (host?.includes("localhost") ? "http" : "https");
+  if (host) return `${proto}://${host}`;
+  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
 
 export async function requestMagicLink(formData: FormData) {
@@ -19,7 +29,7 @@ export async function requestMagicLink(formData: FormData) {
     redirect(`/auth/login?status=invalid-email&next=${encodeURIComponent(next)}`);
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const siteUrl = await currentOrigin();
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email,
