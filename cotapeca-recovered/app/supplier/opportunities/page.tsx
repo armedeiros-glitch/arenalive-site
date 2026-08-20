@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { kmLabel, relativeTime } from '@/lib/sprint2/format';
 
-type Opportunity = { id:string; quote_id:string; status:string; distance_km:number|null; sent_at:string; matching_context:Record<string,unknown> };
+type Opportunity = { id:string; quote_id:string; supplier_id?:string; status:string; distance_km:number|null; sent_at:string; matching_context:Record<string,unknown> };
 type Card = Opportunity & { vehicle:string; item:string; city:string };
 
 async function hydrate(supabase: ReturnType<typeof createClient>, rows: Opportunity[]): Promise<Card[]> {
@@ -34,8 +34,10 @@ export default function OpportunitiesPage() {
       const { data } = await supabase.from('opportunities').select('id,quote_id,status,distance_km,sent_at,matching_context').in('status',['sent','viewed']).order('sent_at',{ascending:false});
       if (alive) { setCards(await hydrate(supabase,(data ?? []) as Opportunity[])); setState(''); }
       const channel = supabase.channel(`supplier-opportunities-${supplier.id}`)
-        .on('postgres_changes',{event:'INSERT',schema:'public',table:'opportunities',filter:`supplier_id=eq.${supplier.id}`},async (payload) => {
-          const next = await hydrate(supabase,[payload.new as Opportunity]);
+        .on('postgres_changes',{event:'INSERT',schema:'public',table:'opportunities'},async (payload) => {
+          const opportunity = payload.new as Opportunity;
+          if (opportunity.supplier_id && opportunity.supplier_id !== supplier.id) return;
+          const next = await hydrate(supabase,[opportunity]);
           if (alive) { setCards((current) => [next[0],...current.filter(x=>x.id!==next[0].id)]); window.dispatchEvent(new CustomEvent('cotapeca:opportunity-realtime',{detail:payload.new})); }
         }).subscribe((status) => {
           if (alive && status === 'SUBSCRIBED') window.dispatchEvent(new CustomEvent('cotapeca:opportunity-realtime-ready'));
