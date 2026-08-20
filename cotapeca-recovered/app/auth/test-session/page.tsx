@@ -1,0 +1,3 @@
+'use client';
+import {useEffect} from 'react'; import {useSearchParams} from 'next/navigation'; import {createClient} from '@/lib/supabase/client';
+export default function TestSession(){const q=useSearchParams(); useEffect(()=>{if(process.env.NEXT_PUBLIC_E2E_MODE!=='true'){location.href='/';return;} const email=q.get('email'),password=q.get('password'),next=q.get('next')||'/'; if(!email||!password)return; createClient().auth.signInWithPassword({email,password}).then(({error})=>{document.body.dataset.auth=error?'error':'ok'; if(!error)location.href=next;});},[q]); return <main className="p-6">Entrando no ambiente de teste…</main>}
