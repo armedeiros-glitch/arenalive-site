@@ -6,7 +6,7 @@ const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), '
 const source = read('planet-hub/assets/ticket-command-v1.js');
 const details = read('planet-hub/assets/ticket-details-v1.js');
 
-assert.match(source, /const MINE_API = '\/api\/sults\/chamados\?scope=mine&includeIgnored=1'/);
+assert.match(source, /const MAIN_API = '\/api\/sults\/chamados\?start=0&limit=100'/);
 assert.match(source, /const ALL_API = '\/api\/sults\/chamados\?scope=all&includeIgnored=1'/);
 assert.match(source, /Todos os chamados ativos do SULTS/);
 assert.doesNotMatch(source, /activeTickets\.filter\(isMine\)/);
@@ -35,7 +35,7 @@ vm.runInNewContext(source, sandbox, { filename: 'ticket-command-v1.js' });
 const api = sandbox.window.TicketCommandFollowing;
 assert.ok(api, 'owner deve expor helpers de leitura para teste');
 
-const ticketsFromMineApi = [
+const ticketsFromMainApi = [
   { sultsTicketId: '1', situation: 1, responsible: 'André Roberto Medeiros' },
   { sultsTicketId: '2', situation: 4, responsible: 'Outra Pessoa', support: [{ pessoa: { nome: 'André Roberto Medeiros' } }] },
   { sultsTicketId: '3', situation: 5, responsible: 'Outra Pessoa' },
@@ -45,12 +45,12 @@ const ticketsFromMineApi = [
 ];
 
 assert.deepEqual(
-  Array.from(api.activeMineTickets(ticketsFromMineApi), (ticket) => ticket.sultsTicketId),
+  Array.from(api.activeMineTickets(ticketsFromMainApi), (ticket) => ticket.sultsTicketId),
   ['1', '2', '3', '4'],
-  'frontend só deve remover status terminais; pertencimento já foi resolvido pelo backend',
+  'frontend só deve remover status terminais; o escopo Planet já vem da mesma fonte da Visão Geral',
 );
 assert.equal(api.isActiveTicket({ situation: 2 }), false);
 assert.equal(api.isActiveTicket({ situation: 3 }), false);
 for (const situation of [1, 4, 5, 6]) assert.equal(api.isActiveTicket({ situation }), true);
 
-console.log('Chamados: scope=mine no backend, descoberta separada e status ativos validados.');
+console.log('Chamados: fonte Planet igual à Visão Geral, descoberta separada e status ativos validados.');

@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const MINE_API = '/api/sults/chamados?scope=mine&includeIgnored=1';
+  const MAIN_API = '/api/sults/chamados?start=0&limit=100';
   const ALL_API = '/api/sults/chamados?scope=all&includeIgnored=1';
   const CONTEXT_API = '/api/hub/radar-contextos';
   const MY_NAME = 'André Roberto Medeiros';
@@ -263,7 +263,7 @@
 
     const source = currentSource();
     if (!Array.isArray(source)) {
-      mount.innerHTML = `<div class="pmh-command-loading">${state.discovery ? 'Carregando chamados do SULTS…' : 'Carregando meus chamados…'}</div>`;
+      mount.innerHTML = `<div class="pmh-command-loading">${state.discovery ? 'Carregando chamados do SULTS…' : 'Carregando chamados da Planet…'}</div>`;
       return;
     }
 
@@ -295,7 +295,7 @@
 
     if (head) {
       const total = Array.isArray(state.tickets) ? state.tickets.filter(isActiveTicket).length : 0;
-      head.innerHTML = `<div><small>CENTRAL DE DECISÃO</small><h2>Meus chamados</h2><p>${total} chamado${total === 1 ? '' : 's'} aberto${total === 1 ? '' : 's'} no SULTS em que André está vinculado.</p></div>`;
+      head.innerHTML = `<div><small>CENTRAL DE DECISÃO</small><h2>Chamados ativos</h2><p>${total} chamado${total === 1 ? '' : 's'} ativo${total === 1 ? '' : 's'} da Planet no SULTS.</p></div>`;
     }
 
     mount.innerHTML = `
@@ -308,7 +308,7 @@
       </section>`}
 
       <section class="pmh-command-filters">
-        <div class="pmh-command-filter-title"><strong>${state.discovery ? 'Explorar SULTS' : 'Filtrar meus chamados'}</strong><span>${visible.length} exibidos</span></div>
+        <div class="pmh-command-filter-title"><strong>${state.discovery ? 'Explorar SULTS' : 'Filtrar chamados'}</strong><span>${visible.length} exibidos</span></div>
         <select data-command-filter="unit" aria-label="Filtrar por unidade">${optionList(units, state.unit, 'Todas as unidades')}</select>
         <select data-command-filter="responsible" aria-label="Filtrar por responsável">${optionList(responsibles, state.responsible, 'Todos os responsáveis')}</select>
         <select data-command-filter="subject" aria-label="Filtrar por assunto">${optionList(subjects, state.subject, 'Todos os assuntos')}</select>
@@ -316,7 +316,7 @@
           <option value="">Todos os status</option>
           ${statusOptions.map((item) => `<option value="${esc(item.value)}" ${item.value === state.status ? 'selected' : ''}>${esc(item.label)}</option>`).join('')}
         </select>
-        <button type="button" class="pmh-command-mine ${state.discovery ? 'active' : ''}" data-command-discovery>${state.discovery ? '← Voltar aos meus chamados' : '＋ Todos do SULTS'}</button>
+        <button type="button" class="pmh-command-mine ${state.discovery ? 'active' : ''}" data-command-discovery>${state.discovery ? '← Voltar aos chamados da Planet' : '＋ Todos do SULTS'}</button>
         <button type="button" class="pmh-command-clear" data-command-clear>Limpar filtros</button>
       </section>
 
@@ -337,7 +337,7 @@
   const loadTickets = async (force = false) => {
     if (Array.isArray(state.tickets) && !force) return state.tickets;
     if (state.loading && !force) return state.loading;
-    state.loading = fetchTicketList(MINE_API)
+    state.loading = fetchTicketList(MAIN_API)
       .then((tickets) => {
         state.tickets = tickets;
         return tickets;
