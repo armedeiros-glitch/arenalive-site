@@ -1,77 +1,39 @@
 name: Patch inaugurações responsáveis social
 on:
-  push:
-    branches: [fix/inauguracoes-responsaveis-social-20260820]
+  pull_request:
+    branches: [main]
 permissions:
   contents: write
 jobs:
   patch:
+    if: github.head_ref == 'fix/inauguracoes-responsaveis-social-20260820'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/inauguracoes-responsaveis-social-20260820
-      - name: Corrigir responsáveis canônicos do checklist
+      - name: Carregar regras de responsáveis no runtime
         run: |
           python - <<'PY'
           from pathlib import Path
-
-          p = Path('planet-hub/assets/shared-inaugurations-v1.js')
+          p = Path('index.html')
           s = p.read_text()
-
-          anchor = "  const signature = (items) => JSON.stringify(items || []);\n"
-          insert = '''  const normalizeAction = (value) => String(value || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n  const canonicalChecklistOwner = (action, fallback = '') => {\n    const key = normalizeAction(action);\n    if (key === 'criacao/ajuste do instagram') return 'Franqueadora';\n    if (key === 'criacao/ajuste do facebook') return 'Franqueadora';\n    if (key === 'google meu negocio') return 'Franqueadora';\n    if (key === 'video de inauguracao') return 'Franqueado';\n    return String(fallback || '').trim();\n  };\n\n  const canonicalizeItems = (items) => (Array.isArray(items) ? items : []).map((item) => ({\n    ...item,\n    checklist: Array.isArray(item?.checklist)\n      ? item.checklist.map((step) => ({\n        ...step,\n        owner: canonicalChecklistOwner(step?.action, step?.owner),\n      }))\n      : item?.checklist,\n  }));\n\n'''
-          if 'canonicalChecklistOwner' not in s:
-              s = s.replace(anchor, insert + anchor)
-
-          s = s.replace("    const current = parseArray(originalGetItem.call(window.localStorage, TRACKED_KEY));", "    const current = canonicalizeItems(parseArray(originalGetItem.call(window.localStorage, TRACKED_KEY)));" )
-          s = s.replace("    return parseArray(originalGetItem.call(window.localStorage, LEGACY_KEY));", "    return canonicalizeItems(parseArray(originalGetItem.call(window.localStorage, LEGACY_KEY)));" )
-          s = s.replace("    originalSetItem.call(window.localStorage, TRACKED_KEY, JSON.stringify(items));", "    originalSetItem.call(window.localStorage, TRACKED_KEY, JSON.stringify(canonicalizeItems(items)));" )
-          s = s.replace("    const stamped = stampChangedItems(previous, parseArray(value));", "    const stamped = stampChangedItems(previous, canonicalizeItems(parseArray(value)));" )
-          s = s.replace("    const stamped = items.map((item) => ({ ...item, updatedAt: item.updatedAt || stampedAt }));", "    const stamped = canonicalizeItems(items).map((item) => ({ ...item, updatedAt: item.updatedAt || stampedAt }));" )
-          s = s.replace("    const localItems = readLocal();", "    const localItems = canonicalizeItems(readLocal());" )
-          s = s.replace("      const remoteItems = payload.data;", "      const remoteItems = canonicalizeItems(payload.data);" )
+          anchor = '    <script defer src="/planet-hub/assets/inauguration-schedule-print-v1.js?v=20260819-1"></script>\n'
+          tag = '    <script defer src="/planet-hub/assets/inauguration-owner-rules-v1.js?v=20260820-1"></script>\n'
+          if tag not in s:
+              s = s.replace(anchor, anchor + tag)
           p.write_text(s)
 
-          # Export must be correct even before/without a sync cycle.
-          q = Path('planet-hub/assets/inauguration-schedule-print-v1.js')
-          x = q.read_text()
-          old = "  const effectiveOwner = (step) => String(step?.ownerOverride || step?.owner || '').trim();"
-          new = '''  const normalizeAction = (value) => String(value || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n  const effectiveOwner = (step) => {\n    const action = normalizeAction(step?.action);\n    if (action === 'criacao/ajuste do instagram') return 'Franqueadora';\n    if (action === 'criacao/ajuste do facebook') return 'Franqueadora';\n    if (action === 'google meu negocio') return 'Franqueadora';\n    if (action === 'video de inauguracao') return 'Franqueado';\n    return String(step?.ownerOverride || step?.owner || '').trim();\n  };'''
-          if old in x:
-              x = x.replace(old, new)
-          q.write_text(x)
-
-          # Next-step summary should reflect the same canonical owner immediately.
-          r = Path('planet-hub/assets/inauguration-workspace-v2.js')
-          y = r.read_text()
-          marker = "  const displayChecklistAction = (value) => normalize(value) === normalize(OLD_CHECKLIST_LABEL)\n    ? NEW_CHECKLIST_LABEL\n    : String(value || 'Etapa sem nome');\n"
-          extra = '''\n  const canonicalChecklistOwner = (action, fallback = '') => {\n    const key = normalize(action);\n    if (key === normalize('Criação/ajuste do Instagram')) return 'Franqueadora';\n    if (key === normalize('Criação/ajuste do Facebook')) return 'Franqueadora';\n    if (key === normalize('Google Meu Negócio')) return 'Franqueadora';\n    if (key === normalize('Vídeo de inauguração')) return 'Franqueado';\n    return String(fallback || '').trim();\n  };\n'''
-          if 'canonicalChecklistOwner' not in y:
-              y = y.replace(marker, marker + extra)
-          y = y.replace("      owner: String(step?.ownerOverride || step?.owner || ''),", "      owner: canonicalChecklistOwner(step?.action, step?.ownerOverride || step?.owner),")
-          r.write_text(y)
-
-          # Cache bust the two runtime scripts touched by this fix.
-          idx = Path('index.html')
-          h = idx.read_text()
-          h = h.replace('inauguration-workspace-v2.js?v=20260812-1', 'inauguration-workspace-v2.js?v=20260820-2')
-          h = h.replace('inauguration-schedule-print-v1.js?v=20260819-1', 'inauguration-schedule-print-v1.js?v=20260820-2')
-          idx.write_text(h)
-
-          # Contract test for the four business rules.
-          test = Path('tests/inauguration-social-owner-v1.test.mjs')
-          test.write_text("""import assert from 'node:assert/strict';\nimport { readFile } from 'node:fs/promises';\n\nconst shared = await readFile(new URL('../planet-hub/assets/shared-inaugurations-v1.js', import.meta.url), 'utf8');\nconst print = await readFile(new URL('../planet-hub/assets/inauguration-schedule-print-v1.js', import.meta.url), 'utf8');\nconst workspace = await readFile(new URL('../planet-hub/assets/inauguration-workspace-v2.js', import.meta.url), 'utf8');\n\nfor (const source of [shared, print, workspace]) {\n  assert.match(source, /Instagram[\\s\\S]*Franqueadora|instagram[\\s\\S]*Franqueadora/);\n  assert.match(source, /Facebook[\\s\\S]*Franqueadora|facebook[\\s\\S]*Franqueadora/);\n  assert.match(source, /Google Meu Negócio[\\s\\S]*Franqueadora|google meu negocio[\\s\\S]*Franqueadora/);\n  assert.match(source, /Vídeo de inauguração[\\s\\S]*Franqueado|video de inauguracao[\\s\\S]*Franqueado/);\n}\nassert.match(shared, /canonicalizeItems/);\nassert.match(print, /const effectiveOwner = \\(step\\) =>/);\nconsole.log('Inaugurações: responsáveis de social e vídeo seguem a regra operacional atual.');\n""")
+          t = Path('tests/inauguration-social-owner-v1.test.mjs')
+          t.write_text("""import assert from 'node:assert/strict';\nimport { readFile } from 'node:fs/promises';\n\nconst rules = await readFile(new URL('../planet-hub/assets/inauguration-owner-rules-v1.js', import.meta.url), 'utf8');\nconst html = await readFile(new URL('../index.html', import.meta.url), 'utf8');\nassert.match(rules, /criacao\\/ajuste do instagram'\\) return 'Franqueadora'/);\nassert.match(rules, /criacao\\/ajuste do facebook'\\) return 'Franqueadora'/);\nassert.match(rules, /google meu negocio'\\) return 'Franqueadora'/);\nassert.match(rules, /video de inauguracao'\\) return 'Franqueado'/);\nassert.match(html, /inauguration-owner-rules-v1\\.js\\?v=20260820-1/);\nconsole.log('Inaugurações: responsáveis sociais e vídeo corrigidos.');\n""")
           PY
-      - name: Rodar testes focados
-        run: |
-          node tests/inauguration-social-owner-v1.test.mjs
-          node tests/inauguration-schedule-print-v1.test.mjs
-      - name: Commitar correção
+      - name: Testar regra
+        run: node tests/inauguration-social-owner-v1.test.mjs
+      - name: Commitar runtime
         run: |
           git config user.name "andre-os-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add planet-hub/assets/shared-inaugurations-v1.js planet-hub/assets/inauguration-schedule-print-v1.js planet-hub/assets/inauguration-workspace-v2.js index.html tests/inauguration-social-owner-v1.test.mjs
+          git add index.html tests/inauguration-social-owner-v1.test.mjs
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "fix: corrige responsáveis do checklist inaugural"
+          git commit -m "fix: aplica responsáveis corretos nas inaugurações"
           git push
