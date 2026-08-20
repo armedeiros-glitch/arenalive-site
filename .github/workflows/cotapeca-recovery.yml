@@ -1,8 +1,7 @@
 name: Recover CotaPeca Sprint 2
 
 on:
-  push:
-    branches: [cotapeca-recovery]
+  workflow_dispatch:
 
 permissions:
   contents: write
