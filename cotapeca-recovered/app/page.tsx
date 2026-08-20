@@ -31,7 +31,7 @@ export default function Home() {
             <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-[radial-gradient(circle,_rgba(249,115,22,.15)_0%,_transparent_68%)]" />
             <p className="text-[11px] font-bold uppercase tracking-[.18em] text-black/35">Cotação de autopeças, sem enrolação.</p>
             <h1 className="mt-5 max-w-3xl text-[3.5rem] font-black leading-[.91] tracking-[-.065em] sm:text-[4.8rem] lg:text-[clamp(4.2rem,5.5vw,6.3rem)]">
-              Você diz o que precisa.
+              Você diz a peça que seu carro precisa.
               <span className="block bg-gradient-to-r from-[#ff7a00] via-[#ff5a1f] to-[#d9480f] bg-clip-text text-transparent">A gente encontra quem tem.</span>
             </h1>
             <p className="mt-6 max-w-xl text-base font-medium leading-7 text-black/48 sm:text-lg">
