@@ -6,6 +6,11 @@ on:
     paths:
       - 'cotapeca-recovered/**'
       - '.github/workflows/cotapeca-ci.yml'
+  pull_request:
+    branches: [cotapeca-recovery]
+    paths:
+      - 'cotapeca-recovered/**'
+      - '.github/workflows/cotapeca-ci.yml'
   workflow_dispatch:
 
 jobs:
