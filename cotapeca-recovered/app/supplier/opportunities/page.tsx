@@ -37,7 +37,9 @@ export default function OpportunitiesPage() {
         .on('postgres_changes',{event:'INSERT',schema:'public',table:'opportunities',filter:`supplier_id=eq.${supplier.id}`},async (payload) => {
           const next = await hydrate(supabase,[payload.new as Opportunity]);
           if (alive) { setCards((current) => [next[0],...current.filter(x=>x.id!==next[0].id)]); window.dispatchEvent(new CustomEvent('cotapeca:opportunity-realtime',{detail:payload.new})); }
-        }).subscribe();
+        }).subscribe((status) => {
+          if (alive && status === 'SUBSCRIBED') window.dispatchEvent(new CustomEvent('cotapeca:opportunity-realtime-ready'));
+        });
       return () => { supabase.removeChannel(channel); };
     }
     let cleanup: void | (()=>void);
