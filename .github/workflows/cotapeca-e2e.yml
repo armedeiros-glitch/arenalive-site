@@ -1,0 +1,50 @@
+name: CotaPeca Sprint 2 E2E
+
+on:
+  pull_request:
+    branches: [cotapeca-recovery]
+    paths:
+      - 'cotapeca-recovered/**'
+      - '.github/workflows/cotapeca-e2e.yml'
+
+jobs:
+  supplier-e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cotapeca-recovered
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://aenmxjmrhancvqgpunhk.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_UofCGoeTB-E3vJyWJXUepQ_U5Ka5tcM
+      NEXT_PUBLIC_E2E_MODE: 'true'
+      COTAPECA_E2E_SUPPLIER_PASSWORD: CotaPeca-E2E-Supplier-2026
+      COTAPECA_E2E_ADMIN_PASSWORD: CotaPeca-E2E-Admin-2026
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build
+        run: npm run build
+      - name: Start app
+        run: |
+          npm start -- -H 127.0.0.1 -p 3000 > /tmp/cotapeca-next.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3000/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/cotapeca-next.log
+          exit 1
+      - name: Run desktop and mobile E2E
+        run: npm run test:e2e
+      - name: Upload realtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cotapeca-sprint2-realtime-evidence
+          path: cotapeca-recovered/test-results/realtime-*.json
+          if-no-files-found: ignore
