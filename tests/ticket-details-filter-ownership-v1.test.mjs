@@ -17,9 +17,10 @@ assert.ok(command.includes('data-command-filter="unit"'));
 assert.ok(command.includes('data-command-filter="responsible"'));
 assert.ok(command.includes('data-command-filter="subject"'));
 assert.ok(command.includes('data-command-filter="status"'));
-assert.ok(command.includes('data-command-discovery'), 'ticket-command mantém descoberta de todos do SULTS');
+assert.ok(command.includes('data-command-discovery'));
 assert.ok(command.includes('data-command-urgency'));
-assert.ok(command.includes('activeTickets.filter(isMine)'), 'fila principal é derivada do vínculo de André no SULTS');
+assert.ok(command.includes("scope=mine&includeIgnored=1"));
+assert.equal(command.includes('activeTickets.filter(isMine)'), false, 'frontend não deve refiltrar a fila pessoal');
 
 assert.ok(details.includes("const card = event.target.closest('.pmh-ticket[data-ticket-id]')"));
 assert.ok(details.includes("if (card) openDrawer(card.dataset.ticketId)"));
@@ -37,4 +38,4 @@ assert.ok(ignored.includes("document.querySelectorAll('.pmh-ticket-drawer-panel'
 assert.ok(ignored.includes("actions.querySelector('[data-ignore-ticket]')"));
 assert.ok(ignored.includes("button.textContent = 'Excluir do Hub'"));
 
-console.log('Chamados: ticket-command mantém filtros e vínculo SULTS; detalhe preservado.');
+console.log('Chamados: filtros pertencem ao ticket-command e a fila pessoal vem pronta do backend.');
