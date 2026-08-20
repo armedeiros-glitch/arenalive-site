@@ -19,7 +19,7 @@ assert.ok(command.includes('data-command-filter="subject"'));
 assert.ok(command.includes('data-command-filter="status"'));
 assert.ok(command.includes('data-command-discovery'));
 assert.ok(command.includes('data-command-urgency'));
-assert.ok(command.includes("scope=mine&includeIgnored=1"));
+assert.ok(command.includes("/api/sults/chamados?start=0&limit=100"));
 assert.equal(command.includes('activeTickets.filter(isMine)'), false, 'frontend não deve refiltrar a fila pessoal');
 
 assert.ok(details.includes("const card = event.target.closest('.pmh-ticket[data-ticket-id]')"));
@@ -38,4 +38,4 @@ assert.ok(ignored.includes("document.querySelectorAll('.pmh-ticket-drawer-panel'
 assert.ok(ignored.includes("actions.querySelector('[data-ignore-ticket]')"));
 assert.ok(ignored.includes("button.textContent = 'Excluir do Hub'"));
 
-console.log('Chamados: filtros pertencem ao ticket-command e a fila pessoal vem pronta do backend.');
+console.log('Chamados: filtros pertencem ao ticket-command e a lista usa a mesma fonte da Visão Geral.');
