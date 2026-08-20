@@ -51,9 +51,10 @@ test('supplier receives, opens and declines a real opportunity without refresh',
   expect(matchError).toBeNull();
   expect(matchedCount).toBe(1);
 
-  const card = page.locator('article[data-opportunity-id]').filter({ hasText: fixture.vehicle });
-  await expect(card).toBeVisible({ timeout: 15_000 });
-  await expect(card).toContainText(fixture.item);
+  await expect.poll(async () => {
+    const { count } = await admin.from('analytics_events').select('id', { count: 'exact', head: true }).eq('quote_id', fixture.quoteId).eq('event_name', 'opportunity_created');
+    return count ?? 0;
+  }, { timeout: 10_000 }).toBeGreaterThan(0);
 
   await page.waitForFunction((quoteId) => {
     const events = (window as Window & { __cotapecaRealtimeEvents?: Array<{ quote_id?: string }> }).__cotapecaRealtimeEvents ?? [];
@@ -66,8 +67,12 @@ test('supplier receives, opens and declines a real opportunity without refresh',
   }, fixture.quoteId);
   expect(realtimeEvent).not.toBeNull();
 
-  const opportunityId = await card.getAttribute('data-opportunity-id');
+  const opportunityId = String((realtimeEvent as Record<string, unknown>).id ?? '');
   expect(opportunityId).toBeTruthy();
+  const card = page.locator(`article[data-opportunity-id="${opportunityId}"]`);
+  await expect(card).toBeVisible({ timeout: 15_000 });
+  await expect(card).toContainText(fixture.vehicle);
+  await expect(card).toContainText(fixture.item);
 
   const evidenceDir = path.join(process.cwd(), 'test-results');
   fs.mkdirSync(evidenceDir, { recursive: true });
@@ -88,7 +93,7 @@ test('supplier receives, opens and declines a real opportunity without refresh',
   await expect(page.getByTestId('privacy-note')).toContainText('Dados pessoais do comprador permanecem protegidos');
 
   await expect.poll(async () => {
-    const { count } = await admin.from('analytics_events').select('id', { count: 'exact', head: true }).eq('opportunity_id', opportunityId!).eq('event_name', 'opportunity_viewed');
+    const { count } = await admin.from('analytics_events').select('id', { count: 'exact', head: true }).eq('opportunity_id', opportunityId).eq('event_name', 'opportunity_viewed');
     return count ?? 0;
   }, { timeout: 10_000 }).toBeGreaterThan(0);
 
@@ -96,12 +101,12 @@ test('supplier receives, opens and declines a real opportunity without refresh',
   await expect(page.getByTestId('action-message')).toHaveText('Oportunidade recusada.');
 
   await expect.poll(async () => {
-    const { data } = await admin.from('opportunities').select('status').eq('id', opportunityId!).single();
+    const { data } = await admin.from('opportunities').select('status').eq('id', opportunityId).single();
     return data?.status;
   }, { timeout: 10_000 }).toBe('declined');
 
   await expect.poll(async () => {
-    const { count } = await admin.from('analytics_events').select('id', { count: 'exact', head: true }).eq('opportunity_id', opportunityId!).eq('event_name', 'opportunity_declined');
+    const { count } = await admin.from('analytics_events').select('id', { count: 'exact', head: true }).eq('opportunity_id', opportunityId).eq('event_name', 'opportunity_declined');
     return count ?? 0;
   }, { timeout: 10_000 }).toBeGreaterThan(0);
 
