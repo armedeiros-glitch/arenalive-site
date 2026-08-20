@@ -27,25 +27,25 @@ export default function Home() {
 
       <div className="mx-auto grid w-full max-w-7xl gap-5 px-5 py-5 sm:px-8 lg:h-[calc(100vh-3.5rem)] lg:grid-rows-[1fr_auto] lg:py-6">
         <section className="grid min-h-0 gap-5 lg:grid-cols-[1.02fr_.98fr]">
-          <div className="relative flex min-h-[29rem] flex-col justify-center overflow-hidden rounded-[2rem] bg-white p-7 ring-1 ring-black/[.05] sm:p-10 lg:min-h-0 lg:p-12">
+          <div className="relative flex min-h-[29rem] flex-col justify-center overflow-hidden rounded-[2rem] bg-white p-7 ring-1 ring-black/[.05] sm:p-10 lg:min-h-0 lg:p-9 xl:p-10">
             <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-[radial-gradient(circle,_rgba(249,115,22,.15)_0%,_transparent_68%)]" />
             <p className="text-[11px] font-bold uppercase tracking-[.18em] text-black/35">Cotação de autopeças, sem enrolação.</p>
-            <h1 className="mt-5 max-w-3xl text-[3.5rem] font-black leading-[.91] tracking-[-.065em] sm:text-[4.8rem] lg:text-[clamp(4.2rem,5.5vw,6.3rem)]">
+            <h1 className="mt-4 max-w-3xl text-[3.25rem] font-black leading-[.9] tracking-[-.06em] sm:text-[4.35rem] lg:text-[clamp(3.55rem,4.35vw,5.15rem)]">
               Você diz a peça que seu carro precisa.
               <span className="block bg-gradient-to-r from-[#ff7a00] via-[#ff5a1f] to-[#d9480f] bg-clip-text text-transparent">A gente encontra quem tem.</span>
             </h1>
-            <p className="mt-6 max-w-xl text-base font-medium leading-7 text-black/48 sm:text-lg">
+            <p className="mt-4 max-w-xl text-base font-medium leading-6 text-black/48 sm:text-[1.05rem] sm:leading-7">
               Faça um pedido uma vez. O CotaPeça encontra fornecedores compatíveis e organiza tudo para você.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/auth/login?next=/cotacao" className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#1d1d1f] px-6 text-sm font-bold text-white shadow-[0_8px_24px_rgba(0,0,0,.12)] transition hover:-translate-y-0.5 hover:bg-black">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Link href="/auth/login?next=/cotacao" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#1d1d1f] px-6 text-sm font-bold text-white shadow-[0_8px_24px_rgba(0,0,0,.12)] transition hover:-translate-y-0.5 hover:bg-black">
                 Fazer cotação
               </Link>
-              <Link href="/auth/login?next=/supplier/opportunities" className="inline-flex min-h-12 items-center justify-center rounded-full px-5 text-sm font-bold text-[#0066cc] transition hover:bg-black/[.035]">
+              <Link href="/auth/login?next=/supplier/opportunities" className="inline-flex min-h-11 items-center justify-center rounded-full px-5 text-sm font-bold text-[#0066cc] transition hover:bg-black/[.035]">
                 Sou fornecedor ›
               </Link>
             </div>
-            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold text-black/35">
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-[11px] font-semibold text-black/35">
               <span>✓ Grátis para quem procura</span>
               <span>✓ Dados protegidos</span>
               <span>✓ Pedido em poucos passos</span>
