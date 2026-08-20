@@ -7,7 +7,7 @@ on:
       - 'cotapeca-recovered/**'
       - '.github/workflows/cotapeca-ci.yml'
   pull_request:
-    branches: [cotapeca-recovery]
+    branches: [main, cotapeca-recovery]
     paths:
       - 'cotapeca-recovered/**'
       - '.github/workflows/cotapeca-ci.yml'
