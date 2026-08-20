@@ -2,8 +2,8 @@
 
 :root {
   color-scheme: light;
-  --background: #f7f4ee;
-  --foreground: #171717;
+  --background: #f4efe5;
+  --foreground: #17191d;
 }
 
 * {
@@ -12,6 +12,7 @@
 
 html {
   background: var(--background);
+  scroll-behavior: smooth;
 }
 
 body {
@@ -19,5 +20,37 @@ body {
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #f97316;
+  color: white;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.input {
+  width: 100%;
+  min-height: 3.25rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(23, 25, 29, 0.14);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0 1rem;
+  color: #17191d;
+  outline: none;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.input:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
 }
