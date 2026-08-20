@@ -6,7 +6,7 @@ const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), '
 const source = read('planet-hub/assets/ticket-command-v1.js');
 const details = read('planet-hub/assets/ticket-details-v1.js');
 
-assert.match(source, /const MINE_API = '\/api\/sults\/chamados\?scope=mine&includeIgnored=1'/);
+assert.match(source, /const MAIN_API = '\/api\/sults\/chamados\?start=0&limit=100'/);
 assert.match(source, /const ALL_API = '\/api\/sults\/chamados\?scope=all&includeIgnored=1'/);
 assert.match(source, /Todos os chamados ativos do SULTS/);
 assert.doesNotMatch(source, /activeTickets\.filter\(isMine\)/);

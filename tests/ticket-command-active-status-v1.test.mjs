@@ -13,7 +13,7 @@ const isActiveTicket = (ticket) => activeSituations.has(Number(ticket?.situation
 for (const situation of [1, 4, 5, 6]) assert.equal(isActiveTicket({ situation }), true);
 for (const situation of [2, 3]) assert.equal(isActiveTicket({ situation }), false);
 
-assert.match(source, /const MINE_API = '\/api\/sults\/chamados\?scope=mine&includeIgnored=1';/);
+assert.match(source, /const MAIN_API = '\/api\/sults\/chamados\?start=0&limit=100';/);
 assert.match(source, /const ALL_API = '\/api\/sults\/chamados\?scope=all&includeIgnored=1';/);
 assert.match(source, /const activeTickets = source\.filter\(isActiveTicket\);/);
 assert.match(source, /const base = activeTickets\.filter\(matchesBaseFilters\);/);
