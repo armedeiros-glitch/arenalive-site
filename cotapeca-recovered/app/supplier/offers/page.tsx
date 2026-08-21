@@ -17,10 +17,9 @@ export default function SupplierOffersPage() {
   const supabase = useMemo(()=>createClient(),[]);
   const [cards,setCards] = useState<Card[]>([]);
   const [state,setState] = useState('Carregando propostas…');
-  const [created,setCreated] = useState(false);
+  const [created] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('created')==='1');
 
   useEffect(()=>{
-    setCreated(new URLSearchParams(location.search).get('created')==='1');
     let alive=true;
     void (async()=>{
       const { data:user } = await supabase.auth.getUser();
