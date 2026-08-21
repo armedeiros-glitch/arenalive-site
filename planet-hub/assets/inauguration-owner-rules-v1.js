@@ -131,15 +131,15 @@
       const canonical = canonicalAction(actionNode.textContent || '');
       if (canonical && actionNode.textContent !== canonical) actionNode.textContent = canonical;
 
-      const expected = ownerFor(canonical, '');
       const candidates = [...row.querySelectorAll('span, small, em')];
       const ownerNode = candidates.find((node) => /franquead/i.test(node.textContent || ''));
+      const expected = ownerFor(canonical, ownerNode?.textContent || '');
 
       row.removeAttribute('data-owner-scope');
       if (ownerNode) {
         ownerNode.classList.remove('pmh-checklist-owner-badge', 'owner-franqueadora', 'owner-franqueado');
       }
-      if (!expected || !ownerNode) return;
+      if (!expected || !ownerNode || !/franquead/i.test(expected)) return;
 
       if (ownerNode.textContent !== expected) ownerNode.textContent = expected;
       const scope = normalize(expected) === 'franqueadora' ? 'franqueadora' : 'franqueado';
@@ -149,7 +149,11 @@
   };
 
   const refresh = () => {
-    normalizeStore();
+    const changed = normalizeStore();
+    if (changed && window.location.hash.includes('inauguracoes')) {
+      window.setTimeout(() => document.querySelector('[data-pmh-open="inauguracoes"]')?.click(), 0);
+      return;
+    }
     requestAnimationFrame(applyDom);
   };
 
