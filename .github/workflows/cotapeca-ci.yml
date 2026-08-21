@@ -1,4 +1,4 @@
-name: CotaPeca Sprint 2 CI
+name: CotaPeca CI
 
 on:
   push:
