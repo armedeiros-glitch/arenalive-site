@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const steps = [
   ["01", "Conte o que precisa", "Veículo, peça e região."],
-  ["02", "A rede recebe", "Só fornecedores compatíveis."],
+  ["02", "As lojas recebem", "O pedido vai para quem pode ter."],
   ["03", "Você acompanha", "Tudo no mesmo lugar."],
 ];
 
@@ -35,7 +35,7 @@ export default function Home() {
               <span className="block bg-gradient-to-r from-[#ff7a00] via-[#ff5a1f] to-[#d9480f] bg-clip-text text-transparent">A gente encontra quem tem.</span>
             </h1>
             <p className="mt-4 max-w-xl text-base font-medium leading-6 text-black/48 sm:text-[1.05rem] sm:leading-7">
-              Faça um pedido uma vez. O CotaPeça encontra fornecedores compatíveis e organiza tudo para você.
+              Faça o pedido uma vez. O CotaPeça procura lojas que podem ter a peça e organiza as respostas para você.
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <Link href="/auth/login?next=/cotacao" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#1d1d1f] px-6 text-sm font-bold text-white shadow-[0_8px_24px_rgba(0,0,0,.12)] transition hover:-translate-y-0.5 hover:bg-black">
@@ -58,7 +58,7 @@ export default function Home() {
               <div className="mb-5 flex items-end justify-between">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[.18em] text-white/35">Seu pedido</p>
-                  <h2 className="mt-2 text-3xl font-black tracking-[-.045em] sm:text-4xl">A rede trabalha.</h2>
+                  <h2 className="mt-2 text-3xl font-black tracking-[-.045em] sm:text-4xl">A gente procura nas lojas.</h2>
                 </div>
                 <span className="rounded-full border border-white/10 bg-white/[.07] px-3 py-1.5 text-xs font-semibold text-white/55">ao vivo</span>
               </div>
@@ -78,8 +78,8 @@ export default function Home() {
                     <p className="mt-1 text-xs text-white/40">Usada original • aceita envio</p>
                   </div>
                   <div className="rounded-2xl bg-white p-4 text-black">
-                    <p className="text-4xl font-black tracking-[-.06em]">12</p>
-                    <p className="mt-1 text-xs font-semibold text-black/42">fornecedores compatíveis</p>
+                    <p className="text-3xl font-black tracking-[-.06em]">Lojas</p>
+                    <p className="mt-1 text-xs font-semibold text-black/42">que atendem esse tipo de pedido</p>
                   </div>
                   <div className="rounded-2xl bg-[#f97316] p-4 text-white">
                     <p className="text-4xl font-black tracking-[-.06em]">1x</p>
@@ -104,7 +104,7 @@ export default function Home() {
         <section className="flex flex-col items-start justify-between gap-3 rounded-[1.5rem] bg-white px-5 py-4 ring-1 ring-black/[.05] sm:flex-row sm:items-center sm:px-6">
           <div>
             <p className="text-sm font-black tracking-[-.02em]">Tem autopeças para vender?</p>
-            <p className="mt-0.5 text-xs text-black/40">Receba oportunidades compatíveis no painel.</p>
+            <p className="mt-0.5 text-xs text-black/40">Receba pedidos que combinam com o que sua loja atende.</p>
           </div>
           <Link href="/auth/login?next=/supplier/opportunities" className="text-sm font-bold text-[#0066cc]">Acessar painel fornecedor ›</Link>
         </section>
