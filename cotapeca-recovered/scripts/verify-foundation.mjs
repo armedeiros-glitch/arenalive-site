@@ -9,6 +9,7 @@ const requiredPaths = [
   'app/supplier/register/page.tsx',
   'app/supplier/opportunities/page.tsx',
   'app/supplier/opportunities/[id]/page.tsx',
+  'app/supplier/offers/page.tsx',
   'app/admin/suppliers/page.tsx',
   'app/admin/suppliers/[id]/page.tsx',
   'lib/supabase/client.ts',
