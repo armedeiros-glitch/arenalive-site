@@ -80,61 +80,60 @@ async function createCompatibleQuote(label: string) {
   return { quoteId, itemLabel: `Farol dianteiro ${label}`, response: data };
 }
 
-for (const viewportName of ['desktop', 'mobile'] as const) {
-  test(`${viewportName}: oportunidade chega via realtime, abre e recusa`, async ({ page }, testInfo) => {
-    await loginSupplier(page);
+test('oportunidade chega via realtime, abre e recusa', async ({ page }, testInfo) => {
+  const viewportName = testInfo.project.name.startsWith('mobile') ? 'mobile' : 'desktop';
+  await loginSupplier(page);
 
-    await page.evaluate(() => {
-      (window as typeof window & { __cotapecaRealtimeEvidence?: unknown }).__cotapecaRealtimeEvidence = null;
-      window.addEventListener(
-        'cotapeca:opportunity-realtime',
-        (event) => {
-          (window as typeof window & { __cotapecaRealtimeEvidence?: unknown }).__cotapecaRealtimeEvidence =
-            (event as CustomEvent).detail;
-        },
-        { once: true },
-      );
-    });
-
-    const unique = `${viewportName}-${Date.now()}`;
-    const quote = await createCompatibleQuote(unique);
-
-    const opportunityCard = page.locator('article').filter({ hasText: quote.itemLabel }).first();
-    await expect(opportunityCard).toBeVisible({ timeout: 15_000 });
-
-    const realtimeEvidence = await page.evaluate(
-      () => (window as typeof window & { __cotapecaRealtimeEvidence?: unknown }).__cotapecaRealtimeEvidence,
+  await page.evaluate(() => {
+    (window as typeof window & { __cotapecaRealtimeEvidence?: unknown }).__cotapecaRealtimeEvidence = null;
+    window.addEventListener(
+      'cotapeca:opportunity-realtime',
+      (event) => {
+        (window as typeof window & { __cotapecaRealtimeEvidence?: unknown }).__cotapecaRealtimeEvidence =
+          (event as CustomEvent).detail;
+      },
+      { once: true },
     );
-    expect(realtimeEvidence).toBeTruthy();
-
-    await page.screenshot({
-      path: testInfo.outputPath(`${viewportName}-realtime-list.png`),
-      fullPage: true,
-    });
-
-    await opportunityCard.getByRole('link', { name: 'VER COTAÇÃO' }).click();
-    await expect(page.getByText(quote.itemLabel)).toBeVisible();
-    await expect(page.getByTestId('privacy-note')).toContainText('Dados pessoais do comprador permanecem protegidos');
-
-    await page.getByTestId('have-part').click();
-    await expect(page.getByTestId('action-message')).toContainText('Sprint 3');
-
-    await page.screenshot({
-      path: testInfo.outputPath(`${viewportName}-detail.png`),
-      fullPage: true,
-    });
-
-    await page.getByTestId('decline').click();
-    await expect(page.getByTestId('action-message')).toContainText('Oportunidade recusada.');
-
-    await page.screenshot({
-      path: testInfo.outputPath(`${viewportName}-declined.png`),
-      fullPage: true,
-    });
-
-    await testInfo.attach(`${viewportName}-realtime-event.json`, {
-      body: Buffer.from(JSON.stringify(realtimeEvidence, null, 2)),
-      contentType: 'application/json',
-    });
   });
-}
+
+  const unique = `${viewportName}-${Date.now()}`;
+  const quote = await createCompatibleQuote(unique);
+
+  const opportunityCard = page.locator('article').filter({ hasText: quote.itemLabel }).first();
+  await expect(opportunityCard).toBeVisible({ timeout: 15_000 });
+
+  const realtimeEvidence = await page.evaluate(
+    () => (window as typeof window & { __cotapecaRealtimeEvidence?: unknown }).__cotapecaRealtimeEvidence,
+  );
+  expect(realtimeEvidence).toBeTruthy();
+
+  await page.screenshot({
+    path: testInfo.outputPath(`${viewportName}-realtime-list.png`),
+    fullPage: true,
+  });
+
+  await opportunityCard.getByRole('link', { name: 'VER COTAÇÃO' }).click();
+  await expect(page.getByText(quote.itemLabel)).toBeVisible();
+  await expect(page.getByTestId('privacy-note')).toContainText('Dados pessoais do comprador permanecem protegidos');
+
+  await page.getByTestId('have-part').click();
+  await expect(page.getByTestId('action-message')).toContainText('Sprint 3');
+
+  await page.screenshot({
+    path: testInfo.outputPath(`${viewportName}-detail.png`),
+    fullPage: true,
+  });
+
+  await page.getByTestId('decline').click();
+  await expect(page.getByTestId('action-message')).toContainText('Oportunidade recusada.');
+
+  await page.screenshot({
+    path: testInfo.outputPath(`${viewportName}-declined.png`),
+    fullPage: true,
+  });
+
+  await testInfo.attach(`${viewportName}-realtime-event.json`, {
+    body: Buffer.from(JSON.stringify(realtimeEvidence, null, 2)),
+    contentType: 'application/json',
+  });
+});
