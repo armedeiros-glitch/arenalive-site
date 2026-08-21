@@ -33,12 +33,21 @@ const CONDITIONS = [
   ['reconditioned', 'Recondicionada'],
 ] as const;
 
+const RADII = ['30', '60', '100'] as const;
+
 const initialForm: FormState = {
   legal_name: '', trade_name: '', cnpj: '', responsible_name: '', email: '', phone_e164: '', whatsapp_e164: '', city: '', state: '', service_radius_km: '60', accepts_shipping: true, all_brands: true, conditions: ['new_original', 'new_aftermarket', 'used_original'], brand_ids: [], category_ids: [],
 };
 
 function toggle(values: string[], value: string) {
   return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
+}
+
+function normalizePhone(value: string) {
+  const digits = value.replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.length === 10 || digits.length === 11) return `+55${digits}`;
+  return `+${digits}`;
 }
 
 export default function SupplierRegisterPage() {
@@ -86,16 +95,24 @@ export default function SupplierRegisterPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const cnpj = form.cnpj.replace(/\D/g, '');
+    const phone = normalizePhone(form.phone_e164);
+    const whatsapp = normalizePhone(form.whatsapp_e164 || form.phone_e164);
+
+    if (cnpj.length !== 14) { setMessage('Confira o CNPJ. Ele precisa ter 14 números.'); return; }
+    if (!/^\+[1-9]\d{7,14}$/.test(phone) || !/^\+[1-9]\d{7,14}$/.test(whatsapp)) { setMessage('Confira o telefone e o WhatsApp.'); return; }
     if (form.conditions.length === 0) { setMessage('Selecione ao menos uma condição de peça.'); return; }
     if (!form.all_brands && form.brand_ids.length === 0) { setMessage('Selecione as marcas atendidas ou marque Todas as marcas.'); return; }
+    if (!RADII.includes(form.service_radius_km as (typeof RADII)[number])) { setMessage('Escolha um raio de atendimento válido.'); return; }
+
     setSaving(true); setMessage('');
     const payload = {
       ...form,
-      cnpj: form.cnpj.replace(/\D/g, ''),
+      cnpj,
       state: form.state.trim().toUpperCase(),
       service_radius_km: Number(form.service_radius_km),
-      phone_e164: form.phone_e164.trim(),
-      whatsapp_e164: form.whatsapp_e164.trim() || form.phone_e164.trim(),
+      phone_e164: phone,
+      whatsapp_e164: whatsapp,
     };
     const { error } = await supabase.rpc('register_supplier', { payload });
     if (error) { setMessage(error.message || 'Não foi possível concluir o cadastro.'); setSaving(false); return; }
@@ -134,14 +151,14 @@ export default function SupplierRegisterPage() {
                 <legend className="mb-4 text-xl font-black sm:col-span-2">Dados da loja</legend>
                 <label className="grid gap-2"><span className={label}>Razão social</span><input className={input} required value={form.legal_name} onChange={(e)=>setForm({...form,legal_name:e.target.value})}/></label>
                 <label className="grid gap-2"><span className={label}>Nome da loja</span><input className={input} required value={form.trade_name} onChange={(e)=>setForm({...form,trade_name:e.target.value})}/></label>
-                <label className="grid gap-2"><span className={label}>CNPJ</span><input className={input} inputMode="numeric" required placeholder="Somente números ou formatado" value={form.cnpj} onChange={(e)=>setForm({...form,cnpj:e.target.value})}/></label>
+                <label className="grid gap-2"><span className={label}>CNPJ</span><input className={input} inputMode="numeric" required placeholder="00.000.000/0000-00" value={form.cnpj} onChange={(e)=>setForm({...form,cnpj:e.target.value})}/></label>
                 <label className="grid gap-2"><span className={label}>Responsável</span><input className={input} required value={form.responsible_name} onChange={(e)=>setForm({...form,responsible_name:e.target.value})}/></label>
                 <label className="grid gap-2"><span className={label}>E-mail</span><input className={input} type="email" required value={form.email} onChange={(e)=>setForm({...form,email:e.target.value})}/></label>
-                <label className="grid gap-2"><span className={label}>Telefone</span><input className={input} required placeholder="+5547999999999" value={form.phone_e164} onChange={(e)=>setForm({...form,phone_e164:e.target.value})}/></label>
-                <label className="grid gap-2"><span className={label}>WhatsApp</span><input className={input} placeholder="Se vazio, usa o telefone" value={form.whatsapp_e164} onChange={(e)=>setForm({...form,whatsapp_e164:e.target.value})}/></label>
+                <label className="grid gap-2"><span className={label}>Telefone</span><input className={input} inputMode="tel" required placeholder="(47) 99999-9999" value={form.phone_e164} onChange={(e)=>setForm({...form,phone_e164:e.target.value})}/></label>
+                <label className="grid gap-2"><span className={label}>WhatsApp</span><input className={input} inputMode="tel" placeholder="Se vazio, usa o telefone" value={form.whatsapp_e164} onChange={(e)=>setForm({...form,whatsapp_e164:e.target.value})}/></label>
                 <label className="grid gap-2"><span className={label}>Cidade</span><input className={input} required value={form.city} onChange={(e)=>setForm({...form,city:e.target.value})}/></label>
                 <label className="grid gap-2"><span className={label}>UF</span><input className={input} required maxLength={2} placeholder="SC" value={form.state} onChange={(e)=>setForm({...form,state:e.target.value})}/></label>
-                <label className="grid gap-2"><span className={label}>Raio de atendimento (km)</span><input className={input} type="number" min="1" max="500" required value={form.service_radius_km} onChange={(e)=>setForm({...form,service_radius_km:e.target.value})}/></label>
+                <label className="grid gap-2 sm:col-span-2"><span className={label}>Raio de atendimento</span><select className={input} required value={form.service_radius_km} onChange={(e)=>setForm({...form,service_radius_km:e.target.value})}>{RADII.map((radius)=><option key={radius} value={radius}>{radius} km</option>)}</select></label>
               </fieldset>
 
               <div className="rounded-2xl bg-[#f5f5f7] p-4">
@@ -173,7 +190,7 @@ export default function SupplierRegisterPage() {
 
               <label className="flex items-start gap-3 rounded-2xl border border-black/10 px-4 py-3"><input className="mt-1" type="checkbox" checked={form.accepts_shipping} onChange={(e)=>setForm({...form,accepts_shipping:e.target.checked})}/><span><strong>Aceito enviar peças</strong><br/><span className="text-xs text-black/45">Permite receber oportunidades fora do raio quando o matching considerar envio.</span></span></label>
 
-              <button disabled={saving || Boolean(message && message === 'Carregando cadastro…')} className="min-h-13 rounded-2xl bg-[#1d1d1f] px-5 font-black text-white disabled:opacity-50">{saving ? 'SALVANDO…' : 'CONCLUIR CADASTRO →'}</button>
+              <button disabled={saving || message === 'Carregando cadastro…'} className="min-h-13 rounded-2xl bg-[#1d1d1f] px-5 font-black text-white disabled:opacity-50">{saving ? 'SALVANDO…' : 'CONCLUIR CADASTRO →'}</button>
               <p className="text-center text-xs leading-5 text-black/40">O cadastro entra como pendente e precisa ser aprovado antes de receber oportunidades.</p>
             </form>
           </div>
