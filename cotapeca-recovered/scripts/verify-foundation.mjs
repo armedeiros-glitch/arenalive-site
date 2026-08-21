@@ -32,6 +32,7 @@ const expectedMigrations = [
   '20260820162901_sprint2_fix_opportunity_created_event.sql',
   '20260821164353_fix_e164_check_constraints.sql',
   '20260821164629_fix_submit_quote_whatsapp_regex.sql',
+  '20260821185826_sprint3_offer_foundation.sql',
 ];
 
 const missingPaths = requiredPaths.filter((path) => !existsSync(join(root, path)));
@@ -51,7 +52,7 @@ if (missingMigrations.length) {
 }
 
 if (unexpectedMigrations.length) {
-  throw new Error(`Migrations não reconhecidas para Sprint 0-2: ${unexpectedMigrations.join(', ')}`);
+  throw new Error(`Migrations não reconhecidas para Sprint 0-3: ${unexpectedMigrations.join(', ')}`);
 }
 
 console.log(`Foundation OK: ${requiredPaths.length} arquivos essenciais e ${currentMigrations.length} migrations verificadas.`);
