@@ -30,6 +30,8 @@ jobs:
           node-version: 24
       - name: Install
         run: npm install --no-audit --no-fund
+      - name: Verify foundation
+        run: npm run verify:foundation
       - name: Typecheck
         run: npm run typecheck
       - name: Lint
