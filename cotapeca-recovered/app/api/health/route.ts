@@ -8,6 +8,7 @@ export async function GET() {
       ok: true,
       service: "cotapeca-v1",
       environment: process.env.APP_ENV ?? "unknown",
+      e2eMode: process.env.NEXT_PUBLIC_E2E_MODE === "true",
     },
     {
       headers: {
