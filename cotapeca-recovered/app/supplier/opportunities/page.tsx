@@ -29,7 +29,7 @@ export default function OpportunitiesPage() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) { location.href='/auth/login?next=/supplier/opportunities'; return; }
       const { data: supplier } = await supabase.from('suppliers').select('id,verification_status,trade_name').maybeSingle();
-      if (!supplier) { setState('Cadastro de fornecedor não encontrado.'); return; }
+      if (!supplier) { location.href='/supplier/register'; return; }
       if (supplier.verification_status !== 'verified') { setState('Seu cadastro ainda não está aprovado.'); return; }
       const { data } = await supabase.from('opportunities').select('id,quote_id,status,distance_km,sent_at,matching_context').in('status',['sent','viewed']).order('sent_at',{ascending:false});
       if (alive) { setCards(await hydrate(supabase,(data ?? []) as Opportunity[])); setState(''); }
