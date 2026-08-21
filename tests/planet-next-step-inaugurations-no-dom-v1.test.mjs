@@ -120,9 +120,9 @@ const runScenario = async ({ radarItem, projects }) => {
   const app = await runScenario({
     radarItem: {
       id: 'inauguration-1', action: 'inauguracoes', title: 'Unidade Centro',
-      nextAction: 'Confirmar treinamento da equipe', dueDate: '2026-08-20',
+      nextAction: 'Confirmar treinamento da equipe', dueDate: '2099-08-20',
     },
-    projects: [{ unit: 'Unidade Centro', checklist: [{ title: 'Etapa API', dueDate: '2026-08-01' }] }],
+    projects: [{ unit: 'Unidade Centro', checklist: [{ title: 'Etapa API', dueDate: '2000-08-01' }] }],
   });
   assert.deepEqual(Array.from(app.calls.collect[0].sources), ['inaugurations', 'contexts']);
   assert.equal(app.calls.collect[0].maxAgeMs, 15000);
@@ -132,12 +132,12 @@ const runScenario = async ({ radarItem, projects }) => {
 
 {
   const app = await runScenario({
-    radarItem: { id: 'inauguration-2', action: 'inauguracoes', title: 'Unidade Norte', dueDate: '2026-08-25' },
+    radarItem: { id: 'inauguration-2', action: 'inauguracoes', title: 'Unidade Norte', dueDate: '2099-08-25' },
     projects: [{
       unit: 'Unidade Norte',
       checklist: [
-        { title: 'Primeira pendente', dueDate: '2026-08-20' },
-        { title: 'Etapa atrasada', dueDate: '2026-08-01' },
+        { title: 'Primeira pendente', dueDate: '2099-08-20' },
+        { title: 'Etapa atrasada', dueDate: '2000-08-01' },
       ],
     }],
   });
@@ -152,9 +152,9 @@ const runScenario = async ({ radarItem, projects }) => {
     projects: [{
       unit: 'Unidade Sul',
       checklist: [
-        { title: 'Etapa concluída', done: true, dueDate: '2026-08-01' },
-        { title: 'Primeira pendente', dueDate: '2026-08-20' },
-        { title: 'Segunda pendente', dueDate: '2026-08-25' },
+        { title: 'Etapa concluída', done: true, dueDate: '2000-08-01' },
+        { title: 'Primeira pendente', dueDate: '2099-08-20' },
+        { title: 'Segunda pendente', dueDate: '2099-08-25' },
       ],
     }],
   });
