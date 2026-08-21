@@ -25,7 +25,7 @@ assert.match(source, /Planet Chocolate · Cronograma inaugural · Gerado em/);
 assert.match(source, /data-inauguration-browser-detail/);
 assert.match(css, /pmh-inauguration-schedule-export/);
 assert.match(index, /inauguration-schedule-print-v1\.css\?v=20260819-1/);
-assert.match(index, /inauguration-schedule-print-v1\.js\?v=20260819-1/);
+assert.match(index, /inauguration-schedule-print-v1\.js\?v=20260821-2/);
 assert.match(financeReport, /Relatório Financeiro de Inauguração/,
   'relatório financeiro existente deve permanecer intacto');
 assert.match(backend, /const LEGACY_STORAGE_KEY = 'planet-hub:inauguracoes:v1'/,

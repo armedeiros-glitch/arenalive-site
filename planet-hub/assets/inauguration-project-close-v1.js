@@ -13,9 +13,9 @@
     close.type = 'button';
     close.className = 'pmh-inauguration-project-close';
     close.dataset.inaugurationProjectClose = '1';
-    close.setAttribute('aria-label', 'Fechar projeto e voltar para todas as implantações');
-    close.title = 'Fechar projeto';
-    close.innerHTML = '<span>Fechar projeto</span><b aria-hidden="true">×</b>';
+    close.setAttribute('aria-label', 'Voltar para todas as implantações');
+    close.title = 'Voltar à lista';
+    close.innerHTML = '<span>Voltar à lista</span><b aria-hidden="true">×</b>';
     head.appendChild(close);
   };
 
