@@ -7,6 +7,13 @@
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
   }[char]));
 
+  const normalize = (value) => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+
   const readTracked = () => {
     try {
       const items = JSON.parse(window.localStorage.getItem(TRACKED_KEY) || '[]');
@@ -32,6 +39,12 @@
   };
 
   const effectiveOwner = (step) => String(step?.ownerOverride || step?.owner || '').trim();
+  const ownerScope = (step) => {
+    const owner = normalize(effectiveOwner(step));
+    if (owner === 'franqueadora') return 'franqueadora';
+    if (owner === 'franqueado') return 'franqueado';
+    return 'outro';
+  };
   const referenceFor = (step) => Number.isFinite(Number(step?.daysBefore)) ? `D-${Number(step.daysBefore)}` : '—';
   const generatedAt = () => new Intl.DateTimeFormat('pt-BR').format(new Date());
 
@@ -54,12 +67,15 @@
   };
 
   const scheduleRows = (project) => (Array.isArray(project?.checklist) ? project.checklist : [])
-    .map((step) => `<tr>
+    .map((step) => {
+      const scope = ownerScope(step);
+      return `<tr class="owner-${scope}">
       <td>${esc(step?.action || 'Etapa sem nome')}</td>
-      <td>${esc(effectiveOwner(step) || '—')}</td>
+      <td><span class="owner-badge">${esc(effectiveOwner(step) || '—')}</span></td>
       <td>${esc(referenceFor(step))}</td>
       <td>${esc(effectiveDue(project, step) || '—')}</td>
-    </tr>`)
+    </tr>`;
+    })
     .join('');
 
   const buildPrintHtml = (project) => {
@@ -73,15 +89,20 @@
 <title>Cronograma de Inauguração · ${esc(project?.unit || 'Planet Chocolate')}</title>
 <style>
   @page { size: A4 portrait; margin: 10mm 11mm 11mm; }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { margin: 0; padding: 0; background: #fff; color: #171717; font-family: Arial, Helvetica, sans-serif; }
   body { font-size: 10px; line-height: 1.28; }
   .sheet { width: 100%; max-width: 188mm; margin: 0 auto; }
-  .report-head { padding-bottom: 7px; margin-bottom: 8px; border-bottom: 2px solid #222; }
+  .report-head { padding-bottom: 7px; margin-bottom: 7px; border-bottom: 2px solid #222; }
   .brand { font-size: 9px; font-weight: 900; letter-spacing: .14em; }
   h1 { margin: 3px 0 7px; font-size: 19px; line-height: 1.05; }
   .meta { display: flex; flex-wrap: wrap; gap: 4px 18px; }
   .meta span { font-size: 9.5px; }
+  .owner-legend { display: flex; gap: 14px; align-items: center; margin: 0 0 7px; color: #555; font-size: 8.5px; font-weight: 700; }
+  .owner-legend span { display: inline-flex; gap: 5px; align-items: center; }
+  .owner-legend i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+  .owner-legend .franqueadora i { background: #f47c20; }
+  .owner-legend .franqueado i { background: #6f7f95; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   thead { display: table-header-group; }
   tr { break-inside: avoid; page-break-inside: avoid; }
@@ -92,6 +113,13 @@
   th:nth-child(3) { width: 12%; }
   th:nth-child(4) { width: 20%; }
   td:nth-child(3), td:nth-child(4) { white-space: nowrap; }
+  tbody tr.owner-franqueadora td { background: #fff4eb; }
+  tbody tr.owner-franqueado td { background: #f2f5f8; }
+  tbody tr.owner-franqueadora td:first-child { border-left: 4px solid #f47c20; }
+  tbody tr.owner-franqueado td:first-child { border-left: 4px solid #6f7f95; }
+  .owner-badge { display: inline-block; padding: 2px 6px; border-radius: 999px; font-size: 8.5px; font-weight: 800; line-height: 1.25; }
+  .owner-franqueadora .owner-badge { background: #ffe1cc; color: #8a3b00; }
+  .owner-franqueado .owner-badge { background: #dfe6ed; color: #465567; }
   .report-footer { margin-top: 7px; padding-top: 5px; border-top: 1px solid #ddd; color: #666; font-size: 8px; text-align: right; }
   @media print {
     html, body { width: 210mm; min-height: 297mm; background: #fff !important; }
@@ -107,6 +135,10 @@
     <h1>CRONOGRAMA DE INAUGURAÇÃO</h1>
     <div class="meta">${metadata.map(([label, value]) => `<span><b>${esc(label)}:</b> ${esc(value)}</span>`).join('')}</div>
   </header>
+  <div class="owner-legend" aria-label="Legenda de responsáveis">
+    <span class="franqueadora"><i></i>Franqueadora</span>
+    <span class="franqueado"><i></i>Franqueado</span>
+  </div>
   <table>
     <thead><tr><th>Etapa</th><th>Responsável</th><th>Referência</th><th>Prazo</th></tr></thead>
     <tbody>${rows || '<tr><td colspan="4">Nenhuma etapa disponível.</td></tr>'}</tbody>
@@ -172,6 +204,7 @@
     buildPrintHtml,
     effectiveDue,
     effectiveOwner,
+    ownerScope,
     open: openSchedulePrint,
   });
 })();
