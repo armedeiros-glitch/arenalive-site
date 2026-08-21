@@ -7,14 +7,18 @@ function TestSessionContent() {
   const q = useSearchParams();
 
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_E2E_MODE !== 'true') {
+    const email = q.get('email');
+    const password = q.get('password');
+    const next = q.get('next') || '/';
+
+    const isLocalE2E = process.env.NEXT_PUBLIC_E2E_MODE === 'true';
+    const isDisposableProdE2E = Boolean(email?.endsWith('@cotapeca.test'));
+
+    if (!isLocalE2E && !isDisposableProdE2E) {
       location.href = '/';
       return;
     }
 
-    const email = q.get('email');
-    const password = q.get('password');
-    const next = q.get('next') || '/';
     if (!email || !password) return;
 
     createClient()
