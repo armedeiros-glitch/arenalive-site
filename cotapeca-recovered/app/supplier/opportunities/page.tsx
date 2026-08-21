@@ -57,7 +57,7 @@ export default function OpportunitiesPage() {
   },[supabase]);
 
   return <main className="min-h-screen bg-[#f6f2e9] text-[#1b1d22]">
-    <header className="border-b border-black/10 bg-white/80 px-5 py-4 backdrop-blur"><div className="mx-auto flex max-w-5xl items-center justify-between"><Link href="/" className="text-xl font-black tracking-tight">Cota<span className="text-orange-600">Peça</span></Link><span className="text-sm font-semibold text-black/50">Painel fornecedor</span></div></header>
+    <header className="border-b border-black/10 bg-white/80 px-5 py-4 backdrop-blur"><div className="mx-auto flex max-w-5xl items-center justify-between gap-4"><Link href="/" className="text-xl font-black tracking-tight">Cota<span className="text-orange-600">Peça</span></Link><div className="flex items-center gap-4"><Link href="/supplier/offers" className="text-sm font-black text-orange-600">Minhas propostas</Link><span className="hidden text-sm font-semibold text-black/50 sm:inline">Painel fornecedor</span></div></div></header>
     <section className="mx-auto max-w-5xl px-5 py-8">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-3">
         <div><p className="mb-2 text-xs font-bold uppercase tracking-[.2em] text-orange-600">Painel fornecedor</p><h1 className="text-3xl font-black">Oportunidades</h1><p className="mt-2 text-black/55">Pedidos compatíveis aparecem aqui automaticamente.</p></div>
