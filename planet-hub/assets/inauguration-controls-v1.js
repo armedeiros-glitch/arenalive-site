@@ -4,14 +4,16 @@
 
   const checklistTemplate = [
     { action: 'Número de telefone para redes sociais', owner: 'Franqueado', daysBefore: 30 },
-    { action: 'Criação/ajuste do Instagram', owner: 'Franqueado', daysBefore: 30 },
-    { action: 'Criação/ajuste do Facebook', owner: 'Franqueado', daysBefore: 30 },
-    { action: 'Google Meu Negócio', owner: 'Franqueado', daysBefore: 30 },
-    { action: 'Vídeo de inauguração', owner: 'Franqueadora', daysBefore: 20 },
-    { action: 'Enviar @ dos influenciadores', owner: 'Franqueado', daysBefore: 20 },
-    { action: 'Contratar influenciadores', owner: 'Franqueado', daysBefore: 15 },
-    { action: 'Contratar Social Media para inauguração', owner: 'Franqueado', daysBefore: 15 },
-    { action: 'Contratar ornamentação / arco de bolas', owner: 'Franqueado', daysBefore: 15 },
+    { action: 'Criação/ajuste do Instagram', owner: 'Franqueadora', daysBefore: 30 },
+    { action: 'Criação/ajuste do Facebook', owner: 'Franqueadora', daysBefore: 30 },
+    { action: 'Google Meu Negócio', owner: 'Franqueadora', daysBefore: 30 },
+    { action: 'Vídeo de inauguração', owner: 'Franqueado', daysBefore: 20 },
+    { action: 'Enviar nomes/@ e contatos dos influenciadores locais', owner: 'Franqueado', daysBefore: 20 },
+    { action: 'Enviar contato/indicação de Social Media local', owner: 'Franqueado', daysBefore: 20 },
+    { action: 'Enviar contato/empresa de ornamentação / arco de bolas', owner: 'Franqueado', daysBefore: 20 },
+    { action: 'Contratar influenciadores', owner: 'Franqueadora', daysBefore: 15 },
+    { action: 'Contratar Social Media para inauguração', owner: 'Franqueadora', daysBefore: 15 },
+    { action: 'Contratar ornamentação / arco de bolas', owner: 'Franqueadora', daysBefore: 15 },
     { action: 'Aprovar artes inaugurais', owner: 'Franqueadora', daysBefore: 12 },
     { action: 'Fazer 1000 panfletos', owner: 'Franqueado', daysBefore: 10 },
     { action: 'Entregar panfletos para lojistas', owner: 'Franqueado', daysBefore: 7 },
@@ -96,7 +98,7 @@
           <label>Data real da inauguração<input name="openingDate" type="date" required></label>
           <label>Responsável<input name="responsible" autocomplete="off"></label>
           <label>Shopping / local<input name="location" autocomplete="off"></label>
-          <p>Ao salvar, a inauguração entra com o checklist de 15 etapas e as seis ações inaugurais, usando a verba padrão de R$ 4.100.</p>
+          <p>Ao salvar, a inauguração entra com o checklist de 17 etapas e as seis ações inaugurais, usando a verba padrão de R$ 4.100.</p>
           <footer>
             <button type="button" data-pmh-independent-close>Cancelar</button>
             <button type="submit">Criar inauguração</button>
