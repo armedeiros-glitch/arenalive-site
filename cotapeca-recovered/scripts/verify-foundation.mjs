@@ -6,6 +6,8 @@ const root = process.cwd();
 const requiredPaths = [
   'app/page.tsx',
   'app/cotacao/page.tsx',
+  'app/buyer/quotes/page.tsx',
+  'app/buyer/quotes/[id]/page.tsx',
   'app/supplier/register/page.tsx',
   'app/supplier/opportunities/page.tsx',
   'app/supplier/opportunities/[id]/page.tsx',
@@ -34,6 +36,7 @@ const expectedMigrations = [
   '20260821164353_fix_e164_check_constraints.sql',
   '20260821164629_fix_submit_quote_whatsapp_regex.sql',
   '20260821185826_sprint3_offer_foundation.sql',
+  '20260825141935_sprint4_buyer_comparison.sql',
 ];
 
 const missingPaths = requiredPaths.filter((path) => !existsSync(join(root, path)));
@@ -53,7 +56,7 @@ if (missingMigrations.length) {
 }
 
 if (unexpectedMigrations.length) {
-  throw new Error(`Migrations não reconhecidas para Sprint 0-3: ${unexpectedMigrations.join(', ')}`);
+  throw new Error(`Migrations não reconhecidas para Sprint 0-4: ${unexpectedMigrations.join(', ')}`);
 }
 
 console.log(`Foundation OK: ${requiredPaths.length} arquivos essenciais e ${currentMigrations.length} migrations verificadas.`);
