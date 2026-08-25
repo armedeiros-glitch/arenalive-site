@@ -23,5 +23,5 @@ export default async function AccountPage() {
     redirect("/supplier/opportunities");
   }
 
-  redirect("/cotacao");
+  redirect("/buyer/quotes");
 }
