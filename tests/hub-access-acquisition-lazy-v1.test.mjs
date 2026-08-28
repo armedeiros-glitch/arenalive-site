@@ -13,6 +13,7 @@ const expectedGlobalScripts = [
   '/planet-hub/assets/financeiro-v1.js?v=20260812-2',
   '/planet-hub/assets/inauguration-finance-report-v1.js?v=20260812-1',
   '/planet-hub/assets/planet-expansion-v1.js?v=20260828-2',
+  '/planet-hub/assets/planet-expansion-contact-trail-v1.js?v=20260828-1',
   '/planet-hub/assets/andre-os-navigation-drawers-v1.js?v=20260811-1',
   '/planet-hub/assets/andre-os-home-pages-v1.js?v=20260807-3',
   '/planet-hub/assets/inauguration-timing-core-v1.js?v=20260828-1',
@@ -31,6 +32,10 @@ assert.ok(sequenceBlock, 'SCRIPT_SEQUENCE deve continuar declarada no bootstrap'
 assert.ok(!sequenceBlock.includes('planet-acquisition-v1.js'), 'Aquisição não pode permanecer na sequência global');
 for (const src of expectedGlobalScripts) assert.ok(sequenceBlock.includes(src), `entrada global deve permanecer: ${src}`);
 assert.equal((sequenceBlock.match(/\/planet-hub\/assets\//g) || []).length, expectedGlobalScripts.length, 'nenhuma outra entrada global deve ser removida ou adicionada');
+assert.ok(
+  sequenceBlock.indexOf('planet-expansion-v1.js') < sequenceBlock.indexOf('planet-expansion-contact-trail-v1.js'),
+  'trilha de contato deve carregar depois do owner principal da Expansão',
+);
 assert.ok(
   sequenceBlock.indexOf('inauguration-timing-core-v1.js') < sequenceBlock.indexOf('andre-os-operational-reconciliation-v1.js'),
   'timing de inaugurações deve carregar antes da reconciliação operacional',
@@ -150,4 +155,4 @@ for (const route of ['#marketing', '#chamados']) {
   assert.equal(app.appended.filter((src) => src === ACQUISITION).length, 1, 'retorno a Aquisição não pode duplicar o asset');
 }
 
-console.log('Hub Access: Aquisição lazy e timing operacional de inaugurações validados.');
+console.log('Hub Access: Aquisição lazy, trilha da Expansão e timing operacional de inaugurações validados.');
