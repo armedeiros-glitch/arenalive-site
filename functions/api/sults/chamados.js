@@ -279,7 +279,7 @@ const personIsIncluded = (ticket, personId, personName) => {
   if (responsibleMatches) return true;
 
   return ticket.support.some((item) => {
-    const supportPerson = item?.pessoa;
+    const supportPerson = item?.pessoa || item?.pessapoiooa;
     if (!supportPerson) return false;
     return (
       (personId && supportPerson.id === personId) ||
