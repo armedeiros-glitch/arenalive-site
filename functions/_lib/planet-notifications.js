@@ -7,6 +7,7 @@ export const MAX_NOTIFICATIONS = 1000;
 const NOTIFICATION_TYPES = new Set(['lead.new', 'lead.updated', 'lead.alert']);
 const NOTIFICATION_PRIORITIES = new Set(['high', 'medium', 'low']);
 const LOW_SIGNAL_MOVEMENT_CHANGES = new Set(['nome', 'origem']);
+const NEW_LEAD_DUPLICATE_WINDOW_MS = 2 * 60 * 1000;
 
 export const notificationStorageKey = (id) => `${NOTIFICATION_STORAGE_PREFIX}${cleanText(id, 120)}`;
 
@@ -39,6 +40,39 @@ export const isLowSignalMovement = (item = {}) => (
   && item.changes.length > 0
   && item.changes.every((label) => LOW_SIGNAL_MOVEMENT_CHANGES.has(cleanText(label, 80).toLowerCase()))
 );
+
+const normalizedFingerprintText = (value) => cleanText(value, 500)
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const newLeadBurstFingerprint = (item) => {
+  if (item?.type !== 'lead.new') return '';
+  const name = normalizedFingerprintText(item.leadName);
+  const summary = normalizedFingerprintText(item.summary);
+  return name && summary ? `${name}::${summary}` : '';
+};
+
+export const collapseDuplicateNewLeadNotifications = (items) => {
+  const recentByFingerprint = new Map();
+  const visible = [];
+  (Array.isArray(items) ? items : []).forEach((item) => {
+    const fingerprint = newLeadBurstFingerprint(item);
+    if (!fingerprint) {
+      visible.push(item);
+      return;
+    }
+    const timestamp = Date.parse(item.createdAt || item.updatedAt || 0);
+    const previous = recentByFingerprint.get(fingerprint);
+    if (Number.isFinite(timestamp) && Number.isFinite(previous)
+      && Math.abs(previous - timestamp) <= NEW_LEAD_DUPLICATE_WINDOW_MS) return;
+    if (Number.isFinite(timestamp)) recentByFingerprint.set(fingerprint, timestamp);
+    visible.push(item);
+  });
+  return visible;
+};
 
 const readLegacyNotificationDocument = async (store) => {
   const stored = await store.get(NOTIFICATIONS_STORAGE_KEY, { type: 'json' });
@@ -126,8 +160,9 @@ export const appendNotification = async (store, input) => {
 };
 
 export const summarizeNotifications = (document) => {
-  const data = (Array.isArray(document?.data) ? document.data : [])
+  const filtered = (Array.isArray(document?.data) ? document.data : [])
     .filter((item) => !isLowSignalMovement(item));
+  const data = collapseDuplicateNewLeadNotifications(filtered);
   return {
     ...document,
     data,
