@@ -90,6 +90,7 @@ try {
     assert.equal(body.data.length, 1);
     assert.equal(body.data[0].unit, 'Planet Centro');
     assert.equal(body.data[0].status, 'ativo');
+    assert.equal(body.filters.scope, 'operational', 'a API usada pela tela deve ser operacional por padrão');
     assert.equal(body.reliability.source, 'sults-live');
     assert.equal(body.reliability.stale, false);
     assert.equal(body.warning, null);
@@ -120,7 +121,7 @@ try {
     assert.equal(response.status, 200);
     assert.deepEqual(starts, [0, 2], 'snapshot completo deve percorrer todas as páginas reportadas');
     assert.equal(body.data.length, 2, 'resposta continua respeitando limit solicitado');
-    assert.equal(body.pagination.size, 3, 'paginação deve conhecer o dataset completo');
+    assert.equal(body.pagination.size, 3, 'paginação deve conhecer o dataset operacional completo');
     assert.equal(body.pagination.rawSize, 3);
     const snapshotWrite = kv.writes.find((item) => item.key === SNAPSHOT_KEY);
     assert.equal(snapshotWrite.value.data.length, 3, 'snapshot deve guardar as duas páginas antes de se declarar completo');
@@ -144,18 +145,31 @@ try {
     globalThis.fetch = async () => { calls += 1; throw new Error('não deveria chamar'); };
     const response = await onRequestGet({
       env: { SULTS_API_TOKEN: 'token-sults', PLANET_HUB_DATA: kv },
-      request: requestFor('?start=0&limit=100&scope=operational'),
+      request: requestFor('?start=0&limit=100'),
     });
     const body = await response.json();
     assert.equal(response.status, 200);
     assert.equal(calls, 0, 'snapshot com menos de 15 minutos deve evitar nova chamada ao SULTS');
     assert.deepEqual(body.data.map((item) => item.sultsProjectId), [1, 2],
-      'escopo operacional deve manter ativos e pausados, excluindo concluídos e inativos');
+      'default operacional deve manter ativos e pausados, excluindo concluídos e inativos');
     assert.equal(body.pagination.rawSize, 4);
     assert.equal(body.pagination.size, 2);
     assert.equal(body.filters.scope, 'operational');
     assert.equal(body.reliability.source, 'shared-cache');
     assert.equal(body.reliability.stale, false, 'cache recente é confiável, não um fallback velho');
+
+    const historicalResponse = await onRequestGet({
+      env: { SULTS_API_TOKEN: 'token-sults', PLANET_HUB_DATA: kv },
+      request: requestFor('?start=0&limit=100&scope=all'),
+    });
+    const historical = await historicalResponse.json();
+    assert.equal(historicalResponse.status, 200);
+    assert.equal(calls, 0, 'scope histórico deve reaproveitar o mesmo snapshot completo');
+    assert.deepEqual(historical.data.map((item) => item.sultsProjectId), [1, 2, 3, 4],
+      'scope=all deve preservar o histórico bruto para auditoria');
+    assert.equal(historical.pagination.size, 4);
+    assert.equal(historical.pagination.rawSize, 4);
+    assert.equal(historical.filters.scope, 'all');
   }
 
   {
@@ -181,6 +195,7 @@ try {
     assert.equal(response.status, 200);
     assert.equal(calls, 0, 'falha recente deve criar cooldown e evitar martelar o SULTS');
     assert.equal(body.data[0].unit, 'Planet Cache');
+    assert.equal(body.filters.scope, 'operational');
     assert.equal(body.reliability.stale, true);
     assert.equal(body.reliability.throttled, true);
     assert.equal(body.reliability.liveFailure.status, 429);
@@ -206,6 +221,7 @@ try {
     const body = await response.json();
     assert.equal(response.status, 200, 'snapshot completo deve manter o módulo disponível');
     assert.equal(body.data[0].unit, 'Planet Fallback');
+    assert.equal(body.filters.scope, 'operational');
     assert.equal(body.reliability.complete, true);
     assert.equal(body.reliability.stale, true);
     assert.equal(body.reliability.source, 'shared-cache');
@@ -224,19 +240,27 @@ try {
     });
     const body = await response.json();
     assert.equal(response.status, 502);
+    assert.equal(body.filters.scope, 'operational');
     assert.equal(body.reliability.complete, false);
     assert.equal(body.reliability.source, 'unavailable');
   }
 
-  const frontend = fs.readFileSync(new URL('../planet-hub/assets/implantations-v1.js', import.meta.url), 'utf8');
-  assert.match(frontend, /scope=operational/,
-    'tela de implantações deve pedir somente o escopo operacional ao SULTS');
-  assert.match(frontend, /ATRASADO NO SULTS/,
-    'projeto ainda ativo depois do fim previsto deve continuar visível como inconsistência operacional');
-  assert.doesNotMatch(frontend, /NÃO USAR ESSE MODELO|NAO USAR ESSE MODELO/,
-    'filtro não deve depender de nome/modelo arbitrário para esconder projeto');
+  const unifiedHub = fs.readFileSync(new URL('../planet-hub/assets/unified-hub-v1.js', import.meta.url), 'utf8');
+  const hubAccess = fs.readFileSync(new URL('../planet-hub/assets/hub-access-v1.js', import.meta.url), 'utf8');
+  const eject = fs.readFileSync(new URL('../planet-hub/assets/andre-os-eject-v1.js', import.meta.url), 'utf8');
 
-  console.log('SULTS implantações: dataset completo, cache fresco, cooldown, fallback e escopo operacional validados.');
+  assert.match(unifiedHub, /projects: '\/api\/sults\/implantacoes\?start=0&limit=100'/,
+    'owner vivo de Inaugurações deve consumir o default operacional da API');
+  assert.match(hubAccess, /unified-hub-v1\.js/,
+    'bootstrap deve continuar carregando o owner vivo');
+  assert.doesNotMatch(hubAccess, /implantations-v1\.js/,
+    'teste não pode voltar a proteger um frontend órfão como se fosse a tela viva');
+  assert.match(eject, /\/api\/sults\/implantacoes\?start=0&limit=100&scope=all/,
+    'EJECT deve pedir explicitamente o dataset histórico completo');
+  assert.doesNotMatch(unifiedHub, /NÃO USAR ESSE MODELO|NAO USAR ESSE MODELO/,
+    'owner vivo não deve depender de nome/modelo arbitrário para esconder projeto');
+
+  console.log('SULTS implantações: owner vivo, default operacional, histórico explícito, cache e fallback validados.');
 } finally {
   globalThis.fetch = originalFetch;
 }
