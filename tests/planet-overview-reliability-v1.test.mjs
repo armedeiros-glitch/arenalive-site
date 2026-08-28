@@ -50,8 +50,10 @@ assert.match(script, /Resposta inválida da fonte/);
 assert.doesNotMatch(script, /indisponível\$\{[^}]+\? '' : 'is'\}/);
 
 assert.match(ticketsBackend, /const ACTIVE_SITUATIONS = \[1, 4, 5, 6\]/);
-assert.match(radarData, /\[2, 3\]\.includes\(Number\(item\.situation\?\.id \|\| item\.situationId\)\)/,
-  'Chamados concluídos/resolvidos continuam fora do RadarData.');
+assert.match(radarData, /const ticketSituationId = \(item\) =>/,
+  'RadarData deve centralizar a leitura da situação do SULTS.');
+assert.match(radarData, /\[2, 3\]\.includes\(ticketSituationId\(item\)\)/,
+  'Chamados concluídos/resolvidos continuam fora do RadarData, inclusive quando situation é numérico.');
 assert.match(script, /const RADAR_SOURCES = \['tickets', 'inaugurations', 'demands', 'contents', 'campaigns'\]/,
   'Nenhuma fonte nova deve ser adicionada ao RadarData seletivo do Overview.');
 assert.doesNotMatch(script, /localStorage\.setItem|sessionStorage|\/api\/hub\/radar-contextos/,
