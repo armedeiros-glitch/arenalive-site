@@ -118,7 +118,6 @@ try {
     assert.equal(body.reliability.liveFailure.status, 503);
   }
 
-  
   {
     const kv = makeKv();
     globalThis.fetch = async (url) => {
@@ -138,7 +137,37 @@ try {
     assert.deepEqual(body.filters.membership, ['marketing-inbox', 'responsible', 'support']);
   }
 
-console.log('SULTS chamados: contrato de token, leitura ao vivo e fallback por snapshot validado.');
+  {
+    const kv = makeKv();
+    globalThis.fetch = async (url) => {
+      const parsed = new URL(url);
+      const situation = Number(parsed.searchParams.get('situacao') || 1);
+      const supported = ticket(`support-${situation}`, situation);
+      supported.departamento = { id: 99, nome: 'Outro departamento' };
+      supported.responsavel = { id: 999, nome: 'Outra Pessoa' };
+      supported.apoio = [{
+        pessapoiooa: { id: 77, nome: 'André Roberto Medeiros' },
+        departamento: { id: 99, nome: 'Outro departamento' },
+        pessoaUnidade: true,
+      }];
+      return new Response(JSON.stringify({ data: [supported] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    };
+
+    const response = await onRequestGet({
+      env: { SULTS_API_TOKEN: 'test-token', PLANET_HUB_DATA: kv },
+      request: requestFor('?scope=mine&includeIgnored=1&personId=77&departmentId=10'),
+    });
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.data.length, 4,
+      'scope mine deve reconhecer apoio no formato pessapoiooa devolvido pelo SULTS');
+    assert.ok(body.data.every((item) => item.support[0]?.pessapoiooa?.id === 77));
+  }
+
+  console.log('SULTS chamados: contrato de token, leitura ao vivo, apoio real e fallback por snapshot validado.');
 } finally {
   globalThis.fetch = originalFetch;
 }
