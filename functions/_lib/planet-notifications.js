@@ -8,6 +8,7 @@ const NOTIFICATION_TYPES = new Set(['lead.new', 'lead.updated', 'lead.alert']);
 const NOTIFICATION_PRIORITIES = new Set(['high', 'medium', 'low']);
 const LOW_SIGNAL_MOVEMENT_CHANGES = new Set(['nome', 'origem']);
 const NEW_LEAD_DUPLICATE_WINDOW_MS = 2 * 60 * 1000;
+const RECENT_UNREAD_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export const notificationStorageKey = (id) => `${NOTIFICATION_STORAGE_PREFIX}${cleanText(id, 120)}`;
 
@@ -163,10 +164,17 @@ export const summarizeNotifications = (document) => {
   const filtered = (Array.isArray(document?.data) ? document.data : [])
     .filter((item) => !isLowSignalMovement(item));
   const data = collapseDuplicateNewLeadNotifications(filtered);
+  const unreadItems = data.filter((item) => !item.readAt && !item.resolvedAt);
+  const unreadRecent = unreadItems.filter((item) => {
+    const timestamp = Date.parse(item.updatedAt || item.createdAt || 0);
+    return Number.isFinite(timestamp)
+      && Math.max(0, Date.now() - timestamp) < RECENT_UNREAD_WINDOW_MS;
+  }).length;
   return {
     ...document,
     data,
     updatedAt: data[0]?.updatedAt || document?.updatedAt || null,
-    unread: data.filter((item) => !item.readAt && !item.resolvedAt).length,
+    unread: unreadItems.length,
+    unreadRecent,
   };
 };
