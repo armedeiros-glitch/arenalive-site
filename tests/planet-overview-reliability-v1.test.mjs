@@ -58,6 +58,6 @@ assert.match(script, /const RADAR_SOURCES = \['tickets', 'inaugurations', 'deman
   'Nenhuma fonte nova deve ser adicionada ao RadarData seletivo do Overview.');
 assert.doesNotMatch(script, /localStorage\.setItem|sessionStorage|\/api\/hub\/radar-contextos/,
   'Health do Overview não pode criar persistência nem adicionar contexts.');
-assert.match(index, /planet-overview-desktop-v1\.js\?v=20260813-1/);
+assert.match(index, /planet-overview-desktop-v1\.js\?v=20260828-1/);
 
 console.log('Visão Geral Planet: confiabilidade e plural de fontes indisponíveis validados.');
