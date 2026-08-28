@@ -118,6 +118,7 @@ const notificationForNewLead = (lead) => {
   const location = [lead.city, lead.state].filter(Boolean).join('/') || 'Local não informado';
   const origin = lead.origin || lead.conversion || 'Origem não informada';
   return normalizeNotification({
+    id: `notification-lead-new-${lead.id}`,
     type: 'lead.new',
     priority: 'high',
     title: 'Novo lead de franquia',
@@ -201,6 +202,7 @@ export async function onRequestPost({ env, request }) {
   try {
     const result = await upsertLead(env.PLANET_HUB_DATA, extracted, {
       sourceOverride: 'rd_station',
+      stableExternalIdentity: true,
       ensureWhatsapp: true,
       mergeExternalOnly: true,
       preserveStatus: true,
