@@ -15,7 +15,7 @@
     '/planet-hub/assets/planet-five-stars-import-v1.js?v=20260807-1',
     '/planet-hub/assets/planet-five-stars-actions-v1.js?v=20260813-1',
     '/planet-hub/assets/andre-os-desktop-shell-v2.js?v=20260807-4',
-    '/planet-hub/assets/planet-notifications-v1.js?v=20260805-1',
+    '/planet-hub/assets/planet-notifications-v1.js?v=20260828-2',
   ];
   const ACQUISITION_SCRIPT = '/planet-hub/assets/planet-acquisition-v1.js?v=20260807-1';
   let acquisitionLoaded = false;
