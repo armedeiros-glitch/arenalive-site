@@ -3,6 +3,7 @@
 
   const VIEW = 'expansao';
   const API = '/api/hub/planet/leads';
+  const RECENT_UNVIEWED_WINDOW_MS = 24 * 60 * 60 * 1000;
   const STATUS_LABELS = {
     new: 'Novo',
     claimed: 'Assumido',
@@ -45,6 +46,17 @@
   const title = () => document.querySelector('[data-title]');
   const isOpen = () => location.hash === '#expansao';
 
+  const isRecentUnviewed = (lead, now = Date.now()) => {
+    if (!lead || lead.viewedAt) return false;
+    const timestamp = Date.parse(lead.createdAt || lead.updatedAt || 0);
+    return Number.isFinite(timestamp)
+      && Math.max(0, now - timestamp) < RECENT_UNVIEWED_WINDOW_MS;
+  };
+
+  const recentUnviewedCount = (leads = state.leads, now = Date.now()) => (
+    (Array.isArray(leads) ? leads : []).filter((lead) => isRecentUnviewed(lead, now)).length
+  );
+
   const showNotice = (message, tone = 'success') => {
     clearTimeout(noticeTimer);
     state.notice = String(message || '');
@@ -61,12 +73,24 @@
   const syncNavigation = () => {
     const button = navigationButton();
     if (!button) return;
-    const unread = state.leads.filter((lead) => !lead.viewedAt).length;
+    const recentUnread = recentUnviewedCount();
+    const totalUnread = state.leads.filter((lead) => !lead.viewedAt).length;
     const badge = button.querySelector('[data-expansion-badge]');
     button.classList.toggle('active', isOpen());
+    button.setAttribute(
+      'aria-label',
+      totalUnread > recentUnread
+        ? `Expansão · ${recentUnread} novos nas últimas 24h · ${totalUnread} não visualizados no total`
+        : recentUnread > 0
+          ? `Expansão · ${recentUnread} novos nas últimas 24h`
+          : 'Expansão',
+    );
     if (badge) {
-      badge.hidden = unread <= 0;
-      badge.textContent = unread > 99 ? '99+' : String(unread || '');
+      badge.hidden = recentUnread <= 0;
+      badge.textContent = recentUnread > 99 ? '99+' : String(recentUnread || '');
+      badge.title = totalUnread > recentUnread
+        ? `${recentUnread} novos nas últimas 24h · ${totalUnread} não visualizados no total`
+        : `${recentUnread} novos nas últimas 24h`;
     }
   };
 
@@ -85,7 +109,6 @@
 
     button.type = 'button';
     button.classList.add('pmh-expansion-nav');
-    button.setAttribute('aria-label', 'Expansão');
 
     if (!button.querySelector('[data-expansion-badge]')) {
       const badge = document.createElement('b');
@@ -402,7 +425,7 @@
     else syncNavigation();
   });
 
-  window.PlanetExpansion = { render };
+  window.PlanetExpansion = { render, recentUnviewedCount };
 
   ensureNavigation();
   connectNotifications();
