@@ -20,7 +20,16 @@ assert.match(webhook, /upsertLead/);
 assert.match(webhook, /readNotificationDocument/);
 assert.match(webhook, /writeNotificationDocument/);
 assert.match(webhook, /MOVEMENT_GROUP_WINDOW_MS/);
-assert.match(webhook, /Movimentação recebida do RD Station/);
+assert.match(webhook, /NOTIFICATION_CHANGE_KEYS/);
+assert.match(webhook, /notificationChanges/);
+assert.match(webhook, /low_signal_changes/);
+assert.match(webhook, /isLowSignalMovement/);
+assert.match(webhook, /Movimentação recebida do RD Station/,
+  'histórico bruto deve continuar auditável mesmo quando o sino ignora baixo sinal');
+assert.match(notifications, /LOW_SIGNAL_MOVEMENT_CHANGES = new Set\(\['nome', 'origem'\]\)/);
+assert.match(notifications, /isLowSignalMovement/);
+assert.match(notifications, /filter\(\(item\) => !isLowSignalMovement\(item\)\)/,
+  'resumo público deve esconder ruído antigo sem apagar armazenamento');
 assert.match(webhook, /destination: 'andre-os'/);
 assert.doesNotMatch(webhook, /planet-hub:planet-expansion-leads:v1|planet-hub:planet-notifications:v1/);
 assert.match(leads, /planet-hub:planet-expansion-leads:v1/);
@@ -28,4 +37,4 @@ assert.match(notifications, /planet-hub:planet-notifications:v1/);
 assert.doesNotMatch(webhook, /TELEGRAM_BOT_TOKEN|TELEGRAM_CHAT_ID|api\.telegram\.org/);
 assert.doesNotMatch(webhook, /console\.log\(JSON\.stringify\(payload\)\)/);
 
-console.log('planet-rd-webhook compartilhado: ok');
+console.log('planet-rd-webhook compartilhado e filtro operacional de ruído: ok');
