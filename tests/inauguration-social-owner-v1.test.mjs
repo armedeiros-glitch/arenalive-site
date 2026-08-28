@@ -18,6 +18,6 @@ assert.match(rules, /daysBefore: 20/);
 assert.match(rules, /pmh-checklist-owner-legend/);
 assert.match(rules, /data-owner-scope/);
 assert.doesNotMatch(rules, /MutationObserver/);
-assert.match(html, /inauguration-owner-rules-v1\.js\?v=20260820-2/);
+assert.match(html, /inauguration-owner-rules-v1\.js\?v=20260828-1/);
 
 console.log('Inaugurações: responsáveis, contatos D-20, migração e leitura por cores validados.');

@@ -8,7 +8,7 @@ const access = read('planet-hub/assets/hub-access-v1.js');
 const reportSource = read('planet-hub/assets/inauguration-finance-report-v1.js');
 const financeSource = read('planet-hub/assets/financeiro-v1.js');
 
-assert.match(index, /hub-access-v1\.js\?v=20260813-1/, 'bootstrap real precisa invalidar o cache do loader atualizado');
+assert.match(index, /hub-access-v1\.js\?v=20260828-4/, 'bootstrap real precisa invalidar o cache do loader atualizado');
 assert.match(access, /inauguration-finance-report-v1\.js\?v=20260812-1/, 'loader atualizado precisa carregar o módulo do relatório');
 assert.equal((access.match(/inauguration-finance-report-v1\.js/g) || []).length, 1, 'não pode existir segundo módulo de relatório');
 assert.match(financeSource, /data-inauguration-finance-export>Exportar esta implantação/, 'CSV precisa continuar disponível');

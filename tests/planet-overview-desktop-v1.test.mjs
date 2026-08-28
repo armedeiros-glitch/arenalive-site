@@ -9,7 +9,7 @@ const [index, script, styles] = await Promise.all([
 ]);
 
 assert.ok(index.includes('planet-overview-desktop-v1.css?v=20260813-1'));
-assert.ok(index.includes('planet-overview-desktop-v1.js?v=20260813-1'));
+assert.ok(index.includes('planet-overview-desktop-v1.js?v=20260828-1'));
 
 assert.match(script, /PMHRadarData\.collect/);
 assert.match(script, /\/api\/hub\/planet\/acquisition\/lp-franquias\?period=7d/);
