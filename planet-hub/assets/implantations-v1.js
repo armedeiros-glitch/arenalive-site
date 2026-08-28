@@ -1,6 +1,6 @@
 (() => {
   const STORAGE_KEY = 'planet-hub-implantations-v1';
-  const SULTS_API_URL = '/api/sults/implantacoes?start=0&limit=100';
+  const SULTS_API_URL = '/api/sults/implantacoes?start=0&limit=100&scope=operational';
   let lastFocus = null;
   let sultsItems = [];
   let sultsState = 'loading';
@@ -85,9 +85,19 @@
     return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(date);
   };
 
+  const isPastDate = (value) => {
+    if (!value) return false;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date.getTime() < today.getTime();
+  };
+
   const statusLabel = (item) => {
     if (item.completed) return 'CONCLUÍDO';
     if (item.paused) return 'PAUSADO';
+    if (item.overdue) return 'ATRASADO NO SULTS';
     if (item.active) return 'EM IMPLANTAÇÃO';
     return 'INATIVO';
   };
@@ -102,6 +112,7 @@
     completed: item.completed,
     paused: item.paused,
     active: item.active,
+    overdue: !item.completed && !item.paused && item.active && isPastDate(item.endDate),
     cnpj: item.cnpj,
     projectName: item.projectName,
   });
@@ -137,7 +148,7 @@
       ? '<p class="pmh-implant-note">Não foi possível sincronizar com o SULTS agora. As implantações manuais continuam disponíveis.</p>'
       : '';
 
-    const markup = `<header><h3>Implantações cadastradas</h3><span>${items.length} ${items.length === 1 ? 'unidade' : 'unidades'}</span></header>${syncMessage}` +
+    const markup = `<header><h3>Implantações em acompanhamento</h3><span>${items.length} ${items.length === 1 ? 'unidade' : 'unidades'}</span></header>${syncMessage}` +
       items.map((item) => `<article class="pmh-implant-card">
         <div><small>${item.source === 'sults' ? statusLabel(item) : 'EM IMPLANTAÇÃO'}</small><h4>${escapeHtml(item.unit)}</h4><p>${escapeHtml(item.location)} · Responsável: ${escapeHtml(item.franchisee)}</p></div>
         <aside><strong>${item.source === 'sults' ? 'Fim previsto ' : 'Inauguração '}${formatDate(item.openingDate)}</strong><span>${item.source === 'sults' ? 'Sincronizado com o SULTS' : '0/15 etapas · 6 ações inaugurais'}</span></aside>
