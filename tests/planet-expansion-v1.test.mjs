@@ -9,13 +9,17 @@ const indexSource = read('index.html');
 const apiSource = read('functions/api/hub/planet/leads.js');
 const leadCore = read('functions/_lib/planet-leads.js');
 
-assert.match(accessSource, /planet-expansion-v1\.js\?v=20260811-1/);
+assert.match(accessSource, /planet-expansion-v1\.js\?v=20260828-2/);
 assert.doesNotMatch(accessSource, /planet-lead-hunter/);
 assert.match(accessSource, /value\.includes\('expans'\)/);
 assert.match(indexSource, /planet-expansion-v1\.css\?v=20260806-1/);
 assert.doesNotMatch(indexSource, /planet-lead-hunter/);
 assert.match(moduleSource, /const VIEW = 'expansao'/);
 assert.match(moduleSource, /const API = '\/api\/hub\/planet\/leads'/);
+assert.match(moduleSource, /RECENT_UNVIEWED_WINDOW_MS = 24 \* 60 \* 60 \* 1000/);
+assert.match(moduleSource, /recentUnviewedCount/);
+assert.match(moduleSource, /badge\.hidden = recentUnread <= 0/);
+assert.match(moduleSource, /const unread = state\.leads\.filter\(\(lead\) => !lead\.viewedAt\)\.length/);
 assert.match(moduleSource, /data-expansion-nav/);
 assert.match(moduleSource, /data-expansion-badge/);
 assert.match(moduleSource, /data-lead-whatsapp/);
