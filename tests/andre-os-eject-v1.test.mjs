@@ -5,8 +5,9 @@ const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), '
 const source = read('planet-hub/assets/andre-os-eject-v1.js');
 const index = read('index.html');
 
-assert.match(index, /andre-os-eject-v1\.js\?v=20260826-1/,
+assert.match(index, /andre-os-eject-v1\.js\?v=20260828-1/,
   'index deve carregar o EJECT com versão de cache explícita');
+assert.match(source, /const VERSION = '20260828-1'/);
 assert.match(source, /data-andre-os-eject/,
   'EJECT deve ter owner visual único');
 assert.match(source, /Copiar EJECT/,
@@ -15,6 +16,18 @@ assert.match(source, /ANDRÉ OS · EJECT OPERACIONAL/,
   'texto copiado deve se identificar para uso no ChatGPT');
 assert.match(source, /Não crie tarefas automaticamente/,
   'EJECT deve preservar a regra de não criar tarefas por conta própria');
+assert.match(source, /Radar pessoal · hoje/,
+  'fonte pessoal deve ser identificada sem ambiguidade');
+assert.match(source, /Contextos operacionais do Radar/,
+  'contextos operacionais não podem parecer a fila pessoal');
+assert.match(source, /Campanhas · operação/,
+  'overlay operacional de campanhas deve ser nomeado como tal');
+assert.match(source, /Não é o catálogo anual completo/,
+  'EJECT deve impedir diagnóstico falso de catálogo ausente');
+assert.match(source, /sourceSemantics:/,
+  'snapshot deve carregar significado explícito das fontes');
+assert.match(source, /Respeite sourceSemantics/,
+  'prompt copiado deve instruir a análise a respeitar a semântica das fontes');
 assert.match(source, /\/api\/radar\/today/,
   'Radar deve entrar no snapshot');
 assert.match(source, /\/api\/sults\/chamados\?start=0&limit=100/,
@@ -24,7 +37,7 @@ assert.match(source, /\/api\/hub\/inauguracoes/,
 assert.match(source, /\/api\/hub\/demandas-internas/,
   'Demandas internas devem entrar no snapshot');
 assert.match(source, /\/api\/hub\/campanhas/,
-  'Campanhas devem entrar no snapshot');
+  'camada operacional de Campanhas deve entrar no snapshot');
 assert.match(source, /\/api\/hub\/planet\/five-stars\/action-plans/,
   'Planos do 5 Estrelas devem entrar no snapshot');
 assert.match(source, /SENSITIVE_KEY/,
@@ -38,4 +51,4 @@ assert.doesNotMatch(source, /localStorage\.setItem|sessionStorage\.setItem/,
 assert.doesNotMatch(source, /MutationObserver/,
   'EJECT não deve observar o DOM continuamente');
 
-console.log('André OS EJECT: fontes operacionais, segurança, cópia e somente-leitura validados.');
+console.log('André OS EJECT: semântica das fontes, segurança, cópia e somente-leitura validados.');

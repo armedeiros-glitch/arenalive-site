@@ -1,25 +1,25 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260826-1';
+  const VERSION = '20260828-1';
   const MAX_ARRAY_ITEMS = 500;
   const MAX_STRING = 6000;
   const SENSITIVE_KEY = /(token|secret|password|senha|authorization|cookie|api[_-]?key|access[_-]?key|refresh[_-]?token)/i;
 
   const SOURCES = [
-    ['Radar hoje', '/api/radar/today'],
-    ['Chamados SULTS', '/api/sults/chamados?start=0&limit=100'],
-    ['Implantações SULTS', '/api/sults/implantacoes?start=0&limit=100'],
-    ['Inaugurações', '/api/hub/inauguracoes'],
-    ['Demandas internas', '/api/hub/demandas-internas'],
-    ['Campanhas', '/api/hub/campanhas'],
-    ['Contextos do Radar', '/api/hub/radar-contextos'],
-    ['Notificações Planet', '/api/hub/planet/notifications'],
-    ['Aquisição · LP Franquias', '/api/hub/planet/acquisition/lp-franquias'],
-    ['Expansão · leads', '/api/hub/planet/leads'],
-    ['Planet 5 Estrelas · avaliações', '/api/hub/planet/five-stars/evaluations'],
-    ['Planet 5 Estrelas · planos de ação', '/api/hub/planet/five-stars/action-plans'],
-    ['Laboratório · projetos', '/api/hub/laboratory/projects'],
+    ['Radar pessoal · hoje', '/api/radar/today', 'Fonte oficial das tarefas pessoais do André. Não confundir com Radar Operacional da Planet.'],
+    ['Chamados SULTS', '/api/sults/chamados?start=0&limit=100', 'Status oficial dos chamados. O André OS adiciona leitura e contexto, mas não altera automaticamente o status do SULTS.'],
+    ['Implantações SULTS', '/api/sults/implantacoes?start=0&limit=100', 'Leitura da origem SULTS para implantações.'],
+    ['Inaugurações · projetos', '/api/hub/inauguracoes', 'Projetos de inauguração do André OS, incluindo checklist e datas operacionais.'],
+    ['Demandas internas', '/api/hub/demandas-internas', 'Demandas operacionais internas da Planet. Não são tarefas pessoais do Todoist/Radar André.'],
+    ['Campanhas · operação', '/api/hub/campanhas', 'Camada operacional persistida das campanhas: status, responsável, próximo marco, data do marco, materiais e notas. Não é o catálogo anual completo; campanhas sem edição operacional podem não aparecer aqui.'],
+    ['Contextos operacionais do Radar', '/api/hub/radar-contextos', 'Contexto adicional dos itens operacionais, como dependência, bloqueio, próximo passo e data de follow-up. Não é a fila pessoal do Radar André.'],
+    ['Notificações Planet', '/api/hub/planet/notifications', 'Alertas operacionais visíveis da Planet. Movimentações de baixo sinal do RD podem permanecer auditáveis sem aparecer no sino.'],
+    ['Aquisição · LP Franquias', '/api/hub/planet/acquisition/lp-franquias', 'Métricas agregadas da aquisição pela landing page.'],
+    ['Expansão · leads', '/api/hub/planet/leads', 'Leads reais de expansão e seu acompanhamento comercial.'],
+    ['Planet 5 Estrelas · avaliações', '/api/hub/planet/five-stars/evaluations', 'Avaliações das unidades no programa Planet 5 Estrelas.'],
+    ['Planet 5 Estrelas · planos de ação', '/api/hub/planet/five-stars/action-plans', 'Planos de ação operacionais do Planet 5 Estrelas. Não transformar automaticamente em tarefas pessoais.'],
+    ['Laboratório · projetos', '/api/hub/laboratory/projects', 'Projetos do ambiente Laboratório do André OS.'],
   ];
 
   const safeClone = (value, depth = 0) => {
@@ -45,7 +45,7 @@
     return String(value);
   };
 
-  const fetchSource = async ([label, url]) => {
+  const fetchSource = async ([label, url, meaning]) => {
     try {
       const response = await fetch(url, {
         headers: { Accept: 'application/json' },
@@ -54,11 +54,11 @@
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
-        return { label, url, ok: false, status: response.status, error: payload?.error || `HTTP ${response.status}` };
+        return { label, url, meaning, ok: false, status: response.status, error: payload?.error || `HTTP ${response.status}` };
       }
-      return { label, url, ok: true, status: response.status, data: safeClone(payload) };
+      return { label, url, meaning, ok: true, status: response.status, data: safeClone(payload) };
     } catch (error) {
-      return { label, url, ok: false, status: 0, error: String(error?.message || error || 'Falha de rede') };
+      return { label, url, meaning, ok: false, status: 0, error: String(error?.message || error || 'Falha de rede') };
     }
   };
 
@@ -87,11 +87,12 @@
         available: available.length,
         unavailable: unavailable.map(({ label, status, error }) => ({ label, status, error })),
       },
+      sourceSemantics: Object.fromEntries(results.map(({ label, meaning }) => [label, meaning])),
       sources: Object.fromEntries(results.map((item) => [item.label, item.ok ? item.data : { unavailable: true, status: item.status, error: item.error }])),
     };
 
     return `ANDRÉ OS · EJECT OPERACIONAL\n\n` +
-      `Use este snapshot como fonte do estado atual do André OS. Analise o que precisa de atenção agora: atrasos, pendências, gargalos, inconsistências, riscos, próximos passos e itens que podem ser ignorados por enquanto. Não crie tarefas automaticamente. Se sugerir ações, priorize poucas e concretas.\n\n` +
+      `Use este snapshot como fonte do estado atual do André OS. Analise o que precisa de atenção agora: atrasos, pendências, gargalos, inconsistências, riscos, próximos passos e itens que podem ser ignorados por enquanto. Não crie tarefas automaticamente. Se sugerir ações, priorize poucas e concretas. Respeite sourceSemantics antes de concluir que uma fonte está incompleta. Em especial, "Campanhas · operação" é somente a camada operacional persistida e não representa o catálogo anual completo.\n\n` +
       `Gerado em: ${startedAt.toLocaleString('pt-BR')}\n` +
       `Fontes disponíveis: ${available.length}/${results.length}\n\n` +
       `--- INÍCIO DO SNAPSHOT ---\n` +
@@ -151,7 +152,7 @@
     const modal = document.createElement('div');
     modal.className = 'aos-eject-modal';
     modal.innerHTML = `<section class="aos-eject-dialog" role="dialog" aria-modal="true" aria-label="EJECT do André OS">
-      <header class="aos-eject-head"><div><small>ANDRÉ OS · EJECT</small><h2>Pacote de contexto para o ChatGPT</h2><p>Reúne o estado operacional atual, remove credenciais e mostra o texto antes de copiar.</p></div><button class="aos-eject-close" type="button" aria-label="Fechar">×</button></header>
+      <header class="aos-eject-head"><div><small>ANDRÉ OS · EJECT</small><h2>Pacote de contexto para o ChatGPT</h2><p>Reúne o estado operacional atual, remove credenciais e explica o papel de cada fonte antes da análise.</p></div><button class="aos-eject-close" type="button" aria-label="Fechar">×</button></header>
       <div class="aos-eject-body"><div class="aos-eject-status">Coletando as fontes do André OS…</div><textarea class="aos-eject-preview" readonly hidden></textarea><div class="aos-eject-actions"><button class="aos-eject-secondary" type="button">Fechar</button><button class="aos-eject-copy" type="button" disabled>Copiar EJECT</button></div></div>
     </section>`;
     document.body.appendChild(modal);
@@ -206,5 +207,9 @@
     if (event.key === 'Escape' && document.querySelector('.aos-eject-modal')) closeModal();
   });
 
-  window.AndreOSEject = Object.freeze({ buildSnapshot, safeClone, sources: SOURCES.map(([label, url]) => ({ label, url })) });
+  window.AndreOSEject = Object.freeze({
+    buildSnapshot,
+    safeClone,
+    sources: SOURCES.map(([label, url, meaning]) => ({ label, url, meaning })),
+  });
 })();
