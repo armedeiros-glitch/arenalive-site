@@ -32,6 +32,16 @@ const errorResponse = (error, fallback) => json({
   }),
 }, Number(error?.status) || 500);
 
+const preserveAdvancedStatusOnContact = async (store, id, changes) => {
+  if (!changes || typeof changes !== 'object' || changes.status !== 'contacted') return changes;
+  const current = await readLeadDocument(store);
+  const existing = current.data.find((lead) => lead.id === String(id || ''));
+  if (!existing || !['qualified', 'discarded'].includes(existing.status)) return changes;
+  const protectedChanges = { ...changes };
+  delete protectedChanges.status;
+  return protectedChanges;
+};
+
 export async function onRequestGet({ env }) {
   const store = env.PLANET_HUB_DATA;
   if (!store) {
@@ -76,7 +86,8 @@ export async function onRequestPut({ env, request }) {
   if (parsed.error) return parsed.error;
 
   try {
-    const result = await updateLeadById(store, parsed.payload?.id, parsed.payload?.changes);
+    const changes = await preserveAdvancedStatusOnContact(store, parsed.payload?.id, parsed.payload?.changes);
+    const result = await updateLeadById(store, parsed.payload?.id, changes);
     return json({ lead: result.lead, revision: result.revision });
   } catch (error) {
     return errorResponse(error, 'Falha ao atualizar o lead da Planet.');
