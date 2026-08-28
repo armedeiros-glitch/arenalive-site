@@ -90,14 +90,14 @@ const responseDocument = (document, reference = new Date()) => ({
   updatedAt: document.updatedAt || null,
   catalogVersion: '2026-v1',
   catalog: CAMPAIGN_CATALOG_2026,
-  overrides: document.data,
-  data: mergeCampaignCatalog(document.data, reference),
+  campaigns: mergeCampaignCatalog(document.data, reference),
+  data: document.data,
   storage: 'shared',
 });
 
 export async function onRequestGet({ env }) {
   if (!env.PLANET_HUB_DATA) {
-    return json({ error: 'PLANET_HUB_DATA não configurado.', data: [], catalog: CAMPAIGN_CATALOG_2026, storage: 'local' }, 503);
+    return json({ error: 'PLANET_HUB_DATA não configurado.', data: [], catalog: CAMPAIGN_CATALOG_2026, campaigns: CAMPAIGN_CATALOG_2026, storage: 'local' }, 503);
   }
 
   try {
