@@ -5,9 +5,9 @@ const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), '
 const source = read('planet-hub/assets/andre-os-eject-v1.js');
 const index = read('index.html');
 
-assert.match(index, /andre-os-eject-v1\.js\?v=20260828-2/,
+assert.match(index, /andre-os-eject-v1\.js\?v=20260828-3/,
   'index deve carregar o EJECT com versão de cache explícita');
-assert.match(source, /const VERSION = '20260828-2'/);
+assert.match(source, /const VERSION = '20260828-3'/);
 assert.match(source, /data-andre-os-eject/,
   'EJECT deve ter owner visual único');
 assert.match(source, /Copiar EJECT/,
@@ -38,6 +38,10 @@ assert.match(source, /\/api\/radar\/today/,
   'Radar deve entrar no snapshot');
 assert.match(source, /\/api\/sults\/chamados\?start=0&limit=100/,
   'Chamados devem entrar no snapshot');
+assert.match(source, /\/api\/sults\/implantacoes\?start=0&limit=100&scope=all/,
+  'EJECT deve pedir explicitamente o histórico completo das implantações SULTS');
+assert.match(source, /incluindo histórico fora do escopo operacional/,
+  'semântica do EJECT deve explicar por que usa scope=all');
 assert.match(source, /\/api\/hub\/inauguracoes/,
   'Inaugurações devem entrar no snapshot');
 assert.match(source, /\/api\/hub\/demandas-internas/,
@@ -57,4 +61,4 @@ assert.doesNotMatch(source, /localStorage\.setItem|sessionStorage\.setItem/,
 assert.doesNotMatch(source, /MutationObserver/,
   'EJECT não deve observar o DOM continuamente');
 
-console.log('André OS EJECT: catálogo, operação, segurança, cópia e somente-leitura validados.');
+console.log('André OS EJECT: catálogo, operação, histórico SULTS, segurança, cópia e somente-leitura validados.');

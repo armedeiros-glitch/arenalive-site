@@ -47,6 +47,7 @@ jobs:
 
           fetch_asset '/planet-hub/assets/radar-data-v1.js?v=20260828-1' /tmp/radar-data.js 'ticketHasAndreSupport'
           fetch_asset '/planet-hub/assets/inauguration-owner-rules-v1.js?v=20260828-1' /tmp/inauguration-owner-rules.js 'Enviar contato/indicação de Social Media local'
+          fetch_asset '/planet-hub/assets/andre-os-eject-v1.js?v=20260828-3' /tmp/andre-os-eject.js 'implantacoes?start=0&limit=100&scope=all'
 
       - name: Verificar contrato público de sessão
         shell: bash
