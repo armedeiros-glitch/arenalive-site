@@ -22,7 +22,7 @@ assert.equal(campaignId({ start: '2026-10-31', name: 'Halloween Planet' }), '202
 
 const sourceBlock = unifiedHub.match(/const campaigns = \[([\s\S]*?)\n  \]\.map\(\(\[start, end, name, type, note\]\)/)?.[1];
 assert.ok(sourceBlock, 'teste deve localizar o catálogo legado que monta o calendário visual');
-const legacyRows = vm.runInNewContext(`[${sourceBlock}]`);
+const legacyRows = JSON.parse(JSON.stringify(vm.runInNewContext(`[${sourceBlock}]`)));
 const legacyCatalog = legacyRows.map(([start, end, name, type, note]) => ({ start, end, name, type, note }));
 const canonicalWithoutIds = CAMPAIGN_CATALOG_2026.map(({ id, ...campaign }) => campaign);
 assert.deepEqual(canonicalWithoutIds, legacyCatalog,
