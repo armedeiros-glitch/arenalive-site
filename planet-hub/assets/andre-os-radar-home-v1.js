@@ -9,7 +9,7 @@
     const link = document.createElement('link');
     link.id = STYLE_ID;
     link.rel = 'stylesheet';
-    link.href = '/planet-hub/assets/andre-os-radar-home-v1.css?v=20260807-1';
+    link.href = '/planet-hub/assets/andre-os-radar-home-v1.css?v=20260828-1';
     document.head.appendChild(link);
   };
 
@@ -36,7 +36,7 @@
     if (shortcuts && shortcuts.dataset.radarAndreShortcuts !== '1') {
       shortcuts.dataset.radarAndreShortcuts = '1';
       shortcuts.innerHTML = `
-        <button type="button" data-radar-refresh-home><i aria-hidden="true">↻</i><span><strong>Atualizar foco</strong><small>Ler novamente o Radar André</small></span></button>
+        <button type="button" data-radar-refresh-home><i aria-hidden="true">↻</i><span><strong>Atualizar foco</strong><small>Ler Radar pessoal e atenção operacional</small></span></button>
         <button type="button" data-home-destination="planet"><i aria-hidden="true">▦</i><span><strong>Abrir Planet Chocolate</strong><small>Entrar na operação de trabalho</small></span></button>`;
     }
     return root;
@@ -56,6 +56,7 @@
     const diff = Math.round((due - now) / 86400000);
     if (diff < 0) return `Atrasada há ${Math.abs(diff)}d`;
     if (diff === 1) return 'Amanhã';
+    if (diff > 1 && diff <= 7) return `Em ${diff} dias`;
     return new Intl.DateTimeFormat('pt-BR').format(due);
   };
   const taskMeta = (task) => [
@@ -64,36 +65,101 @@
     dueLabel(task.due),
   ].filter(Boolean).join(' · ');
 
-  const renderLoading = (root) => {
-    root.innerHTML = `<div class="aos-radar-loading"><small>RADAR ANDRÉ</small><strong>Escolhendo o próximo foco…</strong><span>Fonte única: Todoist via Radar André.</span></div>`;
+  const operationalRoleLabel = (item) => ({
+    mine: 'MINHA AÇÃO',
+    follow_up: 'COBRANÇA',
+    tracking: 'ACOMPANHAR',
+  }[item?.role] || 'OPERAÇÃO');
+
+  const loadOperational = async (force = false) => {
+    const service = window.AndreOSOperationalAttention;
+    if (!service?.refresh) {
+      return { items: [], total: 0, sourceErrors: ['Operação'], unavailable: true };
+    }
+    return service.refresh({ force });
   };
 
-  const renderEmpty = (root) => {
-    root.innerHTML = `
-      <section class="aos-radar-focus-card is-empty">
-        <small>RADAR ANDRÉ</small>
-        <h2>Nada pendente no Radar</h2>
-        <p>Não encontrei tarefas ativas na fila oficial do Radar André.</p>
-        <button type="button" data-radar-refresh-home>Atualizar Radar</button>
+  const operationalMarkup = (snapshot = {}) => {
+    const items = Array.isArray(snapshot.items) ? snapshot.items.slice(0, 3) : [];
+    const total = Number(snapshot.total || items.length || 0);
+    const errors = Array.isArray(snapshot.sourceErrors) ? snapshot.sourceErrors : [];
+
+    if (snapshot.unavailable) {
+      return `
+        <section class="aos-radar-operation-section is-warning">
+          <header><small>OPERAÇÃO PLANET</small><strong>Leitura indisponível</strong></header>
+          <p>O Radar pessoal continua independente. Não consegui confirmar a atenção operacional agora.</p>
+        </section>`;
+    }
+
+    if (!total) {
+      return `
+        <section class="aos-radar-operation-section is-clear">
+          <header><small>OPERAÇÃO PLANET</small><strong>Sem atenção imediata</strong></header>
+          <p>Nenhum item operacional entrou nos critérios de prazo, prioridade ou cobrança agora.${errors.length ? ` ${esc(errors.length)} fonte(s) falharam na leitura.` : ''}</p>
+        </section>`;
+    }
+
+    return `
+      <section class="aos-radar-operation-section">
+        <header><small>OPERAÇÃO PLANET</small><strong>${total} ponto${total === 1 ? '' : 's'} de atenção</strong></header>
+        <div class="aos-radar-operation-list">
+          ${items.map((item) => `
+            <article class="aos-radar-operation-item">
+              <b>${esc(operationalRoleLabel(item))}</b>
+              <span><strong>${esc(item.title || 'Item operacional')}</strong><small>${esc([item.origin, dueLabel(item.attentionDate || item.followUpDate || item.dueDate)].filter(Boolean).join(' · '))}</small></span>
+            </article>`).join('')}
+        </div>
+        <button type="button" class="aos-radar-operation-open" data-home-destination="planet">Abrir operação da Planet</button>
       </section>`;
   };
 
-  const renderUnavailable = (root, payload = {}) => {
+  const sideMarkup = (secondary = [], operational = {}) => `
+    <aside class="aos-radar-secondary" aria-label="Radar pessoal e atenção operacional">
+      ${secondary.length ? `
+        <section class="aos-radar-personal-next">
+          <header><small>DEPOIS DO FOCO</small><strong>${secondary.length} próxima${secondary.length === 1 ? '' : 's'}</strong></header>
+          ${secondary.map((task, index) => `
+            <article>
+              <b>${index + 2}</b>
+              <span><strong>${esc(task.title || 'Tarefa sem título')}</strong><small>${esc(taskMeta(task))}</small></span>
+            </article>`).join('')}
+        </section>` : ''}
+      ${operationalMarkup(operational)}
+    </aside>`;
+
+  const renderLoading = (root) => {
+    root.innerHTML = `<div class="aos-radar-loading"><small>ANDRÉ OS</small><strong>Atualizando o que merece atenção…</strong><span>Radar pessoal e operação continuam como fontes separadas.</span></div>`;
+  };
+
+  const renderEmpty = (root, operational = {}) => {
+    root.innerHTML = `
+      <section class="aos-radar-focus-card is-empty">
+        <small>RADAR PESSOAL</small>
+        <h2>Radar pessoal sem pendências</h2>
+        <p>Não encontrei tarefas ativas na fila oficial do Radar André. A situação da Planet é mostrada separadamente ao lado.</p>
+        <button type="button" data-radar-refresh-home>Atualizar Radar</button>
+      </section>
+      ${sideMarkup([], operational)}`;
+  };
+
+  const renderUnavailable = (root, payload = {}, operational = {}) => {
     const notConfigured = payload.code === 'RADAR_NOT_CONFIGURED';
     root.innerHTML = `
       <section class="aos-radar-focus-card is-warning">
-        <small>RADAR ANDRÉ</small>
-        <h2>${notConfigured ? 'Radar pessoal ainda não conectado' : 'Não consegui ler o Radar agora'}</h2>
+        <small>RADAR PESSOAL</small>
+        <h2>${notConfigured ? 'Radar pessoal ainda não conectado' : 'Não consegui ler o Radar pessoal agora'}</h2>
         <p>${notConfigured
-          ? 'A Home não vai usar chamados do SULTS como substituto das suas tarefas.'
-          : 'Mantive a Home sem inventar prioridades a partir da operação da Planet.'}</p>
+          ? 'Chamados e dados da Planet continuam separados e não serão usados como substitutos das suas tarefas.'
+          : 'A operação pode continuar aparecendo ao lado sem virar tarefa pessoal.'}</p>
         <button type="button" data-radar-refresh-home>Tentar novamente</button>
-      </section>`;
+      </section>
+      ${sideMarkup([], operational)}`;
   };
 
-  const renderTasks = (root, payload, mode = 'today') => {
+  const renderTasks = (root, payload, mode = 'today', operational = {}) => {
     const tasks = Array.isArray(payload.tasks) ? payload.tasks : [];
-    if (!tasks.length) return renderEmpty(root);
+    if (!tasks.length) return renderEmpty(root, operational);
     const recommendedId = String(payload.recommended_task_id || tasks[0]?.id || '');
     const focus = tasks.find((task) => String(task.id) === recommendedId) || tasks[0];
     const secondary = tasks.filter((task) => String(task.id) !== String(focus.id)).slice(0, 3);
@@ -101,19 +167,12 @@
 
     root.innerHTML = `
       <section class="aos-radar-focus-card">
-        <header><div><small>🎯 ${isToday ? 'FOCO DE HOJE' : 'PRÓXIMO FOCO NO RADAR'}</small><span>${isToday ? 'Hoje' : dueLabel(focus.due)}</span></div></header>
+        <header><div><small>🎯 ${isToday ? 'FOCO PESSOAL DE HOJE' : 'PRÓXIMO FOCO PESSOAL'}</small><span>${isToday ? 'Hoje' : dueLabel(focus.due)}</span></div></header>
         <h2>${esc(focus.title || 'Tarefa sem título')}</h2>
         <div class="aos-radar-focus-meta">${esc(taskMeta(focus))}</div>
-        <p>${isToday ? 'Esta é a primeira tarefa vencida ou prevista para hoje na fila oficial.' : 'Não há tarefa vencida ou prevista para hoje. Esta é a próxima tarefa da fila oficial do Radar.'}</p>
+        <p>${isToday ? 'Esta é a primeira tarefa vencida ou prevista para hoje na fila oficial do Radar pessoal.' : 'Não há tarefa pessoal vencida ou prevista para hoje. Esta é a próxima da fila oficial.'}</p>
       </section>
-      <aside class="aos-radar-secondary" aria-label="Próximas tarefas do Radar">
-        <header><small>DEPOIS DO FOCO</small><strong>${secondary.length ? `${secondary.length} próximas` : 'Fila limpa'}</strong></header>
-        ${secondary.length ? secondary.map((task, index) => `
-          <article>
-            <b>${index + 2}</b>
-            <span><strong>${esc(task.title || 'Tarefa sem título')}</strong><small>${esc(taskMeta(task))}</small></span>
-          </article>`).join('') : '<div class="aos-radar-secondary-empty">Nenhuma outra tarefa na fila.</div>'}
-      </aside>`;
+      ${sideMarkup(secondary, operational)}`;
   };
 
   const getJson = async (url) => {
@@ -127,31 +186,40 @@
     return payload;
   };
 
-  const load = async () => {
+  const load = async (force = false) => {
     const root = claimHome();
     if (!root) return;
     const id = ++requestId;
     renderLoading(root);
 
+    const operationalPromise = loadOperational(force).catch(() => ({
+      items: [], total: 0, sourceErrors: ['Operação'], unavailable: true,
+    }));
+
     try {
       const todayPayload = await getJson('/api/radar/today');
       if (id !== requestId || !homeContent()) return;
+      const operational = await operationalPromise;
+      if (id !== requestId || !homeContent()) return;
       if (Array.isArray(todayPayload.tasks) && todayPayload.tasks.length) {
-        return renderTasks(root, todayPayload, 'today');
+        return renderTasks(root, todayPayload, 'today', operational);
       }
 
       const nextPayload = await getJson('/api/radar/next');
       if (id !== requestId || !homeContent()) return;
-      renderTasks(root, nextPayload, 'next');
+      renderTasks(root, nextPayload, 'next', operational);
     } catch (error) {
-      if (id === requestId && homeContent()) renderUnavailable(root, error?.payload || { code: 'RADAR_UNAVAILABLE' });
+      const operational = await operationalPromise;
+      if (id === requestId && homeContent()) {
+        renderUnavailable(root, error?.payload || { code: 'RADAR_UNAVAILABLE' }, operational);
+      }
     }
   };
 
   const schedule = () => requestAnimationFrame(() => { if (homeContent()) load(); });
   window.addEventListener('andre-os:home-page-rendered', (event) => { if (event.detail?.page === 'hoje') schedule(); });
   window.addEventListener('pmh:view-rendered', (event) => { if (event.detail?.page === 'hoje') schedule(); });
-  document.addEventListener('click', (event) => { if (event.target.closest?.('[data-radar-refresh-home]')) load(); });
+  document.addEventListener('click', (event) => { if (event.target.closest?.('[data-radar-refresh-home]')) load(true); });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedule, { once: true });
   else schedule();
