@@ -15,7 +15,8 @@ const expectedGlobalScripts = [
   '/planet-hub/assets/planet-expansion-v1.js?v=20260811-1',
   '/planet-hub/assets/andre-os-navigation-drawers-v1.js?v=20260811-1',
   '/planet-hub/assets/andre-os-home-pages-v1.js?v=20260807-3',
-  '/planet-hub/assets/andre-os-operational-reconciliation-v1.js?v=20260828-1',
+  '/planet-hub/assets/inauguration-timing-core-v1.js?v=20260828-1',
+  '/planet-hub/assets/andre-os-operational-reconciliation-v1.js?v=20260828-2',
   '/planet-hub/assets/andre-os-radar-home-v1.js?v=20260828-1',
   '/planet-hub/assets/planet-five-stars-v1.js?v=20260807-2',
   '/planet-hub/assets/planet-five-stars-data-v1.js?v=20260807-1',
@@ -30,6 +31,10 @@ assert.ok(sequenceBlock, 'SCRIPT_SEQUENCE deve continuar declarada no bootstrap'
 assert.ok(!sequenceBlock.includes('planet-acquisition-v1.js'), 'Aquisição não pode permanecer na sequência global');
 for (const src of expectedGlobalScripts) assert.ok(sequenceBlock.includes(src), `entrada global deve permanecer: ${src}`);
 assert.equal((sequenceBlock.match(/\/planet-hub\/assets\//g) || []).length, expectedGlobalScripts.length, 'nenhuma outra entrada global deve ser removida ou adicionada');
+assert.ok(
+  sequenceBlock.indexOf('inauguration-timing-core-v1.js') < sequenceBlock.indexOf('andre-os-operational-reconciliation-v1.js'),
+  'timing de inaugurações deve carregar antes da reconciliação operacional',
+);
 assert.match(hubSource, /const ACQUISITION_SCRIPT = '\/planet-hub\/assets\/planet-acquisition-v1\.js\?v=20260807-1'/);
 assert.match(hubSource, /currentView\(\) !== 'aquisicao'/, 'lazy load deve depender exclusivamente da rota Aquisição');
 assert.match(hubSource, /if \(acquisitionLoading\) return acquisitionLoading/, 'bootstrap deve compartilhar load já em andamento');
@@ -145,4 +150,4 @@ for (const route of ['#marketing', '#chamados']) {
   assert.equal(app.appended.filter((src) => src === ACQUISITION).length, 1, 'retorno a Aquisição não pode duplicar o asset');
 }
 
-console.log('Hub Access: Aquisição lazy por rota, entrada direta e retorno sem duplicação validados.');
+console.log('Hub Access: Aquisição lazy e timing operacional de inaugurações validados.');

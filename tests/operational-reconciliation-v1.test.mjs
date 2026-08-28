@@ -18,6 +18,16 @@ assert.match(home, /AndreOSOperationalAttention/,
   'Home deve consumir a camada de reconciliação operacional sem transformar operação em tarefa');
 assert.match(service, /PMHRadarData\.collect/,
   'reconciliação deve reaproveitar o RadarData operacional existente');
+assert.match(service, /INAUGURATIONS_API = '\/api\/hub\/inauguracoes'/,
+  'atenção operacional deve reaproveitar a fonte oficial de inaugurações');
+assert.match(service, /PMHInaugurationTiming\.attentionItems/,
+  'timing do checklist deve alimentar a atenção operacional');
+assert.match(service, /itemOwnership\(item\) === 'info'/,
+  'itens meramente informativos não devem virar atenção do André');
+assert.match(service, /roleFor[\s\S]*itemOwnership\(item\) === 'mine' \? 'mine' : 'tracking'/,
+  'atenção deve distinguir minha ação de acompanhamento');
+assert.match(service, /mergeTimedInaugurations/,
+  'timing das inaugurações deve herdar contexto salvo em vez de criar estado paralelo');
 assert.match(service, /sources\.contexts\?\.reliability !== 'fresh'/,
   'contextos só podem ser limpos quando a própria fonte de contextos estiver confiável');
 assert.match(service, /sources\[key\]\?\.reliability === 'fresh'/,
@@ -32,10 +42,12 @@ assert.match(radarData, /ticketHasAndreSupport/,
   'papel de acompanhamento do André deve considerar a lista de apoio do chamado');
 assert.match(radarData, /ownership: ticketOwnership\(item\)/,
   'chamados devem expor mine, tracking ou info em vez de tratar toda a fila como ação do André');
-assert.match(access, /andre-os-operational-reconciliation-v1\.js\?v=20260828-1/,
-  'bootstrap autenticado deve carregar a reconciliação antes da Home');
+assert.match(access, /inauguration-timing-core-v1\.js\?v=20260828-1/,
+  'bootstrap autenticado deve carregar o núcleo temporal das inaugurações');
+assert.match(access, /andre-os-operational-reconciliation-v1\.js\?v=20260828-2/,
+  'bootstrap autenticado deve invalidar o cache da reconciliação atualizada');
 assert.match(access, /andre-os-radar-home-v1\.js\?v=20260828-1/,
-  'bootstrap deve invalidar o cache da Home alterada');
+  'bootstrap deve manter a Home atual');
 
 class MemoryStore {
   constructor(document) {
@@ -93,4 +105,4 @@ const invalid = await onRequestPost({
 assert.equal(invalid.status, 400,
   'backend deve rejeitar escopos arbitrários para impedir limpeza ampla acidental');
 
-console.log('André OS: separação pessoal/operação, SULTS e reconciliação conservadora de contextos validados.');
+console.log('André OS: separação pessoal/operação, SULTS, timing e reconciliação conservadora validados.');

@@ -9,6 +9,7 @@
     campaigns: 'campaign-',
   });
   const CONTEXT_API = '/api/hub/radar-contextos';
+  const INAUGURATIONS_API = '/api/hub/inauguracoes';
   const MAX_VISIBLE = 5;
 
   let current = Object.freeze({
@@ -37,6 +38,7 @@
     .trim();
 
   const isAndre = (value) => /\bandre\b/.test(normalizeText(value));
+  const itemOwnership = (item) => item?.ownership || (isAndre(item?.responsible) ? 'mine' : 'tracking');
   const isDeferred = (item) => item?.operationalState && item.operationalState !== 'actionable';
   const followUpDue = (item) => {
     const followUp = cleanDate(item?.followUpDate);
@@ -51,7 +53,7 @@
 
   const attentionReason = (item) => {
     if (followUpDue(item)) return 'follow_up';
-    if (!isAndre(item?.responsible) || isDeferred(item)) return '';
+    if (isDeferred(item) || itemOwnership(item) === 'info') return '';
     const due = dueMeta(item?.dueDate);
     if (['late', 'today', 'week'].includes(due.bucket)) return 'due';
     if (Number(item?.priority ?? 3) <= 1) return 'priority';
@@ -59,9 +61,8 @@
   };
 
   const roleFor = (item, reason) => {
-    if (isAndre(item?.responsible)) return 'mine';
     if (reason === 'follow_up') return 'follow_up';
-    return 'tracking';
+    return itemOwnership(item) === 'mine' ? 'mine' : 'tracking';
   };
 
   const attentionDate = (item, reason) => reason === 'follow_up'
@@ -87,6 +88,46 @@
     })
     .filter(Boolean)
     .sort((a, b) => rank(a) - rank(b));
+
+  const loadTimedInaugurations = async () => {
+    if (!window.PMHInaugurationTiming?.attentionItems) return { items: [], error: 'Timing de inaugurações indisponível' };
+    try {
+      const response = await fetch(INAUGURATIONS_API, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
+      return {
+        items: window.PMHInaugurationTiming.attentionItems(Array.isArray(payload.data) ? payload.data : []),
+        error: '',
+      };
+    } catch (error) {
+      return { items: [], error: error instanceof Error ? error.message : String(error) };
+    }
+  };
+
+  const mergeTimedInaugurations = (snapshotItems, timedItems) => {
+    const items = Array.isArray(snapshotItems) ? snapshotItems : [];
+    const timed = Array.isArray(timedItems) ? timedItems : [];
+    if (!timed.length) return items;
+
+    const contextById = new Map(items
+      .filter((item) => String(item?.id || '').startsWith('inauguration-'))
+      .map((item) => [String(item.id), item]));
+    const nonInaugurations = items.filter((item) => !String(item?.id || '').startsWith('inauguration-'));
+    const enriched = timed.map((item) => {
+      const previous = contextById.get(String(item.id)) || {};
+      return {
+        ...item,
+        operationalState: previous.operationalState || 'actionable',
+        blockerReason: previous.blockerReason || '',
+        dependsOn: previous.dependsOn || '',
+        followUpDate: previous.followUpDate || '',
+        contextUpdatedAt: previous.contextUpdatedAt || '',
+        contextSuggestion: previous.contextSuggestion || null,
+        nextAction: previous.nextAction || item.nextAction || '',
+      };
+    });
+    return [...nonInaugurations, ...enriched];
+  };
 
   const postReconciliation = async (snapshot) => {
     const sources = snapshot?.sources || {};
@@ -133,18 +174,25 @@
       return publish(current);
     }
 
-    pending = window.PMHRadarData.collect({ force, maxAgeMs: 15_000 })
-      .then(async (snapshot) => {
-        const attention = deriveAttention(snapshot?.items);
+    pending = Promise.all([
+      window.PMHRadarData.collect({ force, maxAgeMs: 15_000 }),
+      loadTimedInaugurations(),
+    ])
+      .then(async ([snapshot, inaugurationTiming]) => {
+        const operationalItems = mergeTimedInaugurations(snapshot?.items, inaugurationTiming.items);
+        const attention = deriveAttention(operationalItems);
+        const sourceErrors = Array.isArray(snapshot?.errors) ? [...snapshot.errors] : [];
+        if (inaugurationTiming.error) sourceErrors.push('Timing de inaugurações');
+
         current = Object.freeze({
           items: attention.slice(0, MAX_VISIBLE),
           total: attention.length,
           loadedAt: snapshot?.loadedAt || new Date().toISOString(),
-          sourceErrors: Array.isArray(snapshot?.errors) ? snapshot.errors : [],
+          sourceErrors,
           unavailable: false,
         });
         publish(current);
-        await postReconciliation(snapshot).catch(() => null);
+        await postReconciliation({ ...snapshot, items: operationalItems }).catch(() => null);
         return current;
       })
       .catch((error) => {
@@ -168,5 +216,6 @@
     refresh,
     getSnapshot,
     deriveAttention,
+    mergeTimedInaugurations,
   });
 })();
