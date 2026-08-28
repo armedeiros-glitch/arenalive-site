@@ -6,7 +6,10 @@ if (!globalThis.crypto) globalThis.crypto = webcrypto;
 const webhook = await import('../functions/api/integrations/planet/rd/webhook/[secret].js');
 const notifications = await import('../functions/api/hub/planet/notifications.js');
 const { readLeadDocument } = await import('../functions/_lib/planet-leads.js');
-const { readNotificationDocument } = await import('../functions/_lib/planet-notifications.js');
+const {
+  readNotificationDocument,
+  writeNotification,
+} = await import('../functions/_lib/planet-notifications.js');
 
 class MemoryKv {
   constructor() { this.data = new Map(); }
@@ -74,6 +77,7 @@ assert.equal(firstMovementResponse.status, 200);
 const firstMovement = await firstMovementResponse.json();
 assert.equal(firstMovement.duplicate, true);
 assert.deepEqual(firstMovement.changes, ['etapa do funil']);
+assert.deepEqual(firstMovement.notificationChanges, ['etapa do funil']);
 assert.equal(firstMovement.notification.created, true);
 assert.equal(firstMovement.notification.grouped, false);
 assert.equal(firstMovement.notification.unread, 2);
@@ -90,9 +94,9 @@ assert.equal(secondMovement.notification.created, true);
 assert.equal(secondMovement.notification.grouped, true);
 assert.equal(secondMovement.notification.unread, 2);
 
-const leadDocument = await readLeadDocument(store);
+let leadDocument = await readLeadDocument(store);
 assert.equal(leadDocument.data.length, 1);
-const lead = leadDocument.data[0];
+let lead = leadDocument.data[0];
 assert.equal(lead.name, 'Maria Planet');
 assert.equal(lead.phone, '47999991111');
 assert.equal(lead.city, 'Joinville');
@@ -101,7 +105,7 @@ assert.equal(lead.assignedTo, 'Comercial Planet');
 assert.equal(lead.rdStage, 'Negociação');
 assert.equal(lead.history.length, 3);
 
-const notificationDocument = await readNotificationDocument(store);
+let notificationDocument = await readNotificationDocument(store);
 assert.equal(notificationDocument.data.length, 2);
 const movementNotification = notificationDocument.data.find((item) => item.type === 'lead.updated');
 assert.ok(movementNotification);
@@ -118,9 +122,50 @@ const repeated = await (await postWebhook({
 assert.equal(repeated.notification.created, false);
 assert.equal(repeated.notification.reason, 'no_relevant_changes');
 
+const lowSignal = await (await postWebhook({
+  lead: {
+    uuid: 'rd-contact-1',
+    email: 'maria@planet.com',
+    funnel: { origin: 'Google Ads' },
+  },
+})).json();
+assert.deepEqual(lowSignal.changes, ['origem']);
+assert.deepEqual(lowSignal.notificationChanges, []);
+assert.equal(lowSignal.notification.created, false,
+  'mudança só de origem deve atualizar o cadastro sem tocar o sino');
+assert.equal(lowSignal.notification.reason, 'low_signal_changes');
+
+leadDocument = await readLeadDocument(store);
+lead = leadDocument.data[0];
+assert.equal(lead.origin, 'Google Ads', 'origem continua sendo sincronizada no cadastro');
+assert.equal(lead.history.length, 4, 'auditoria bruta continua preservada');
+notificationDocument = await readNotificationDocument(store);
+assert.equal(notificationDocument.data.length, 2,
+  'mudança de baixo sinal nova não deve persistir notificação operacional');
+
+await writeNotification(store, {
+  id: 'notification-old-origin-noise',
+  type: 'lead.updated',
+  priority: 'medium',
+  title: 'Lead movimentado no RD',
+  summary: 'Maria Planet · origem',
+  leadId: lead.id,
+  leadName: lead.name,
+  changes: ['origem'],
+  createdAt: '2026-08-20T12:00:00.000Z',
+  updatedAt: '2026-08-20T12:00:00.000Z',
+});
+
+const rawWithLegacyNoise = await readNotificationDocument(store);
+assert.equal(rawWithLegacyNoise.data.length, 3,
+  'notificação antiga permanece armazenada para rastreabilidade');
+
 const notificationList = await (await notifications.onRequestGet({ env })).json();
-assert.equal(notificationList.unread, 2);
-assert.equal(notificationList.data.length, 2);
+assert.equal(notificationList.unread, 2,
+  'ruído antigo de nome/origem não deve inflar o contador');
+assert.equal(notificationList.data.length, 2,
+  'ruído antigo de nome/origem não deve aparecer no sino');
+assert.equal(notificationList.data.some((item) => item.id === 'notification-old-origin-noise'), false);
 
 const afterRead = await (await notifications.onRequestPut({
   env,
@@ -130,6 +175,7 @@ const afterRead = await (await notifications.onRequestPut({
     body: JSON.stringify({ action: 'read', id: movementNotification.id }),
   }),
 })).json();
-assert.equal(afterRead.unread, 1);
+assert.equal(afterRead.unread, 1,
+  'respostas de mutação também devem usar o contador sem ruído');
 
-console.log('Planet RD → núcleo compartilhado por item → notificações: integration tests passed');
+console.log('Planet RD → cadastro auditável → notificações com sinal operacional: integration tests passed');

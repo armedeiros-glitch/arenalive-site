@@ -6,6 +6,7 @@ export const MAX_NOTIFICATIONS = 1000;
 
 const NOTIFICATION_TYPES = new Set(['lead.new', 'lead.updated', 'lead.alert']);
 const NOTIFICATION_PRIORITIES = new Set(['high', 'medium', 'low']);
+const LOW_SIGNAL_MOVEMENT_CHANGES = new Set(['nome', 'origem']);
 
 export const notificationStorageKey = (id) => `${NOTIFICATION_STORAGE_PREFIX}${cleanText(id, 120)}`;
 
@@ -31,6 +32,13 @@ export const normalizeNotification = (item = {}) => {
     updatedAt: cleanText(item.updatedAt, 40) || createdAt,
   };
 };
+
+export const isLowSignalMovement = (item = {}) => (
+  item.type === 'lead.updated'
+  && Array.isArray(item.changes)
+  && item.changes.length > 0
+  && item.changes.every((label) => LOW_SIGNAL_MOVEMENT_CHANGES.has(cleanText(label, 80).toLowerCase()))
+);
 
 const readLegacyNotificationDocument = async (store) => {
   const stored = await store.get(NOTIFICATIONS_STORAGE_KEY, { type: 'json' });
@@ -117,7 +125,13 @@ export const appendNotification = async (store, input) => {
   return { notification, document };
 };
 
-export const summarizeNotifications = (document) => ({
-  ...document,
-  unread: document.data.filter((item) => !item.readAt && !item.resolvedAt).length,
-});
+export const summarizeNotifications = (document) => {
+  const data = (Array.isArray(document?.data) ? document.data : [])
+    .filter((item) => !isLowSignalMovement(item));
+  return {
+    ...document,
+    data,
+    updatedAt: data[0]?.updatedAt || document?.updatedAt || null,
+    unread: data.filter((item) => !item.readAt && !item.resolvedAt).length,
+  };
+};

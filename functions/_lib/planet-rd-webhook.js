@@ -5,13 +5,24 @@ import {
   upsertLead,
 } from './planet-leads.js';
 import {
+  isLowSignalMovement,
   normalizeNotification,
   readNotificationDocument,
+  summarizeNotifications,
   writeNotificationDocument,
 } from './planet-notifications.js';
 
 const MAX_BODY_BYTES = 128_000;
 const MOVEMENT_GROUP_WINDOW_MS = 15 * 60 * 1000;
+const NOTIFICATION_CHANGE_KEYS = new Set([
+  'phone',
+  'email',
+  'city',
+  'state',
+  'conversion',
+  'assignedTo',
+  'rdStage',
+]);
 
 const headers = {
   'Content-Type': 'application/json; charset=UTF-8',
@@ -118,6 +129,9 @@ const notificationForNewLead = (lead) => {
   });
 };
 
+const notificationChanges = (changes) => (Array.isArray(changes) ? changes : [])
+  .filter((item) => NOTIFICATION_CHANGE_KEYS.has(item?.key));
+
 const upsertMovementNotification = (items, lead, changes) => {
   const timestamp = nowIso();
   const labels = changes.map((item) => item.label);
@@ -127,6 +141,7 @@ const upsertMovementNotification = (items, lead, changes) => {
     && item.leadId === lead.id
     && !item.readAt
     && !item.resolvedAt
+    && !isLowSignalMovement(item)
     && Date.parse(item.updatedAt || item.createdAt || 0) >= cutoff
   ));
   const highPriority = changes.some((item) => ['assignedTo', 'rdStage'].includes(item.key));
@@ -208,17 +223,20 @@ export async function onRequestPost({ env, request }) {
       missingContactMessage: 'Lead sem telefone e e-mail.',
     });
 
+    const movementChanges = notificationChanges(result.changes);
     let notification = {
       created: false,
       grouped: false,
-      reason: result.duplicate && !result.changes.length ? 'no_relevant_changes' : 'not_created',
+      reason: result.duplicate
+        ? (result.changes.length ? 'low_signal_changes' : 'no_relevant_changes')
+        : 'not_created',
     };
 
-    if (!result.duplicate || result.changes.length) {
+    if (!result.duplicate || movementChanges.length) {
       try {
         const currentNotifications = await readNotificationDocument(env.PLANET_HUB_DATA);
         const notificationResult = result.duplicate
-          ? upsertMovementNotification(currentNotifications.data, result.lead, result.changes)
+          ? upsertMovementNotification(currentNotifications.data, result.lead, movementChanges)
           : {
               data: [notificationForNewLead(result.lead), ...currentNotifications.data],
               grouped: false,
@@ -228,11 +246,12 @@ export async function onRequestPost({ env, request }) {
           notificationResult.data,
         );
         const createdNotification = notificationResult.notification || notificationDocument.data[0];
+        const visibleNotifications = summarizeNotifications(notificationDocument);
         notification = {
           created: true,
           grouped: Boolean(notificationResult.grouped),
           id: createdNotification?.id || '',
-          unread: notificationDocument.data.filter((item) => !item.readAt && !item.resolvedAt).length,
+          unread: visibleNotifications.unread,
         };
       } catch (error) {
         notification = {
@@ -247,6 +266,7 @@ export async function onRequestPost({ env, request }) {
       ok: true,
       duplicate: result.duplicate,
       changes: result.changes.map((item) => item.label),
+      notificationChanges: movementChanges.map((item) => item.label),
       leadId: result.lead.id,
       revision: result.revision,
       notification,
