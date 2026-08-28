@@ -147,9 +147,12 @@ const readDocument = async (store) => {
   const data = mergeStorage(legacy.data, v2Records);
   const versionMap = await buildVersionMap(data);
   return {
-    revision: encodeRevision(versionMap),
-    updatedAt: data[0]?.updatedAt || legacy.updatedAt || null,
-    data,
+    document: {
+      revision: encodeRevision(versionMap),
+      updatedAt: data[0]?.updatedAt || legacy.updatedAt || null,
+      data,
+    },
+    tombstonedIds: new Set(v2Records.filter((record) => record.deleted).map((record) => record.id)),
   };
 };
 
@@ -176,7 +179,8 @@ export async function onRequestGet({ env }) {
   }
 
   try {
-    return json({ ...(await readDocument(store)), storage: 'shared' });
+    const { document } = await readDocument(store);
+    return json({ ...document, storage: 'shared' });
   } catch (error) {
     return json({
       error: 'Falha ao carregar as demandas internas.',
@@ -203,7 +207,7 @@ export async function onRequestPut({ env, request }) {
   if (payload.data.length > MAX_ITEMS) return json({ error: `Limite de ${MAX_ITEMS} demandas excedido.` }, 400);
 
   try {
-    const current = await readDocument(store);
+    const { document: current, tombstonedIds } = await readDocument(store);
     const baseVersions = payload.baseRevision ? decodeRevision(payload.baseRevision) : {};
     if (payload.baseRevision && !baseVersions) {
       return json({
@@ -213,7 +217,9 @@ export async function onRequestPut({ env, request }) {
       }, 409);
     }
 
-    const incoming = payload.data.map(normalizeDemand);
+    const incoming = payload.data
+      .map(normalizeDemand)
+      .filter((item) => !tombstonedIds.has(item.id));
     const incomingById = new Map(incoming.map((item) => [item.id, item]));
     const currentById = new Map(current.data.map((item) => [item.id, item]));
     const currentVersions = await buildVersionMap(current.data);
