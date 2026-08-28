@@ -41,11 +41,24 @@ jobs:
             grep -Fq "$marker" "$output"
           }
 
+          python - <<'PY'
+          home = open('/tmp/home.html', encoding='utf-8').read()
+          policy = 'inauguration-core-policy-v1.js?v=20260828-1'
+          access = 'hub-access-v1.js?v=20260828-4'
+          assert policy in home, 'política canônica não publicada no HTML'
+          assert access in home, 'bootstrap não publicado no HTML'
+          assert home.index(policy) < home.index(access), 'política canônica precisa carregar antes do bootstrap'
+          print('inauguration core policy boot order ok')
+          PY
+
           fetch_asset '/planet-hub/assets/hub-access-v1.js?v=20260828-4' /tmp/hub-access.js 'planet-expansion-contact-trail-v1.js?v=20260828-1'
           grep -Fq 'andre-os-operational-reconciliation-v1.js?v=20260828-2' /tmp/hub-access.js
           grep -Fq 'andre-os-radar-home-v1.js?v=20260828-1' /tmp/hub-access.js
 
           fetch_asset '/planet-hub/assets/radar-data-v1.js?v=20260828-1' /tmp/radar-data.js 'ticketHasAndreSupport'
+          fetch_asset '/planet-hub/assets/inauguration-core-policy-v1.js?v=20260828-1' /tmp/inauguration-core-policy.js 'PlanetInaugurationCorePolicy'
+          grep -Fq 'Checklist de 17 etapas e seis ações inaugurais' /tmp/inauguration-core-policy.js
+          grep -Fq 'operationalActive' /tmp/inauguration-core-policy.js
           fetch_asset '/planet-hub/assets/inauguration-owner-rules-v1.js?v=20260828-1' /tmp/inauguration-owner-rules.js 'Enviar contato/indicação de Social Media local'
           fetch_asset '/planet-hub/assets/andre-os-eject-v1.js?v=20260828-3' /tmp/andre-os-eject.js 'implantacoes?start=0&limit=100&scope=all'
 
