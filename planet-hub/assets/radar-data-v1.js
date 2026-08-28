@@ -32,6 +32,8 @@
     .replace(/\s+/g, ' ')
     .trim();
 
+  const isAndre = (value) => /\bandre\b/.test(normalizeText(value));
+
   const asDate = (value) => {
     const raw = cleanDate(value);
     if (!raw) return null;
@@ -67,8 +69,26 @@
   };
 
   const ticketDue = (item) => item.stipulatedResolutionAt || item.plannedResolutionAt || '';
+  const ticketSituationId = (item) => {
+    const raw = item?.situation;
+    if (raw && typeof raw === 'object') return Number(raw.id || item.situationId || 0);
+    return Number(raw || item?.situationId || 0);
+  };
+  const ticketStatus = (item) => {
+    if (item?.situation && typeof item.situation === 'object' && item.situation.name) return item.situation.name;
+    const situationId = ticketSituationId(item);
+    return situationId ? `Situação ${situationId}` : 'Aberta';
+  };
+  const ticketHasAndreSupport = (item) => (Array.isArray(item?.support) ? item.support : [])
+    .some((support) => isAndre(support?.pessapoiooa?.nome || support?.person?.name || support?.name));
+  const ticketOwnership = (item) => {
+    if (isAndre(item?.responsible)) return 'mine';
+    if (isAndre(item?.requester) || ticketHasAndreSupport(item)) return 'tracking';
+    return 'info';
+  };
+  const ownershipFromResponsible = (value) => isAndre(value) ? 'mine' : 'tracking';
   const ticketFinished = (item) => Boolean(
-    item.concludedAt || item.resolvedAt || [2, 3].includes(Number(item.situation?.id || item.situationId)),
+    item.concludedAt || item.resolvedAt || item.completedAt || [2, 3].includes(ticketSituationId(item)),
   );
 
   const fromTickets = (items) => items
@@ -82,8 +102,9 @@
       context: item.unit || item.department || 'Chamado do Marketing',
       responsible: item.responsible || 'Não definido',
       requester: item.requester || '',
-      situationId: Number(item.situation?.id || item.situationId || 0),
-      status: item.situation?.name || 'Aberta',
+      situationId: ticketSituationId(item),
+      status: ticketStatus(item),
+      ownership: ticketOwnership(item),
       dueDate: cleanDate(ticketDue(item)),
       priority: ticketDue(item) && (dayDiff(ticketDue(item)) ?? 1) < 0 ? 0 : 2,
       updatedAt: item.lastChangeAt || item.openedAt || '',
@@ -107,6 +128,7 @@
         context: item.location || 'Implantação acompanhada',
         responsible: item.responsible || 'Não definido',
         status: checklist.length ? `${done}/${checklist.length} etapas` : 'Em acompanhamento',
+        ownership: ownershipFromResponsible(item.responsible),
         dueDate: cleanDate(item.openingDate),
         priority: item.openingDate && (dayDiff(item.openingDate) ?? 99) <= 7 ? 1 : 3,
         updatedAt: item.updatedAt || '',
@@ -133,6 +155,7 @@
       context: item.category || 'Demanda interna',
       responsible: item.responsible || 'Não definido',
       status: ({ new: 'Nova', in_progress: 'Em andamento', waiting: 'Aguardando' }[item.status] || 'Ativa'),
+      ownership: ownershipFromResponsible(item.responsible),
       dueDate: cleanDate(item.dueDate),
       priority: ({ urgent: 0, high: 1, normal: 2, low: 3 }[item.priority] ?? 2),
       updatedAt: item.updatedAt || '',
@@ -152,6 +175,7 @@
       context: [item.category, item.campaign, item.unit].filter(Boolean).join(' · ') || 'Biblioteca de conteúdos',
       responsible: item.responsible || 'Não definido',
       status: ({ planejamento: 'Planejamento', producao: 'Em produção', aprovacao: 'Em aprovação' }[item.status] || 'Ativo'),
+      ownership: ownershipFromResponsible(item.responsible),
       dueDate: cleanDate(item.dueDate),
       priority: item.status === 'aprovacao' ? 1 : item.status === 'producao' ? 2 : 3,
       updatedAt: item.updatedAt || '',
@@ -176,13 +200,13 @@
       context: item.nextMilestone || 'Campanha do calendário',
       responsible: item.responsible || 'Não definido',
       status: ({ planejamento: 'Planejamento', producao: 'Em produção', aprovacao: 'Em aprovação', ativa: 'Ativa' }[item.status] || 'Ativa'),
+      ownership: ownershipFromResponsible(item.responsible),
       dueDate: cleanDate(item.milestoneDate || campaignStart(item.id)),
       priority: item.status === 'ativa' ? 0 : item.status === 'aprovacao' ? 1 : 2,
       updatedAt: item.updatedAt || '',
       action: 'calendario',
     }));
 
-  const isAndre = (value) => /\bandre\b/.test(normalizeText(value));
   const responsibleMissing = (item) => !item.responsible || /não definido|sem responsável/i.test(item.responsible);
 
   const contextSuggestionFor = (item) => {
@@ -392,6 +416,7 @@
     dueDate: cleanDate(item.dueDate),
     priority: item.priority,
     updatedAt: item.updatedAt,
+    ownership: item.ownership || 'tracking',
     operationalState: item.operationalState || 'actionable',
     blockerReason: item.blockerReason || '',
     dependsOn: item.dependsOn || '',
