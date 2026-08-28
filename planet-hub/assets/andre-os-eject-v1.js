@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260828-2';
+  const VERSION = '20260828-3';
   const MAX_ARRAY_ITEMS = 500;
   const MAX_STRING = 6000;
   const SENSITIVE_KEY = /(token|secret|password|senha|authorization|cookie|api[_-]?key|access[_-]?key|refresh[_-]?token)/i;
@@ -9,7 +9,7 @@
   const SOURCES = [
     ['Radar pessoal · hoje', '/api/radar/today', 'Fonte oficial das tarefas pessoais do André. Não confundir com a atenção operacional da Planet.'],
     ['Chamados SULTS', '/api/sults/chamados?start=0&limit=100', 'Status oficial dos chamados. O André OS adiciona leitura e contexto, mas não altera automaticamente o status do SULTS.'],
-    ['Implantações SULTS', '/api/sults/implantacoes?start=0&limit=100', 'Leitura da origem SULTS para implantações.'],
+    ['Implantações SULTS', '/api/sults/implantacoes?start=0&limit=100&scope=all', 'Leitura completa da origem SULTS para auditoria de implantações, incluindo histórico fora do escopo operacional.'],
     ['Inaugurações · projetos', '/api/hub/inauguracoes', 'Projetos de inauguração do André OS, incluindo checklist e datas operacionais.'],
     ['Demandas internas', '/api/hub/demandas-internas', 'Demandas operacionais internas da Planet. Não são tarefas pessoais do Todoist/Radar André.'],
     ['Campanhas · catálogo e operação', '/api/hub/campanhas', 'Fonte combinada de campanhas. catalog contém o calendário oficial completo de 2026; data contém somente overrides operacionais persistidos; campaigns combina catálogo e overrides para auditoria. Uma campanha presente apenas no catálogo não deve ser tratada automaticamente como tarefa ou pendência operacional.'],
