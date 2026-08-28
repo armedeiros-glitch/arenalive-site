@@ -269,7 +269,7 @@ export async function onRequestGet({ env, request }) {
   const incomingUrl = new URL(request.url);
   const start = Math.max(0, Number.parseInt(incomingUrl.searchParams.get('start') || '0', 10) || 0);
   const limit = Math.min(100, Math.max(1, Number.parseInt(incomingUrl.searchParams.get('limit') || '100', 10) || 100));
-  const scope = incomingUrl.searchParams.get('scope') === 'operational' ? 'operational' : 'all';
+  const scope = incomingUrl.searchParams.get('scope') === 'all' ? 'all' : 'operational';
   const servedAt = new Date().toISOString();
   const [snapshot, status] = await Promise.all([readSnapshot(env), readStatus(env)]);
 
