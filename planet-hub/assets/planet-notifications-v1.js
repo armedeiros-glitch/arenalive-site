@@ -3,7 +3,8 @@
 
   const API = '/api/hub/planet/notifications';
   const LEADS_API = '/api/hub/planet/leads';
-  const state = { items: [], unread: 0, loading: false, error: '', open: false, filter: 'all' };
+  const RECENT_WINDOW_MS = 86400000;
+  const state = { items: [], unread: 0, unreadRecent: 0, loading: false, error: '', open: false, filter: 'all' };
 
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
@@ -20,6 +21,20 @@
     if (hours < 24) return `há ${hours}h`;
     const days = Math.floor(hours / 24);
     return `há ${days}d`;
+  };
+
+  const recentUnreadFrom = (items) => (Array.isArray(items) ? items : []).filter((item) => {
+    if (item.readAt || item.resolvedAt) return false;
+    const timestamp = Date.parse(item.updatedAt || item.createdAt || 0);
+    return Number.isFinite(timestamp) && Math.max(0, Date.now() - timestamp) < RECENT_WINDOW_MS;
+  }).length;
+
+  const applyUnreadCounts = (payload = {}) => {
+    state.unread = Number(payload.unread) || 0;
+    const providedRecent = Number(payload.unreadRecent);
+    state.unreadRecent = Number.isFinite(providedRecent)
+      ? Math.max(0, providedRecent)
+      : recentUnreadFrom(state.items);
   };
 
   const injectStyles = () => {
@@ -75,17 +90,20 @@
     if (!panel || !trigger || !badge) return;
 
     trigger.classList.toggle('active', state.open);
-    badge.hidden = state.unread <= 0;
-    badge.textContent = state.unread > 99 ? '99+' : String(state.unread || '');
+    badge.hidden = state.unreadRecent <= 0;
+    badge.textContent = state.unreadRecent > 99 ? '99+' : String(state.unreadRecent || '');
+    badge.title = state.unread > state.unreadRecent
+      ? `${state.unreadRecent} novas nas últimas 24h · ${state.unread} pendentes no histórico`
+      : `${state.unreadRecent} notificações não lidas nas últimas 24h`;
     panel.classList.toggle('open', state.open);
 
     const items = filteredItems();
-    const recent = items.filter((item) => Date.now() - Date.parse(item.updatedAt || item.createdAt || 0) < 86400000);
+    const recent = items.filter((item) => Date.now() - Date.parse(item.updatedAt || item.createdAt || 0) < RECENT_WINDOW_MS);
     const previous = items.filter((item) => !recent.includes(item));
 
     panel.innerHTML = `<header class="aos-notification-head">
       <div><h2>Notificações</h2></div>
-      <div>${state.unread ? '<button type="button" data-notification-read-all>Ler todas</button>' : ''}<button type="button" data-notification-close>×</button></div>
+      <div>${state.unread ? `<button type="button" data-notification-read-all>Ler todas (${state.unread})</button>` : ''}<button type="button" data-notification-close>×</button></div>
     </header>
     <nav class="aos-notification-filters">
       <button type="button" data-notification-filter="all" class="${state.filter === 'all' ? 'active' : ''}">Tudo</button>
@@ -134,10 +152,10 @@
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
       state.items = Array.isArray(payload.data) ? payload.data : [];
-      state.unread = Number(payload.unread) || 0;
+      applyUnreadCounts(payload);
       window.AndreOS?.events?.emit?.('notifications.updated', {
-        tenantId: 'planet', area: 'expansion', unread: state.unread, items: state.items,
-      }, { retain: true, dedupeKey: `${payload.revision || 'none'}:${state.unread}` });
+        tenantId: 'planet', area: 'expansion', unread: state.unread, unreadRecent: state.unreadRecent, items: state.items,
+      }, { retain: true, dedupeKey: `${payload.revision || 'none'}:${state.unread}:${state.unreadRecent}` });
     } catch (error) {
       state.error = error instanceof Error ? error.message : String(error);
     } finally {
@@ -155,7 +173,7 @@
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
     state.items = Array.isArray(payload.data) ? payload.data : state.items;
-    state.unread = Number(payload.unread) || 0;
+    applyUnreadCounts(payload);
     render();
   };
 
