@@ -10,6 +10,29 @@ export const cleanPhone = (value) => cleanText(value, 40).replace(/[^\d+]/g, '')
 export const nowIso = () => new Date().toISOString();
 export const leadStorageKey = (id) => `${LEAD_STORAGE_PREFIX}${cleanText(id, 120)}`;
 
+const stableIdentityHash = (value) => {
+  let first = 0x811c9dc5;
+  let second = 0x9e3779b9;
+  const text = String(value || '');
+  for (let index = 0; index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    first = Math.imul(first ^ code, 0x01000193);
+    second = Math.imul(second ^ code, 0x85ebca6b);
+  }
+  return [first, second]
+    .map((part) => (part >>> 0).toString(16).padStart(8, '0'))
+    .join('');
+};
+
+export const deterministicExternalLeadId = (source, externalId) => {
+  const normalizedSource = cleanText(source, 40).toLowerCase();
+  const normalizedExternalId = cleanText(externalId, 180).toLowerCase();
+  if (!normalizedSource || !normalizedExternalId) return '';
+  const sourceToken = normalizedSource.replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32) || 'external';
+  const directToken = /^[a-z0-9_-]{1,90}$/.test(normalizedExternalId) ? normalizedExternalId : '';
+  return `lead-${sourceToken}-${directToken || stableIdentityHash(`${normalizedSource}:${normalizedExternalId}`)}`;
+};
+
 export const suggestedWhatsappMessage = (name) => {
   const normalizedName = cleanText(name, 180);
   const firstName = normalizedName && normalizedName !== 'Lead sem nome'
@@ -121,6 +144,86 @@ const readLeadItems = async (store, keys, options = {}) => {
   return result;
 };
 
+const timeValue = (value) => {
+  const parsed = Date.parse(value || 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const externalIdentityKey = (lead) => {
+  const source = cleanText(lead?.source, 40).toLowerCase();
+  const externalId = cleanText(lead?.externalId, 180).toLowerCase();
+  return source && externalId ? `${source}:${externalId}` : '';
+};
+
+const hasOperatorState = (lead) => (
+  lead?.status !== 'new'
+  || Boolean(cleanText(lead?.notes, 1600))
+  || Boolean(cleanText(lead?.viewedAt, 40))
+  || Boolean(cleanText(lead?.lastActionAt, 40))
+);
+
+const historyFingerprint = (item) => [
+  cleanText(item?.type, 40),
+  cleanText(item?.title, 180),
+  (Array.isArray(item?.changes) ? item.changes : []).map((value) => cleanText(value, 160)).join('|'),
+  cleanText(item?.createdAt, 40),
+].join('::');
+
+const mergeExternalIdentityGroup = (group, options = {}) => {
+  const ordered = [...group].sort((a, b) => timeValue(b.updatedAt) - timeValue(a.updatedAt));
+  const latest = ordered[0];
+  const operatorRecord = ordered.find(hasOperatorState) || latest;
+  const createdAt = [...ordered]
+    .map((item) => cleanText(item.createdAt, 40))
+    .filter(Boolean)
+    .sort((a, b) => timeValue(a) - timeValue(b))[0] || latest.createdAt;
+  const history = [];
+  const seenHistory = new Set();
+  ordered
+    .flatMap((item) => Array.isArray(item.history) ? item.history : [])
+    .sort((a, b) => timeValue(b.createdAt) - timeValue(a.createdAt))
+    .forEach((item) => {
+      const fingerprint = historyFingerprint(item);
+      if (seenHistory.has(fingerprint)) return;
+      seenHistory.add(fingerprint);
+      history.push(item);
+    });
+
+  return normalizeLead({
+    ...latest,
+    id: operatorRecord.id,
+    status: operatorRecord.status,
+    notes: operatorRecord.notes,
+    whatsappMessage: operatorRecord.whatsappMessage || latest.whatsappMessage,
+    whatsappUrl: operatorRecord.whatsappUrl || latest.whatsappUrl,
+    viewedAt: operatorRecord.viewedAt,
+    lastActionAt: operatorRecord.lastActionAt,
+    createdAt,
+    updatedAt: latest.updatedAt,
+    history: history.slice(0, 100),
+  }, options);
+};
+
+export const collapseExternalLeadDuplicates = (items, options = {}) => {
+  const result = [];
+  const positions = new Map();
+  (Array.isArray(items) ? items : []).forEach((lead) => {
+    const key = externalIdentityKey(lead);
+    if (!key) {
+      result.push(lead);
+      return;
+    }
+    if (!positions.has(key)) {
+      positions.set(key, result.length);
+      result.push(lead);
+      return;
+    }
+    const position = positions.get(key);
+    result[position] = mergeExternalIdentityGroup([result[position], lead], options);
+  });
+  return result;
+};
+
 export const readLeadDocument = async (store, options = {}) => {
   const [legacy, keys] = await Promise.all([
     readLegacyLeadDocument(store, options),
@@ -134,7 +237,7 @@ export const readLeadDocument = async (store, options = {}) => {
       merged.set(lead.id, lead);
     }
   });
-  const data = [...merged.values()]
+  const data = collapseExternalLeadDuplicates([...merged.values()], options)
     .sort((a, b) => Date.parse(b.updatedAt || 0) - Date.parse(a.updatedAt || 0))
     .slice(0, MAX_LEADS);
   return {
@@ -273,9 +376,12 @@ export const upsertLead = async (store, rawLead, options = {}) => {
   }
 
   const createdAt = cleanText(options.createdAt, 40) || timestamp;
+  const stableId = options.stableExternalIdentity
+    ? deterministicExternalLeadId(incoming.source, incoming.externalId)
+    : '';
   const lead = normalizeLead({
     ...incoming,
-    id: `lead-${crypto.randomUUID()}`,
+    id: stableId || `lead-${crypto.randomUUID()}`,
     createdAt,
     updatedAt: timestamp,
     history: Array.isArray(options.initialHistory) && options.initialHistory.length
