@@ -5,6 +5,7 @@ import { onRequestPost } from '../functions/api/hub/radar-contextos.js';
 const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const home = read('planet-hub/assets/andre-os-radar-home-v1.js');
 const service = read('planet-hub/assets/andre-os-operational-reconciliation-v1.js');
+const radarData = read('planet-hub/assets/radar-data-v1.js');
 const access = read('planet-hub/assets/hub-access-v1.js');
 
 assert.match(home, /RADAR PESSOAL/,
@@ -23,6 +24,14 @@ assert.match(service, /sources\[key\]\?\.reliability === 'fresh'/,
   'cada escopo só pode ser reconciliado quando sua fonte respondeu com sucesso');
 assert.match(service, /activeItemIds/,
   'reconciliação deve preservar os IDs que continuam ativos');
+assert.match(radarData, /typeof raw === 'object'.*Number\(raw\.id/s,
+  'RadarData deve aceitar situation do SULTS tanto como objeto quanto como número');
+assert.match(radarData, /\[2, 3\]\.includes\(ticketSituationId\(item\)\)/,
+  'situações finais numéricas devem sair da fila ativa');
+assert.match(radarData, /ticketHasAndreSupport/,
+  'papel de acompanhamento do André deve considerar a lista de apoio do chamado');
+assert.match(radarData, /ownership: ticketOwnership\(item\)/,
+  'chamados devem expor mine, tracking ou info em vez de tratar toda a fila como ação do André');
 assert.match(access, /andre-os-operational-reconciliation-v1\.js\?v=20260828-1/,
   'bootstrap autenticado deve carregar a reconciliação antes da Home');
 assert.match(access, /andre-os-radar-home-v1\.js\?v=20260828-1/,
@@ -84,4 +93,4 @@ const invalid = await onRequestPost({
 assert.equal(invalid.status, 400,
   'backend deve rejeitar escopos arbitrários para impedir limpeza ampla acidental');
 
-console.log('André OS: separação pessoal/operação e reconciliação conservadora de contextos validadas.');
+console.log('André OS: separação pessoal/operação, SULTS e reconciliação conservadora de contextos validados.');
