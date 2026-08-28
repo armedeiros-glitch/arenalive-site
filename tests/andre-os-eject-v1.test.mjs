@@ -5,9 +5,9 @@ const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), '
 const source = read('planet-hub/assets/andre-os-eject-v1.js');
 const index = read('index.html');
 
-assert.match(index, /andre-os-eject-v1\.js\?v=20260828-1/,
+assert.match(index, /andre-os-eject-v1\.js\?v=20260828-2/,
   'index deve carregar o EJECT com versão de cache explícita');
-assert.match(source, /const VERSION = '20260828-1'/);
+assert.match(source, /const VERSION = '20260828-2'/);
 assert.match(source, /data-andre-os-eject/,
   'EJECT deve ter owner visual único');
 assert.match(source, /Copiar EJECT/,
@@ -20,10 +20,16 @@ assert.match(source, /Radar pessoal · hoje/,
   'fonte pessoal deve ser identificada sem ambiguidade');
 assert.match(source, /Contextos operacionais do Radar/,
   'contextos operacionais não podem parecer a fila pessoal');
-assert.match(source, /Campanhas · operação/,
-  'overlay operacional de campanhas deve ser nomeado como tal');
-assert.match(source, /Não é o catálogo anual completo/,
-  'EJECT deve impedir diagnóstico falso de catálogo ausente');
+assert.match(source, /Campanhas · catálogo e operação/,
+  'Campanhas deve explicitar catálogo e camada operacional');
+assert.match(source, /catalog contém o calendário oficial completo de 2026/,
+  'EJECT deve declarar o catálogo anual completo');
+assert.match(source, /data contém somente overrides operacionais persistidos/,
+  'EJECT deve separar referência anual de estado operacional');
+assert.match(source, /campaigns combina catálogo e overrides/,
+  'EJECT deve explicar a visão combinada usada para auditoria');
+assert.match(source, /presente apenas no catálogo não deve ser tratada automaticamente como tarefa ou pendência operacional/,
+  'catálogo não pode virar fila operacional');
 assert.match(source, /sourceSemantics:/,
   'snapshot deve carregar significado explícito das fontes');
 assert.match(source, /Respeite sourceSemantics/,
@@ -37,7 +43,7 @@ assert.match(source, /\/api\/hub\/inauguracoes/,
 assert.match(source, /\/api\/hub\/demandas-internas/,
   'Demandas internas devem entrar no snapshot');
 assert.match(source, /\/api\/hub\/campanhas/,
-  'camada operacional de Campanhas deve entrar no snapshot');
+  'Campanhas deve entrar no snapshot');
 assert.match(source, /\/api\/hub\/planet\/five-stars\/action-plans/,
   'Planos do 5 Estrelas devem entrar no snapshot');
 assert.match(source, /SENSITIVE_KEY/,
@@ -51,4 +57,4 @@ assert.doesNotMatch(source, /localStorage\.setItem|sessionStorage\.setItem/,
 assert.doesNotMatch(source, /MutationObserver/,
   'EJECT não deve observar o DOM continuamente');
 
-console.log('André OS EJECT: semântica das fontes, segurança, cópia e somente-leitura validados.');
+console.log('André OS EJECT: catálogo, operação, segurança, cópia e somente-leitura validados.');
