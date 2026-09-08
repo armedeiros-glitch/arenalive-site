@@ -6,6 +6,7 @@ const html = read('index.html');
 const hub = read('planet-hub/assets/hub-access-v1.js');
 const corePolicy = read('planet-hub/assets/inauguration-core-policy-v1.js');
 const ownerRules = read('planet-hub/assets/inauguration-owner-rules-v1.js');
+const paymentRequest = read('planet-hub/assets/payment-request-print-v1.js');
 const radar = read('planet-hub/assets/radar-data-v1.js');
 const eject = read('planet-hub/assets/andre-os-eject-v1.js');
 
@@ -16,6 +17,7 @@ const published = new Map([
   ['inauguration-owner-rules-v1.js', '20260828-1'],
   ['planet-overview-desktop-v1.js', '20260828-1'],
   ['andre-os-eject-v1.js', '20260828-3'],
+  ['payment-request-print-v1.js', '20260908-1'],
 ]);
 
 for (const [file, version] of published) {
@@ -54,6 +56,14 @@ assert.match(ownerRules, /Enviar contato\/indicação de Social Media local/,
   'owner-rules publicado precisa conter a expansão do checklist de inauguração');
 assert.match(ownerRules, /if \(key === 'criacao\/ajuste do instagram'\) return 'Franqueadora'/,
   'owner-rules publicado precisa preservar os responsáveis corrigidos');
+assert.match(paymentRequest, /pmh:inauguration-finance-updated/,
+  'solicitação de pagamento precisa reagir ao carregamento real do Financeiro');
+assert.match(paymentRequest, /editButton\.before\(printButton\)/,
+  'botão Gerar solicitação deve entrar diretamente antes de Editar');
+assert.match(paymentRequest, /row\.querySelector\('\[data-finance-delete-payment\]'\)/,
+  'decorador deve reconhecer o Excluir nativo e não criar ação duplicada');
+assert.doesNotMatch(paymentRequest, /editButton\.replaceWith\(actions\)/,
+  'decorador não deve mais reestruturar a linha de pagamento para inserir a solicitação');
 assert.match(radar, /ticketHasAndreSupport/,
   'RadarData publicado precisa preservar a leitura atual de apoio do SULTS');
 assert.match(eject, /implantacoes\?start=0&limit=100&scope=all/,

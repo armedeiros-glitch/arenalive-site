@@ -45,8 +45,10 @@ jobs:
           home = open('/tmp/home.html', encoding='utf-8').read()
           policy = 'inauguration-core-policy-v1.js?v=20260828-1'
           access = 'hub-access-v1.js?v=20260828-4'
+          payment_request = 'payment-request-print-v1.js?v=20260908-1'
           assert policy in home, 'política canônica não publicada no HTML'
           assert access in home, 'bootstrap não publicado no HTML'
+          assert payment_request in home, 'solicitação de pagamento não publicada no HTML'
           assert home.index(policy) < home.index(access), 'política canônica precisa carregar antes do bootstrap'
           print('inauguration core policy boot order ok')
           PY
@@ -60,6 +62,9 @@ jobs:
           grep -Fq 'Checklist de 17 etapas e seis ações inaugurais' /tmp/inauguration-core-policy.js
           grep -Fq 'operationalActive' /tmp/inauguration-core-policy.js
           fetch_asset '/planet-hub/assets/inauguration-owner-rules-v1.js?v=20260828-1' /tmp/inauguration-owner-rules.js 'Enviar contato/indicação de Social Media local'
+          fetch_asset '/planet-hub/assets/payment-request-print-v1.js?v=20260908-1' /tmp/payment-request-print.js 'pmh:inauguration-finance-updated'
+          grep -Fq 'editButton.before(printButton)' /tmp/payment-request-print.js
+          grep -Fq '[data-finance-delete-payment]' /tmp/payment-request-print.js
           fetch_asset '/planet-hub/assets/andre-os-eject-v1.js?v=20260828-3' /tmp/andre-os-eject.js 'implantacoes?start=0&limit=100&scope=all'
 
       - name: Verificar contrato público de sessão
