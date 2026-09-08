@@ -101,27 +101,24 @@
     document.querySelectorAll('[data-finance-edit-payment]').forEach((editButton) => {
       const paymentId = editButton.dataset.financeEditPayment;
       const row = editButton.closest('.pmh-payment-row');
-      if (!paymentId || !row) return;
+      const actions = editButton.closest('.pmh-payment-actions') || editButton.parentElement;
+      if (!paymentId || !row || !actions) return;
 
-      let actions = editButton.closest('.pmh-payment-actions');
-      if (!actions) {
-        actions = document.createElement('div');
-        actions.className = 'pmh-payment-actions';
-        editButton.replaceWith(actions);
-        actions.appendChild(editButton);
-      }
+      actions.classList.add('pmh-payment-actions');
 
-      if (!actions.querySelector(`[data-payment-request="${CSS.escape(paymentId)}"]`)) {
+      if (!row.querySelector(`[data-payment-request="${CSS.escape(paymentId)}"]`)) {
         const printButton = document.createElement('button');
         printButton.type = 'button';
         printButton.className = 'pmh-payment-request-button';
         printButton.dataset.paymentRequest = paymentId;
         printButton.textContent = 'Gerar solicitação';
         printButton.title = 'Gerar documento A4 para imprimir, assinar e entregar ao financeiro';
-        actions.prepend(printButton);
+        editButton.before(printButton);
       }
 
-      if (!actions.querySelector(`[data-payment-delete="${CSS.escape(paymentId)}"]`)) {
+      const hasNativeDelete = Boolean(row.querySelector('[data-finance-delete-payment]'));
+      const hasLegacyDelete = Boolean(row.querySelector(`[data-payment-delete="${CSS.escape(paymentId)}"]`));
+      if (!hasNativeDelete && !hasLegacyDelete) {
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
         deleteButton.className = 'pmh-payment-delete-button';
@@ -135,11 +132,11 @@
   };
 
   const decorateFinancePanelSoon = () => {
-    [0, 60, 160].forEach((delay) => window.setTimeout(decorate, delay));
+    [0, 60, 180, 450].forEach((delay) => window.setTimeout(decorate, delay));
   };
 
   document.addEventListener('click', async (event) => {
-    if (event.target.closest('[data-inauguration-finance-open]')) {
+    if (event.target.closest('[data-inauguration-finance-open], [data-inauguration-finance-new-payment], [data-inauguration-finance-new-supplier], [data-finance-edit-payment], [data-finance-delete-payment], [data-finance-close]')) {
       decorateFinancePanelSoon();
     }
 
@@ -187,6 +184,13 @@
     generateRequest(button.dataset.paymentRequest, popup);
   }, true);
 
-  window.addEventListener('pmh:view-rendered', decorate);
-  decorate();
+  document.addEventListener('change', (event) => {
+    if (event.target.closest?.('[data-payment-status], [data-inauguration-panel-budget]')) {
+      decorateFinancePanelSoon();
+    }
+  });
+
+  window.addEventListener('pmh:inauguration-finance-updated', decorateFinancePanelSoon);
+  window.addEventListener('pmh:view-rendered', decorateFinancePanelSoon);
+  decorateFinancePanelSoon();
 })();
